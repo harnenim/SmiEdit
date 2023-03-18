@@ -1,0 +1,899 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>설정</title>
+
+<!--
+
+// 창 설정
+setting.window.x
+setting.window.y
+setting.window.width
+setting.window.height
+setting.viewer.window
+setting.player.window
+setting.window.follow
+
+// 싱크 설정
+setting.sync.insert: 1    // 싱크 입력 시 커서 이동
+setting.sync.update: 2    // 싱크 수정 시 커서 이동 (기본: 0 / 싱크 새로 찍기: 2 등)
+setting.sync.weight: -450 // 가중치 설정
+setting.sync.unit: 42     // 싱크 조절량 설정 (24fps이면 1프레임당 41.7ms)
+setting.sync.move: 2000   // 앞으로/뒤로 이동 단위
+setting.sync.lang: // 언어
+setting.sync.preset: "<Sync Start={start}><P Class={lang}{type}>" // 싱크 태그 형태
+
+// 단축키 설정
+setting.command.withCtrls
+setting.command.withAlts
+setting.command.withCtrlAlts
+setting.command.withCtrlShifts
+
+// 자동완성 설정
+setting.autoComplete["50" ] // @
+setting.autoComplete["51" ] // #
+setting.autoComplete["52" ] // $
+setting.autoComplete["53" ] // %
+setting.autoComplete["54" ] // ^
+setting.autoComplete["55" ] // &
+setting.autoComplete["57" ] // (
+setting.autoComplete["48" ] // )
+setting.autoComplete["188"] // <
+setting.autoComplete["190"] // >
+
+// 에디터 스타일
+setting.useTab
+setting.css
+// 미리보기 스타일
+setting.viewer.css
+
+// 플레이어 설정
+setting.player.control
+
+-->
+
+<script src="lib/jquery-3.2.1.min.js"></script>
+<script src="lib/setting.js"></script>
+<link rel="stylesheet" type="text/css" href="lib/common.css" />
+<script>
+function show(index) {
+	$("#settingArea > form").hide();
+	$("#settingArea > form:eq(" + index + ")").show();
+	$("#settingNav > a.selected").removeClass("selected");
+	$("#settingNav > a:eq(" + index + ")").addClass("selected");
+}
+
+$(function() {
+	var setting = opener.setting;
+	
+	$("input[type=text][name],input[type=number][name],textarea[name]").each(function() {
+		var input = $(this);
+		var name = input.attr("name");
+		if (name.indexOf("what") > 0) {
+			name = name.split("what").join(setting.player.control.dll);
+		}
+		var value = eval("setting['" + name.split("_").join("']['") + "']");
+		if (typeof value == "number" || typeof value == "string") {
+			input.val(value);
+		} else if (value && value.join) {
+			input.val(value.join("\n"));
+		}
+	});
+	$("input[type=checkbox][name]").each(function() {
+		var input = $(this);
+		var name = input.attr("name");
+		if (name.indexOf("what")) {
+			name = name.split("what").join(setting.player.control.dll);
+		}
+		input.prop("checked", eval("setting['" + name.split("_").join("']['") + "']"));
+	});
+	$("select[name]").each(function() {
+		var select = $(this);
+		var name = select.attr("name");
+		var value = eval("setting." + name.split("_").join("."));
+		select.data({value: value});
+	});
+	
+	var fieldEditor = $("#fieldEditor");
+	var fieldViewer = $("#fieldViewer");
+	var fieldPlayer = $("#fieldPlayer");
+
+	var tableCommand = $("#tableCommand");
+	var inputCommandName = $("#inputCommandName");
+	var inputCommandKey  = $("#inputCommandKey" );
+	var inputCommandFunc = $("#inputCommandFunc");
+
+	function refreshWindow() {
+		var editor = [setting.window, fieldEditor];
+		var viewer = [setting.viewer.window, fieldViewer];
+		var player = [setting.player.window, fieldPlayer];
+
+		var xs = [];
+		if (editor[0].x < viewer[0].x) {
+			xs = [[editor], [viewer]];
+		} else if (editor[0].x > viewer[0].x) {
+			xs = [[viewer], [editor]];
+		} else {
+			xs = [[editor, viewer]];
+		}
+		if (player[0].x < xs[0][0][0].x) {
+			xs = [[player]].concat(xs);
+		} else if (player[0].x == xs[0][0][0].x) {
+			xs[0].push(player);
+		} else if (xs.length > 1) {
+			if (player[0].x < xs[1][0][0].x) {
+				xs = [xs[0], [player], xs[1]];
+			} else if (player[0].x == xs[1][0][0].x) {
+				xs[1].push(player);
+			} else {
+				xs.push([player]);
+			}
+		} else {
+			xs.push([player]);
+		}
+		
+		var ys = [];
+		if (editor[0].y < viewer[0].y) {
+			ys = [[editor], [viewer]];
+		} else if (editor[0].y > viewer[0].y) {
+			ys = [[viewer], [editor]];
+		} else {
+			ys = [[editor, viewer]];
+		}
+		if (player[0].y < ys[0][0][0].y) {
+			ys = [[player]].concat(ys);
+		} else if (player[0].y == ys[0][0][0].y) {
+			ys[0].push(player);
+		} else if (ys.length > 1) {
+			if (player[0].y < ys[1][0][0].y) {
+				ys = [ys[0], [player], ys[1]];
+			} else if (player[0].y == ys[1][0][0].y) {
+				ys[1].push(player);
+			} else {
+				ys.push([player]);
+			}
+		} else {
+			ys.push([player]);
+		}
+		
+		switch (xs.length) {
+			case 1: {
+				for (var i = 0; i < xs[0].length; i++) {
+					xs[0][i][1].css({ left: "4%", width: "92%" });
+				}
+				break;
+			}
+			case 2: {
+				for (var i = 0; i < xs[0].length; i++) {
+					xs[0][i][1].css({ left: "4%", width: "44%" });
+				}
+				for (var i = 0; i < xs[1].length; i++) {
+					xs[1][i][1].css({ left: "52%", width: "44%" });
+				}
+				break;
+			}
+			case 3: {
+				for (var i = 0; i < xs[0].length; i++) {
+					xs[0][i][1].css({ left: "4%", width: "26%" });
+				}
+				for (var i = 0; i < xs[1].length; i++) {
+					xs[1][i][1].css({ left: "34%", width: "26%" });
+				}
+				for (var i = 0; i < xs[2].length; i++) {
+					xs[2][i][1].css({ left: "64%", width: "26%" });
+				}
+				break;
+			}
+		}
+		switch (ys.length) {
+			case 1: {
+				for (var i = 0; i < ys[0].length; i++) {
+					ys[0][i][1].css({ top: "4%", height: "92%" });
+				}
+				break;
+			}
+			case 2: {
+				for (var i = 0; i < ys[0].length; i++) {
+					ys[0][i][1].css({ top: "4%", height: "44%" });
+				}
+				for (var i = 0; i < ys[1].length; i++) {
+					ys[1][i][1].css({ top: "52%", height: "44%" });
+				}
+				break;
+			}
+			case 3: {
+				for (var i = 0; i < ys[0].length; i++) {
+					ys[0][i][1].css({ top: "4%", height: "26%" });
+				}
+				for (var i = 0; i < ys[1].length; i++) {
+					ys[1][i][1].css({ top: "34%", height: "26%" });
+				}
+				for (var i = 0; i < ys[2].length; i++) {
+					ys[2][i][1].css({ top: "64%", height: "26%" });
+				}
+				break;
+			}
+		}
+	}
+	
+	{	// 창
+		refreshWindow();
+	
+		$("form:eq(0)").on("submit", function(e) {
+			e.preventDefault();
+			setting.window.x             = Number($("input[name=window_x]"            ).val());
+			setting.window.y             = Number($("input[name=window_y]"            ).val());
+			setting.window.width         = Number($("input[name=window_width]"        ).val());
+			setting.window.height        = Number($("input[name=window_height]"       ).val());
+			setting.viewer.window.x      = Number($("input[name=viewer_window_x]"     ).val());
+			setting.viewer.window.y      = Number($("input[name=viewer_window_y]"     ).val());
+			setting.viewer.window.width  = Number($("input[name=viewer_window_width]" ).val());
+			setting.viewer.window.height = Number($("input[name=viewer_window_height]").val());
+			setting.player.window.x      = Number($("input[name=player_window_x]"     ).val());
+			setting.player.window.y      = Number($("input[name=player_window_y]"     ).val());
+			setting.player.window.width  = Number($("input[name=player_window_width]" ).val());
+			setting.player.window.height = Number($("input[name=player_window_height]").val());
+			setting.player.window.use    = $("input[name=player_window_use]").prop("checked");
+			setting.window.follow        = $("input[name=window_follow]").prop("checked");
+			opener.saveSetting();
+			opener.moveWindowsToSetting();
+			refreshWindow();
+			return false;
+		});
+		
+		$("#btnRunViewer").on("click", function() {
+			opener.SmiEditor.Viewer.open();
+		});
+		$("#btnGetWindows").on("click", function() {
+			opener.binder.getWindows(["editor", "viewer", "player"]);
+		});
+		// C#에서 Script("afterGetWindow", object[] { "editor", x, y, w, h });
+		opener.afterGetWindow = function(id, x, y, w, h) {
+			var name = "window";
+			if (id != "editor") {
+				name = id + "_window";
+			}
+			$("input[name=" + name + "_x]"     ).val(x);
+			$("input[name=" + name + "_y]"     ).val(y);
+			$("input[name=" + name + "_width]" ).val(w);
+			$("input[name=" + name + "_height]").val(h);
+		};
+	}
+	
+	{	// 싱크
+		$("form:eq(1)").on("submit", function(e) {
+			e.preventDefault();
+			setting.sync.insert = Number($("input[name=sync_insert]").val());
+			setting.sync.update = Number($("input[name=sync_update]").val());
+			setting.sync.weight = Number($("input[name=sync_weight]").val());
+			setting.sync.unit   = Number($("input[name=sync_unit]"  ).val());
+			setting.sync.move   = Number($("input[name=sync_move]"  ).val());
+			setting.sync.lang   = $("input[name=sync_lang]"  ).val();
+			setting.sync.preset = $("input[name=sync_preset]").val();
+			opener.setSetting(setting);
+			opener.saveSetting();
+			return false;
+		});
+	}
+	
+	{	// 단축키
+		var tbody = tableCommand.find("tbody");
+		var withs = ["withCtrls", "withAlts", "withCtrlAlts", "withCtrlShifts"];
+		var keys = "ABCDEFGHIJKLMKNOPQRSTUVWXYZ1234567890";
+		var reserved = {
+				withCtrls: "ACDFHNOQSTVXYZ"
+			,	withAlts: "FHSQW"
+			,	withCtrlAlts: ""
+			,	withCtrlShifts: "FS"
+		};
+		function refreshTableCommand() {
+			tbody.empty();
+			for (var i = 0; i < keys.length; i++) {
+				var key = keys[i];
+				var tr = $("<tr>").addClass("key-" + key).append($("<th>").text(key));
+				for (var j = 0; j < withs.length; j++) {
+					var w = withs[j];
+					var td = $("<td>");
+					if (reserved[w].indexOf(key) >= 0) {
+						td.addClass("fixed").text("예약 단축키");
+					} else {
+						var func = setting.command[w][key];
+						if (!func || !func.trim()) {
+							func = "";
+						} else {
+							td.addClass("used").text(func);
+						}
+						td.data({
+								"name": "setting.command." + w + "['" + key + "']"
+							,	"with": j
+							,	"key" : key
+							,	"func": func
+						});
+					}
+					tr.append(td);
+				}
+				tbody.append(tr);
+			}
+		}
+		refreshTableCommand();
+
+		var cmdSaved = true;
+		function checkSaved() {
+			if (cmdSaved) return true;
+			return confirm("변경사항이 사라집니다.");
+		}
+		
+		tableCommand.on("click", "td:not(.fixed)", function() {
+			if (!checkSaved()) {
+				return;
+			}
+			var data = $(this).data();
+			var key = " + " + data.key;
+			switch (data.with) {
+				case 0: {
+					key = "Ctrl" + key;
+					break;
+				}
+				case 1: {
+					key = "Alt" + key;
+					break;
+				}
+				case 2: {
+					key = "Ctrl + Alt" + key;
+					break;
+				}
+				case 3: {
+					key = "Ctrl + Shift" + key;
+					break;
+				}
+			}
+			inputCommandName.val(data.name);
+			inputCommandKey .val(key);
+			inputCommandFunc.val(data.func);
+		});
+		
+		inputCommandKey.on("keydown", function(e) {
+			e.preventDefault();
+			
+			if (!checkSaved()) {
+				return;
+			}
+			var name = "";
+			var key = String.fromCharCode(e.keyCode);
+			var func = "";
+			
+			if (keys.indexOf(key) >= 0) {
+				var w = null;
+				if (e.shiftKey) {
+					if (e.ctrlKey) {
+						if (e.altKey) {
+							
+						} else {
+							if (reserved.withCtrlShifts.indexOf(key) >= 0) {
+								key = "Ctrl + Shift + ";
+							} else {
+								func = tableCommand.find("tr.key-" + key + " > td:eq(3)").data("func");
+								name = "setting.command.withCtrlShifts[\"" + key + "\"]";
+								key = "Ctrl + Shift + " + key;
+							}
+						}
+					}
+				} else {
+					if (e.ctrlKey) {
+						if (e.altKey) {
+							if (reserved.withCtrlAlts.indexOf(key) >= 0) {
+								key = "Ctrl + Alt + ";
+							} else {
+								func = tableCommand.find("tr.key-" + key + " > td:eq(2)").data("func");
+								name = "setting.command.withCtrlAlts[\"" + key + "\"]";
+								key = "Ctrl + Alt + " + key;
+							}
+						} else {
+							if (reserved.withCtrls.indexOf(key) >= 0) {
+								key = "Ctrl + ";
+							} else {
+								func = tableCommand.find("tr.key-" + key + " > td:eq(0)").data("func");
+								name = "setting.command.withCtrls[\"" + key + "\"]";
+								key = "Ctrl + " + key;
+							}
+						}
+					} else {
+						if (e.altKey) {
+							if (reserved.withAlts.indexOf(key) >= 0) {
+								key = "Alt + ";
+							} else {
+								func = tableCommand.find("tr.key-" + key + " > td:eq(1)").data("func");
+								name = "setting.command.withAlts[\"" + key + "\"]";
+								key = "Alt + " + key;
+							}
+						} else {
+							
+						}
+					}
+				}
+			} else {
+				if (e.shiftKey) {
+					if (e.ctrlKey) {
+						if (e.altKey) {
+							
+						} else {
+							key = "Ctrl + Shift + ";
+						}
+					}
+				} else {
+					if (e.ctrlKey) {
+						if (e.altKey) {
+							key = "Ctrl + Alt + ";
+						} else {
+							key = "Ctrl + ";
+						}
+					} else {
+						if (e.altKey) {
+							key = "Alt + ";
+						} else {
+							
+						}
+					}
+				}
+			}
+			inputCommandName.val(name);
+			inputCommandKey .val(key);
+			inputCommandFunc.val(func);
+		});
+		
+		inputCommandFunc.bind("input propertychange", function() {
+			if (inputCommandName.val()) {
+				cmdSaved = false;
+			}
+		});
+
+		$("#areaFunctions").on("click", "dt", function() {
+			var func = inputCommandFunc.val();
+			inputCommandFunc.val((func ? func + "\n" : "") + $(this).data("input"));
+			cmdSaved = false;
+		});
+		
+		$("form:eq(2)").on("submit", function(e) {
+			e.preventDefault();
+			var name = inputCommandName.val();
+			if (name) {
+				var func = inputCommandFunc.val();
+				if (func.trim().length == 0) {
+					func = " ";
+				}
+				eval(name + " = func;");
+				cmdSaved = true;
+				refreshTableCommand();
+				opener.setSetting(setting);
+				opener.saveSetting();
+			}
+			return false;
+		});
+	}
+	
+	{	// 자동완성
+		// 숫자 안 되는 범인 찾아야 함
+		$("form:eq(3)").on("submit", function(e) {
+			e.preventDefault();
+			$(this).find("textarea").each(function() {
+				var textarea = $(this);
+				var name = "setting['" + textarea.attr("name").split("_").join("']['") + "']";
+				var value = textarea.val();
+				if (value) {
+					value = value.split("\n");
+				} else {
+					value = [];
+				}
+				eval(name + " = value");
+			});
+			opener.setSetting(setting);
+			opener.saveSetting();
+			return false;
+		});
+	}
+	
+	{	// 스타일
+		$("form:eq(4)").on("submit", function(e) {
+			e.preventDefault();
+			setting.useTab     = $("input[name=useTab]").prop("checked");
+			setting.css        = $("textarea[name=css]"       ).val();
+			setting.viewer.css = $("textarea[name=viewer_css]").val();
+			opener.setSetting(setting);
+			opener.saveSetting();
+			return false;
+		});
+	}
+	
+	{	// 플레이어
+		var select = $("select[name=player_control_dll]");
+		if (opener.playerDlls) {
+			var dlls = opener.playerDlls.split(",");
+			for (var i = 0; i < dlls.length; i++) {
+				var dll = dlls[i].split("|");
+				select.append($("<option>").val(dll[0]).text(dll[1]));
+			}
+			select.find("option[value=" + select.data("value") + "]").prop("selected", true);
+		}
+		select.on("change", function() {
+			var dll = select.val();
+			var dllSetting = setting.player.control[dll];
+			if (!dllSetting) {
+				dllSetting = {
+						path: ""
+					,	auto: true
+					,	withRun: true
+					,	withExit: true
+				};
+			}
+			$("input[name=player_control_what_path]"    ).val(dllSetting.path);
+			$("input[name=player_control_what_auto]"    ).prop("checked", dllSetting.auto);
+			$("input[name=player_control_what_withRun]" ).prop("checked", dllSetting.withRun);
+			$("input[name=player_control_what_withExit]").prop("checked", dllSetting.withExit);
+		});
+	
+		$("form:eq(5)").on("submit", function(e) {
+			e.preventDefault();
+			var dll = setting.player.control.dll = select.val();
+			var dllSetting = setting.player.control[dll];
+			if (!dllSetting) {
+				dllSetting = setting.player.control[dll] = {};
+			}
+			dllSetting.path     = $("input[name=player_control_what_path]"    ).val();
+			dllSetting.auto     = $("input[name=player_control_what_auto]"    ).prop("checked");
+			dllSetting.withRun  = $("input[name=player_control_what_withRun]" ).prop("checked");
+			dllSetting.withExit = $("input[name=player_control_what_withExit]").prop("checked");
+			opener.setSetting(setting);
+			opener.saveSetting();
+			return false;
+		});
+	}
+	
+	show(0);
+});
+</script>
+<style>
+* {
+	font-size: 14px;
+}
+
+textarea {
+	width: 100%;
+	height: 100px;
+}
+
+#fieldEditor,
+#fieldViewer,
+#fieldPlayer {
+	border: 1px solid #000;
+	border-radius: 6px;
+	margin-bottom: 4px;
+	padding: 8px;
+}
+
+#settingNav {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100px;
+	height: 100%;
+	padding: 4px 0 4px 4px;
+	background: #ccc;
+	border-right: 1px solid #888;
+}
+#settingArea {
+	position: fixed;
+	top: 0;
+	left: 100px;
+	width: calc(100% - 100px);
+	height: 100%;
+	overflow-y: scroll;
+	padding: 4px;
+	background: #f0f0f0;
+}
+#settingArea > form {
+	display: none;
+}
+
+#settingNav > a {
+	display : block;
+	margin: -1px -1px 0 0;
+	border: 1px solid #888;
+	border-radius: 6px 0 0 6px;
+	padding: 4px;
+	background: #ddd;
+	color: #000;
+	font-size: 12px;
+	text-decoration: none;
+	line-height: 20px;
+}
+#settingNav > a.selected {
+	background: #f0f0f0;
+	border-right-color: #f0f0f0;
+}
+
+input[type=number] { width: 50px; }
+
+#fieldEditor,
+#fieldViewer,
+#fieldPlayer { position: absolute; }
+
+#areaTableCommand {
+	height: 250px;
+	overflow-y: scroll;
+}
+#tableCommand {
+	width: 100%;
+}
+#tableCommand tr {
+	height: 20px;
+}
+#tableCommand td {
+	height: 20px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	cursor: pointer;
+}
+#tableCommand td:hover {
+	background: #ff8;
+}
+#tableCommand td.fixed {
+	background: #f88;
+	cursor: default;
+}
+#tableCommand td.used {
+	background: #8ff;
+}
+#tableCommand td.used:hover {
+	background: #cfc;
+}
+
+</style>
+</head>
+<body>
+
+<nav id="settingNav">
+	<a href="javascript:show(0)">창 배치</a>
+	<a href="javascript:show(1)">싱크</a>
+	<a href="javascript:show(2)">단축키</a>
+	<a href="javascript:show(3)">자동완성</a>
+	<a href="javascript:show(4)">스타일</a>
+	<a href="javascript:show(5)">플레이어</a>
+</nav>
+<div id="settingArea">
+	<form style="height: 100%;">
+		<div style="width: 100%; height: calc(100% - 100px); position: relative;">
+			<fieldset id="fieldEditor">
+				<legend>에디터</legend>
+				<label>↦: <input type="number" name="window_x" /></label>
+				<label>↧: <input type="number" name="window_y" /></label>
+				<br />
+				<label>↔: <input type="number" name="window_width" /></label>
+				<label>↕: <input type="number" name="window_height" /></label>
+			</fieldset>
+			<fieldset id="fieldViewer">
+				<legend>미리보기</legend>
+				<label>↦: <input type="number" name="viewer_window_x" /></label>
+				<label>↧: <input type="number" name="viewer_window_y" /></label>
+				<br />
+				<label>↔: <input type="number" name="viewer_window_width" /></label>
+				<label>↕: <input type="number" name="viewer_window_height" /></label>
+				<br />
+				<button type="button" id="btnRunViewer">재실행</button>
+			</fieldset>
+			<fieldset id="fieldPlayer">
+				<legend>플레이어</legend>
+				<label>↦: <input type="number" name="player_window_x" /></label>
+				<label>↧: <input type="number" name="player_window_y" /></label>
+				<br />
+				<label>↔: <input type="number" name="player_window_width" /></label>
+				<label>↕: <input type="number" name="player_window_height" /></label>
+				<br />
+				<label><input type="checkbox" name="player_window_use" /> 위치 고정 사용</label>
+			</fieldset>
+		</div>
+		<button type="button" id="btnGetWindows">현재 위치 가져오기</button><br />
+		<label><input type="checkbox" name="window_follow" /> 창 함께 이동</label><br />
+		<button type="submit">적용</button>
+	</form>
+	
+	<form>
+		<label>싱크 입력 시 <input type="number" name="sync_insert" />줄 아래로 이동</label><br />
+		<label>싱크 수정 시 <input type="number" name="sync_update" />줄 아래로 이동</label><br />
+		<label>싱크 가중치: <input type="number" name="sync_weight" />ms</label><br />
+		<label>싱크 조절 단위: <input type="number" name="sync_unit" />ms</label><br />
+		<label>재생 앞뒤 이동 단위: <input type="number" name="sync_move" />ms</label><br />
+		<label>싱크 언어: <input type="text" name="sync_lang" /></label><br />
+		<label>싱크 태그 형태: <input type="text" name="sync_preset" style="width: 400px;" /></label><br />
+		<button type="submit">적용</button>
+	</form>
+	
+	<form>
+		<table style="width: calc(100% - 17px);">
+			<cols>
+				<col style="width: 8%;" />
+				<col style="width: 23%;" />
+				<col style="width: 23%;" />
+				<col style="width: 23%;" />
+				<col style="width: 23%;" />
+			</cols>
+			<thead>
+				<tr>
+					<th></th>
+					<th>Ctrl</th>
+					<th>Alt</th>
+					<th>Ctrl+Alt</th>
+					<th>Ctrl+Shift</th>
+				</tr>
+			</thead>
+		</table>
+		<div id="areaTableCommand">
+			<table id="tableCommand">
+				<cols>
+					<col style="width: 8%;" />
+					<col style="width: 23%;" />
+					<col style="width: 23%;" />
+					<col style="width: 23%;" />
+					<col style="width: 23%;" />
+				</cols>
+				<tbody></tbody>
+			</table>
+		</div>
+		<input type="hidden" id="inputCommandName" />
+		<label>단축키 <input type="text" id="inputCommandKey" readonly /></label>
+		<button type="submit">적용</button>
+		<br />
+		<textarea id="inputCommandFunc" spellcheck="false"></textarea>
+		
+		<div id="areaFunctions">
+			사용자 정의 명령 함수 지원
+			<style>
+				dt { margin-top: 8px; cursor: pointer; }
+			</style>
+			<dl>
+				<dt data-input="getText()"
+				>editor.getText() → { text: '전체_텍스트', selection: ['커서_시작', '커서_끝'] }</dt>
+				<dd>전체 내용을 구해옵니다.</dd>
+				
+				<dt data-input="setText(text, [cursor, cursor])"
+				>editor.setText(string '대체_텍스트', number[] ['커서_시작', '커서_끝'])</dt>
+				<dd>전체 내용을 교체합니다.</dd>
+				
+				<dt data-input="getLine()"
+				>editor.getLine() → { text: '현재_줄_텍스트', selection: ['커서_시작', '커서_끝'] }</dt>
+				<dd>커서(끝) 줄의 내용을 가져옵니다.</dd>
+				
+				<dt data-input="setLine(text, [cursor, cursor])"
+				>editor.setLine(string '대체_텍스트', number[] ['커서_시작', '커서_끝'])</dt>
+				<dd>커서(끝) 줄의 내용을 교체합니다.</dd>
+				
+				<dt data-input="inputText(text, false)"
+				>editor.inputText(string '입력_텍스트', bool '커서_고정')</dt>
+				<dd>현재 커서 위치에 내용을 입력합니다.</dd>
+				 
+				<dt data-input="tagging('<i>', false)"
+				>editor.tagging(string '&lt;태그&gt;', bool '커서_위치부터')</dt>
+				<dd>커서가 있는 줄 전체, 혹은 커서 위치 이후 문자열에 태그를 입힙니다.</dd>
+				
+				<dt data-input="taggingRange('<u>')"
+				>editor.taggingRange(tag) { self.taggingRange(tag); };</dt>
+				<dd>tagging(string '&lt;태그&gt;', true)와 같은 동작입니다.</dd>
+				
+				<dt data-input="self.moveToSync()"
+				>editor.moveToSync()</dt>
+				<dd>현재 대사의 싱크를 재생합니다.</dd>
+				
+				<dt data-input="self.findSync()"
+				>editor.findSync()</dt>
+				<dd>현재 재생 중인 대사를 찾습니다.</dd>
+				
+				<dt data-input=""newFile()
+				>newFile()</dt>
+				<dd>새 파일</dd>
+				
+				<dt data-input=""openFile()
+				>openFile()</dt>
+				<dd>파일 열기</dd>
+				
+				<dt data-input="saveFile()"
+				>saveFile()</dt>
+				<dd>파일 저장하기</dd>
+				
+				<dt data-input="saveFile(true)"
+				>saveFile(true)</dt>
+				<dd>다른 이름으로 저장하기</dd>
+				
+				<!--
+				<dt data-input="openNewTab()"
+				>openNewTab()</dt>
+				<dd>새 탭 열기</dd>
+				-->
+				
+				<dt data-input="openSetting()"
+				>openSetting()</dt>
+				<dd>설정창 열기</dd>
+				
+				<dt data-input="openAddon('~~.html')"
+				>openAddon("~~.html")</dt>
+				<dd>직접 만든 부가기능 창을 열 수 있습니다.</dd>
+				
+				<dt></dt>
+				<dd></dd>
+				
+				<dt></dt>
+				<dd></dd>
+				
+				<dt></dt>
+				<dd></dd>
+				
+				<dt></dt>
+				<dd></dd>
+				
+			</dl>
+		</div>
+	</form>
+	
+	<form>
+		<p>
+			줄 단위로 자동완성 문자열을 지정할 수 있습니다.<br />
+			반드시 시작 문자가 일치해야 하며, '|'를 이용해 입력값과 출력값이 다르게 설정할 수 있습니다. 
+		</p>
+		<label>@
+			<textarea name="autoComplete_50_1"  spellcheck="false"></textarea>
+		</label>
+		<label>#
+			<textarea name="autoComplete_51_1"  spellcheck="false"></textarea>
+		</label>
+		<label>$
+			<textarea name="autoComplete_52_1"  spellcheck="false"></textarea>
+		</label>
+		<label>%
+			<textarea name="autoComplete_53_1"  spellcheck="false"></textarea>
+		</label>
+		<label>^
+			<textarea name="autoComplete_54_1"  spellcheck="false"></textarea>
+		</label>
+		<label>&
+			<textarea name="autoComplete_55_1"  spellcheck="false"></textarea>
+		</label>
+		<label>(
+			<textarea name="autoComplete_57_1"  spellcheck="false"></textarea>
+		</label>
+		<label>)
+			<textarea name="autoComplete_48_1"  spellcheck="false"></textarea>
+		</label>
+		<label>&lt;
+			<textarea name="autoComplete_188_1" spellcheck="false"></textarea>
+		</label>
+		<label>&gt;
+			<textarea name="autoComplete_190_1" spellcheck="false"></textarea>
+		</label>
+		<div style="position: fixed; top: 0; right: 20px;">
+			<button type="submit">적용</button>
+		</div>
+	</form>
+	
+	<form>
+		<label><input type="checkbox" name="useTab" /> 탭 사용</label><br />
+		<label>에디터
+			<textarea name="css" spellcheck="false"></textarea>
+		</label>
+		<br />
+		<label>미리보기
+			<textarea name="viewer_css" spellcheck="false"></textarea>
+		</label>
+		<br />
+		<button type="submit">적용</button>
+	</form>
+	
+	<form>
+		<label>플레이어: <select name="player_control_dll"></select></label><br />
+		<label>플레이어 실행파일: <input type="text" name="player_control_what_path" style="width: calc(100% - 130px);" /></label><br /><!-- TODO: 찾아보기 창이 필요할까? -->
+		<label><input type="checkbox" name="player_control_what_withRun"  /> 프로그램 실행 시 플레이어 실행</label><br />
+		<label><input type="checkbox" name="player_control_what_withExit" /> 프로그램 종료 시 플레이어 종료</label><br />
+		<button type="submit">적용</button>
+	</form>
+</div>
+</body>
+</html>

@@ -1,0 +1,625 @@
+﻿<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>겹치는 싱크 결합</title>
+	<script src="../lib/jquery-3.2.1.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/common.css" />
+	<script>
+var SmiEditor = {};
+var LINE = {};
+var TYPE = {};
+var setting = {};
+var defaultCss = {
+		whiteSpace: "nowrap"
+	,	fontSize: "39.4px"
+	,	fontFamily: "맑은 고딕"
+	,	fontWeight: "bold"
+};
+if (opener) {
+	SmiEditor = opener.SmiEditor;
+	LINE = opener.LINE;
+	TYPE = opener.TYPE;
+	setting = opener.setting;
+	if (SmiEditor.Viewer.window) {
+		defaultCss = { font: SmiEditor.Viewer.window.$("#viewer").css("font") };
+	}
+	
+} else {
+	LINE = {
+			TEXT: 0
+		,	SYNC: 1
+		,	TYPE: 2
+	};
+	TYPE = {
+			TEXT: null
+		,	BASIC: 1
+		,	FRAME: 2
+		,	RANGE: 3
+	};
+	TIDs = [null, "", " ", "	"];
+	var preset = "<Sync Start={sync}><P Class=KRCC{type}>"
+	SmiEditor.makeSyncLine = function(time, type) {
+		return preset.split("{sync}").join(Math.floor(time)).split("{type}").join(TIDs[type ? type : 1]);
+	}
+}
+
+function getWidth(smi, css) {
+	if (!css) {
+		// 가능하면 미리보기 폰트 설정을 따라감
+		css = defaultCss;
+	}
+	// RUBY태그 문법이 미묘하게 달라서 가공 필요
+	smi = smi.split("<RP").join("<!--RP").split("</RP>").join("</RP-->");
+	var checker = $("<span>").css(css).html(smi);
+	$("body").append(checker);
+	var width = checker.width();
+	checker.remove();
+	return width;
+}
+function parse(text) {
+	var lines = text.split("\n");
+	var parseds = [];
+	
+	// 싱크값을 제외하면 별도의 값을 취하지 않는 간이 파싱
+	// SMI는 태그 꺽쇠 내에서 줄바꿈을 하는 경우는 일반적으로 없다고 가정
+	for (var i = 0; i < lines.length; i++) {
+		var line = lines[i];
+		var parsed = [line, null, null];
+		parseds.push(parsed);
+		
+		var j = 0;
+		var k = 0;
+		var hasSync = false;
+		var sync = 0;
+		
+		while ((k = line.indexOf("<", j)) >= 0) {
+			// 태그 열기
+			j = k + 1;
+
+			// 태그 닫힌 곳까지 탐색
+			var closePos = line.indexOf(">", j);
+			if (j < closePos) {
+				// 태그명 찾기
+				for (k = j; k < closePos; k++) {
+					var c = line[k];
+					if (c == ' ' || c == '\t' || c == '"' || c == "'" || c == '\n') {
+						break;
+					}
+				}
+				var tagName = line.substring(j, k);
+				j = k;
+				
+				hasSync = (tagName.toUpperCase() == "SYNC");
+
+				if (hasSync) {
+					while (j < closePos) {
+						// 속성 찾기
+						for (; j < closePos; j++) {
+							var c = line[j];
+							if (('0'<=c&&c<='9') || ('a'<=c&&c<='z') || ('A'<=c&&c<='Z')) {
+								break;
+							}
+							//html += c;
+						}
+						for (k = j; k < closePos; k++) {
+							var c = line[k];
+							if ((c<'0'||'9'<c) && (c<'a'||'z'<c) && (c<'A'||'Z'<c)) {
+								break;
+							}
+						}
+						var attrName = line.substring(j, k);
+						j = k;
+						
+						// 속성 값 찾기
+						if (line[j] == "=") {
+							j++;
+							
+							var q = line[j];
+							if (q == "'" || q == '"') { // 따옴표로 묶인 경우
+								k = line.indexOf(q, j + 1);
+								k = (0 <= k && k < closePos) ? k : closePos;
+							} else {
+								q = "";
+								k = line.indexOf(" ");
+								k = (0 <= k && k < closePos) ? k : closePos;
+								k = line.indexOf("\t");
+								k = (0 <= k && k < closePos) ? k : closePos;
+							}
+							var value = line.substring(j + q.length, k);
+							
+							if (q.length && k < closePos) { // 닫는 따옴표가 있을 경우
+								j += q.length + value.length + q.length;
+							} else {
+								j += q.length + value.length;
+							}
+							
+							if (attrName.toUpperCase() == "START" && isFinite(value)) {
+								sync = Number(value);
+							}
+						}
+					}
+				} else {
+					// 싱크 태그 아니면 그냥 제낌
+					j = closePos;
+				}
+				
+				// 태그 닫기
+				j++;
+			}
+		}
+		
+		if (parsed[LINE.SYNC] = sync) { // 어차피 0이면 플레이어에서도 씹힘
+			// 화면 싱크 체크
+			parsed[LINE.TYPE] = TYPE.BASIC;
+			var typeCss = "";
+			if (line.indexOf(" >") > 0) {
+				parsed[LINE.TYPE] = TYPE.FRAME;
+				typeCss = " frame";
+			} else if (line.indexOf("\t>") > 0) {
+				parsed[LINE.TYPE] = TYPE.RANGE;
+				typeCss = " range";
+			}
+		} else {
+			parsed[LINE.TYPE] = TYPE.TEXT;
+		}
+	}
+	parseds.push(["&nbsp;", 99999999, TYPE.BASIC]);
+	
+	var syncs = [];
+	var last = null;
+	for (var i = 0; i < parseds.length; i++) {
+		var parsed = parseds[i];
+		if (parsed[LINE.TYPE]) {
+			if (last) {
+				var text = [];
+				for (var j = last[0] + 1; j < i; j++) {
+					text.push(parseds[j][LINE.TEXT]);
+				}
+				text = text.join("\n");
+				if (text.split("&nbsp;").join("").trim()) {
+					var lineCount = text.split(/<br>/gi).length;
+					//[STIME, STYPE, ETIME, ETYPE, TEXT, LINES, WIDTH];
+					syncs.push([last[LINE.SYNC], last[LINE.TYPE], parsed[LINE.SYNC], parsed[LINE.TYPE], text, lineCount, getWidth(text)]);
+				}
+			}
+			last = [i, parsed[LINE.SYNC], parsed[LINE.TYPE]];
+		}
+	}
+	
+	return syncs;
+}
+
+var STIME = 0;
+var STYPE = 1;
+var ETIME = 2;
+var ETYPE = 3;
+var TEXT  = 4;
+var LINES = 5;
+var WIDTH = 6;
+var UPPER = 4;
+var LOWER = 5;
+
+$(function() {
+	$("#preview").css(defaultCss);
+	$("#btnCombine").on("click", function() {
+		// [[시작,종료,대사,줄수], ...]
+		// {lines:[시작,종료,위,아래], maxLines:[1,1]}//, maxWidth: 100
+		
+		var upperSyncs = parse($("#inputUpper").val());
+		var lowerSyncs = parse($("#inputLower").val());
+		
+		var ui = 0;
+		var li = 0;
+		var groups = [];
+		var group = null;
+		while  ((ui <= upperSyncs.length) && (li <= lowerSyncs.length)) {
+			if ((ui == upperSyncs.length) && (li == lowerSyncs.length)) {
+				break;
+			}
+			var us = (ui < upperSyncs.length) ? upperSyncs[ui] : [99999999, 99999999, null, 0];
+			var ls = (li < lowerSyncs.length) ? lowerSyncs[li] : [99999999, 99999999, null, 0];
+			if (us[STIME] < ls[STIME]) { // 위가 바뀜
+				if (group && group.lower.length && (group.lower[group.lower.length - 1][ETIME] > us[STIME])) { // 그룹 유지
+					group.upper.push(us);
+					group.maxLines[0] = Math.max(group.maxLines[0], us[LINES]);
+					group.maxWidth = Math.max(group.maxWidth, us[WIDTH]);
+					
+				} else { // 아래가 없거나 끝남 -> 그룹 끊김
+					groups.push(group = {
+							upper: [us]
+						,	lower: []
+						,	maxLines: [us[LINES], 0]
+						,	maxWidth: us[WIDTH]
+					});
+				}
+				ui++;
+				
+			} else if (ls[STIME] < us[STIME]) { // 아래가 바뀜
+				if (group && group.upper.length && (group.upper[group.upper.length - 1][ETIME] > ls[STIME])) { // 그룹 유지
+					group.lower.push(ls);
+					group.maxLines[0] = Math.max(group.maxLines[0], ls[LINES]);
+					group.maxWidth = Math.max(group.maxWidth, ls[WIDTH]);
+					
+				} else { // 위가 없거나 끝남 -> 그룹 끊김
+					groups.push(group = {
+							upper: []
+						,	lower: [ls]
+						,	maxLines: [0, ls[LINES]]
+						,	maxWidth: ls[WIDTH]
+					});
+				}
+				li++;
+				
+			} else { // 둘이 같이 바뀜 -> 새 그룹
+				groups.push(group = {
+						upper: [us]
+					,	lower: [ls]
+					,	maxLines: [us[LINES], ls[LINES]]
+					,	maxWidth: Math.max(us[WIDTH], ls[WIDTH])
+				});
+				ui++;
+				li++;
+			}
+		}
+		
+		for (var gi = 0; gi < groups.length; gi++) {
+			var group = groups[gi];
+			group.lines = [];
+			var last = null;
+
+			// 팟플레이어 왼쪽 정렬에서 좌우로 흔들리지 않도록 잡아줌
+			// ... 사실 폰트에 따라 흔들리긴 함...
+			var lists = [group.upper, group.lower];
+			for (var i = 0; i < lists.length; i++) {
+				var list = lists[i];
+				
+				for (var j = 0; j < list.length; j++) {
+					// 줄 길이 채워주기
+					var sync = list[j];
+					if (sync[WIDTH] < group.maxWidth) {
+						var line = sync[TEXT];
+						var lines = line.split(/<br>/gi);
+						
+						// 여러 줄일 경우 제일 긴 줄 찾기
+						if (lines.length > 1) {
+							var maxWidth = 0;
+							for (var k = 0; k < lines.length; k++) {
+								var width = getWidth(lines[k]);
+								if (width > maxWidth) {
+									maxWidth = width;
+									line = lines[k];
+								}
+							}
+						}
+	
+						// 여백을 붙여서 제일 적절한 값 찾기
+						var pad = "";
+						var width = getWidth(line);
+						var lastPad;
+						var lastWidth;
+						do {
+							lastPad = pad;
+							lastWidth = width;
+							pad = lastPad + "&nbsp;";
+							width = getWidth("​" + pad + line + pad + "​");
+							
+						} while (width < group.maxWidth);
+						
+						if ((width - group.maxWidth) < (group.maxWidth - lastWidth)) {
+							pad = lastPad;
+						}
+						pad = pad.split("&nbsp;").join(" ");
+						for (var k = 0; k < lines.length; k++) {
+							lines[k] = "​" + pad + lines[k] + pad + "​";
+						}
+						sync[TEXT] = lines.join("<br>");
+					}
+					
+					// 줄 높이 맞춰주기
+					for (var k = sync[LINES]; k < group.maxLines[0]; k++) {
+						sync[TEXT] = "<b>　</b><br>" + sync[TEXT];
+					}
+				}
+			}
+			
+			ui = li = 0;
+			while  ((ui <= group.upper.length) && (li <= group.lower.length)) {
+				if ((ui == group.upper.length) && (li == group.lower.length)) {
+					break;
+				}
+				var us = (ui < group.upper.length) ? group.upper[ui] : [99999999, 99999999, null, 0];
+				var ls = (li < group.lower.length) ? group.lower[li] : [99999999, 99999999, null, 0];
+
+				if (us[STIME] < ls[STIME]) { // 위가 바뀜
+					if (!last) { // 첫 싱크
+						group.lines.push(last = [us[STIME], us[STYPE], us[ETIME], us[ETYPE], us, null]);
+						
+					} else {
+						// 아래는 유지하고 위는 바뀐 걸 추가
+						if (last[STIME] == us[STIME]) {
+							last[UPPER] = us;
+						} else {
+							var curr = [us[STIME], us[STYPE], last[2], last[3], us, last[LOWER]];
+							last[ETIME] = us[STIME];
+							last[ETYPE] = us[STYPE];
+							group.lines.push(last = curr);
+						}
+							
+						if (us[ETIME] < last[ETIME]) { // 위가 먼저 끝남
+							var curr = [us[ETIME], us[ETYPE], last[ETIME], last[ETYPE], null, last[LOWER]];
+							last[ETIME] = us[ETIME];
+							last[ETYPE] = us[ETYPE];
+							group.lines.push(last = curr);
+						} else if (us[ETIME] > last[ETIME]) { // 아래가 먼저 끝남
+							group.lines.push(last = [last[ETIME], last[ETYPE], us[ETIME], us[ETYPE], us, null]);
+						} else {
+							// 둘 다 끝남 -> 그룹 끝
+						}
+					}
+					ui++;
+					
+				} else if (ls[STIME] < us[STIME]) { // 아래가 바뀜
+					if (!last) { // 첫 싱크
+						group.lines.push(last = [ls[STIME], ls[STYPE], ls[ETIME], ls[ETYPE], null, ls]);
+						
+					} else {
+						// 위는 유지하고 아래는 바뀐 걸 추가
+						if (last[STIME] == ls[STIME]) {
+							last[LOWER] = ls;
+						} else {
+							var curr = [ls[STIME], ls[STYPE], last[ETIME], last[ETYPE], last[UPPER], ls];
+							last[ETIME] = ls[STIME];
+							last[ETYPE] = ls[STYPE];
+							group.lines.push(last = curr);
+						}
+						
+						if (ls[ETIME] < last[ETIME]) { // 아래가 먼저 끝남
+							var curr = [ls[ETIME], ls[ETYPE], last[ETIME], last[ETYPE], last[TEXT], null];
+							last[ETIME] = ls[ETIME];
+							last[ETYPE] = ls[ETYPE];
+							group.lines.push(last = curr);
+						} else if (ls[ETIME] > last[ETIME]) { // 위가 먼저 끝남
+							group.lines.push(last = [last[ETIME], last[ETYPE], ls[ETIME], ls[ETYPE], null, ls]);
+						} else {
+							// 둘 다 끝남 -> 그룹 끝
+						}
+					}
+					li++;
+					
+				} else { // 둘이 같이 바뀜(그룹 첫 싱크에서만 가능)
+					var ss = (us[ETIME] < ls[ETIME] ? us : ls);
+					group.lines.push(last = [us[STIME], us[STYPE], ss[ETIME], ss[ETYPE], us, ls]);
+					ui++;
+					li++;
+				}
+			}
+		}
+		
+		var lines = [];
+		var lastSync = 0;
+		for (var gi = 0; gi < groups.length; gi++) {
+			var group = groups[gi];
+			var forEmpty = [[], []];
+			for (var i = 0; i < 2; i++) {
+				for (var j = 0; j < group.maxLines[i]; j++) {
+					forEmpty[i].push("<b>　</b>");
+				}
+				forEmpty[i] = forEmpty[i].join("<br>");
+			}
+			
+			for (var i = 0; i < group.lines.length; i++) {
+				var line = group.lines[i];
+				
+				if (lastSync < line[STIME]) {
+					if (gi > 0) { // 처음일 땐 제외
+						lines.push("&nbsp;");
+					}
+					lines.push(SmiEditor.makeSyncLine(line[STIME], line[STYPE]));
+				}
+				if (group.upper.length == 0) {
+					lines.push(line[LOWER] ? line[LOWER][TEXT] : "&nbsp;");
+				} else if (group.lower.length == 0) {
+					lines.push(line[UPPER] ? line[UPPER][TEXT] : "&nbsp;");
+				} else {
+					lines.push((line[UPPER] ? line[UPPER][TEXT] : forEmpty[0]) + "<br>" + (line[LOWER] ? line[LOWER][TEXT] : forEmpty[1]));
+				}
+				if (line[ETIME] < 99999999) {
+					lines.push(SmiEditor.makeSyncLine(lastSync = line[ETIME], line[ETYPE]));
+				} else {
+					lastSync = 0;
+				}
+			}
+		}
+		if (lastSync) {
+			lines.push("&nbsp;");
+		}
+		$("#output").val(lines.join("\n"));
+		
+		// preview 돌리기
+		var list = [];
+		for (var i = 0; i < lines.length; i++) {
+			if (i % 2) { // 짝수: 싱크 / 홀수: 대사
+				var text = lines[i];
+				// 공백문자 무시되지 않도록 조정
+				// 팟플레이어 특성이긴 한데, 애초에 왼쪽 정렬 자체가 거의 팟플레이어이므로
+				var a = text.split("<");
+				text = [a[0].split(" ").join("&nbsp;")];
+				for (var j = 1; j < a.length; j++) {
+					var b = a[j].split(">");
+					var c = [b[0]];
+					for (var k = 1; k < b.length; k++) {
+						c.push(b[k].split(" ").join("&nbsp;"));
+					}
+					text.push(c.join(">"));
+				}
+				list.push(text.join("<"));
+			}
+		}
+		setPreview(list);
+	});
+});
+var refreshPreview = 0;
+function setPreview(list) {
+	if (refreshPreview) {
+		clearInterval(refreshPreview);
+	}
+	
+	var preview = $("#preview");
+	var i = 0;
+	refreshPreview = setInterval(function() {
+		while (i >= list.length) {
+			i -= list.length;
+		}
+		preview.html(list[i++]);
+	}, 333);
+}
+	</script>
+	<style>
+body > * {
+	position: absolute;
+}
+
+textarea {
+	position: absolute;
+	width: calc(50% - 10px);
+	border-width: 0;
+}
+#inputUpper {
+	top: 0;
+	left: 0;
+	height: calc(50% - 1px);
+	border-bottom-width: 1px;
+}
+#inputLower {
+	top: 50%;
+	left: 0;
+	height: 50%;
+}
+#output {
+	top: 200px;
+	left: calc(50% + 10px);
+	height: calc(100% - 200px);
+}
+#btnCombine {
+	position: absolute;
+	top: 0;
+	left: calc(50% - 10px);
+	width: 20px;
+	height: 100%;
+}
+#preview {
+	top: 0;
+	left: calc(50% + 10px);
+	width: calc(50% - 10px);
+	height: 200px;
+	background: #000;
+	text-align: left;
+	white-space: nowrap;
+	color: #fff;
+}
+	</style>
+</head>
+<body>
+<!--
+	<textarea id="inputUpper">&lt;Sync Start=623620&gt;&lt;P Class=KRCC&gt;
+괜찮아? 미라미라
+&lt;Sync Start=625292&gt;&lt;P Class=KRCC&gt;
+혼자 설 수 있겠어?
+&lt;Sync Start=626854&gt;&lt;P Class=KRCC &gt;
+&amp;nbsp;
+&lt;Sync Start=628340&gt;&lt;P Class=KRCC&gt;
+당연하지
+&lt;Sync Start=629444&gt;&lt;P Class=KRCC&gt;
+&amp;nbsp;</textarea>
+	<textarea id="inputLower">&lt;Sync Start=622310&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;난이도 G라도&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=624454&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;모든 걸 부숴주겠어&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=628966&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;빙글빙글 날며&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=631182&gt;&lt;P Class=KRCC&gt;
+&amp;nbsp;</textarea>
+-->
+	<textarea id="inputUpper" spellcheck="false">&lt;Sync Start=589368&gt;&lt;P Class=KRCC&gt;
+노래하지 마!
+&lt;Sync Start=590777&gt;&lt;P Class=KRCC&gt;
+&amp;nbsp;
+&lt;Sync Start=597997&gt;&lt;P Class=KRCC&gt;
+현혹되지 마라&lt;br&gt;룬으로 느껴라!
+&lt;Sync Start=600437&gt;&lt;P Class=KRCC&gt;
+&amp;nbsp;
+&lt;Sync Start=620892&gt;&lt;P Class=KRCC&gt;
+프레이야
+&lt;Sync Start=621974&gt;&lt;P Class=KRCC &gt;
+&amp;nbsp;
+&lt;Sync Start=623620&gt;&lt;P Class=KRCC&gt;
+괜찮아? 미라미라
+&lt;Sync Start=625292&gt;&lt;P Class=KRCC&gt;
+혼자 설 수 있겠어?
+&lt;Sync Start=626854&gt;&lt;P Class=KRCC &gt;
+&amp;nbsp;
+&lt;Sync Start=628340&gt;&lt;P Class=KRCC&gt;
+당연하지
+&lt;Sync Start=629444&gt;&lt;P Class=KRCC&gt;
+&amp;nbsp;
+&lt;Sync Start=645212&gt;&lt;P Class=KRCC&gt;
+산개해서 각자 쫓아라!
+&lt;Sync Start=647353&gt;&lt;P Class=KRCC&gt;
+유적의 폴드 에너지가&lt;br&gt;급속히 활성화
+&lt;Sync Start=650396&gt;&lt;P Class=KRCC&gt;
+발퀴레의 폴드파에&lt;br&gt;감응하는 것 같습니다
+&lt;Sync Start=653044&gt;&lt;P Class=KRCC &gt;
+&amp;nbsp;</textarea>
+	<textarea id="inputLower" spellcheck="false">&lt;Sync Start=579908&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;서로 눈이 맞고 사랑을 하고&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=582972&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;정신없이 뒤쫓아가고&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=585940&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;그래도 더 자세히 알고 싶어서&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=588316&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;활활 불타올라&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=590924&gt;&lt;P Class=KRCC&gt;
+&amp;nbsp;
+&lt;Sync Start=591892&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;원할수록 의문이 늘고&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=594806&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;생각할수록 열이 올라&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=597806&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;그래서 더 뛰어드는 거야&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=600311&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;미지의 세계로 ah&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=604624&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;사랑이나 꿈 같은 건&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=607525&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;누구나 믿지만&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=610525&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;거기 거기 공략 안 하면 재미없지&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=616317&gt;&lt;P Class=KRCC&gt;
+&amp;nbsp;
+&lt;Sync Start=616973&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;아슬아슬 사랑&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=619262&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;위태로운 보더라인&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=622310&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;난이도 G라도&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=624454&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;모든 걸 부숴주겠어&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=628966&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;빙글빙글 날며&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=631182&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;한층 더 G로&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=634183&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;의식이 녹아드네&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=636399&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;몸은 제어불능&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=640118&gt;&lt;P Class=KRCC&gt;
+&lt;i&gt;&lt;font color="#ff88ff"&gt;가버리겠어&lt;/font&gt;&lt;/i&gt;
+&lt;Sync Start=643750&gt;&lt;P Class=KRCC&gt;
+&amp;nbsp;</textarea>
+	<button id="btnCombine">＞</button>
+	<div id="preview"></div>
+	<textarea id="output"></textarea>
+</body>
+</html>

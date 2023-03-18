@@ -1,0 +1,96 @@
+﻿#tabSelector {
+	display: none;
+	background: #ccc;
+	height: 26px;
+	border-bottom: 1px solid #aaa;
+}
+.th {
+	float: left;
+	margin-top: 2px;
+	padding: 0 2px;
+	background: #ddd;
+	border: 1px solid #888;
+	border-radius: 4px 4px 0 0;
+	font-size: 14px;
+	line-height: 22px;
+	cursor: default;
+}
+.th:hover {
+	background: #f0f0f0;
+}
+.th.selected {
+	background: #f0f0f0;
+	border-bottom-color: #f0f0f0;
+}
+.btn-close-tab {
+	margin: 0 4px;
+	line-height: 10px;
+}
+
+#editor {
+	width: 100%;
+	height: calc(100% - 24px);
+}
+
+.use-tab #tabSelector {
+	display: block;
+}
+.use-tab #editor {
+	height: calc(100% - 50px);
+}
+
+#editor .tab {
+	width: 100%;
+	height: 100%;
+}
+
+.tab {
+	overflow: hidden;
+	position: relative;
+}
+.tab.not-saved {
+	background: #f86;
+}
+.tab > * {
+	position: absolute;
+	top: 2px;
+	bottom: 0;
+	font-family: '맑은 고딕';
+	font-size: 14px;
+	line-height: 20px;
+	white-space: pre;
+	outline: 0;
+}
+.tab > .col-sync {
+	left: 0;
+	width: 100px;
+	height: 100%;
+	text-align: center;
+	overflow: hidden;
+	padding-bottom: 100%;
+	border: 1px solid transparent;
+	background: #f0f0f0;
+}
+.tab > .input {
+	left: 100px;
+	right: 0;
+	border: 0;
+	overflow: scroll;
+	resize: none;
+	border: 1px solid #aaa;
+	border-right: 0;
+}
+.sync { border: 0 solid #000; }
+.sync.frame { border-top-width: 1px; line-height: 19px; }
+.sync.range + span { border-left-width: 1px; border-style: dotted; }
+input, textarea {
+	background: #fff;
+	border: 1px solid #666;
+	user-select: text;
+}
+
+/* 사용자 설정 */
+.sync { border-color: #000; }
+.sync.error { background: #f88; }
+.sync.equal { background: #8f8; }
+.sync.range { color: #888; }

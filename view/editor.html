@@ -1,0 +1,445 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>에디터</title>
+<script src="lib/jquery-3.2.1.min.js"></script>
+<script src="lib/webview.js"></script>
+<script src="lib/setting.js"></script>
+<script src="lib/AutoCompleteTextarea.js"></script>
+<script src="lib/History.js"></script>
+<script src="lib/SmiEditor.js"></script>
+<link rel="stylesheet" type="text/css" href="lib/AutoCompleteTextarea.css" />
+<link rel="stylesheet" type="text/css" href="lib/SmiEditor.css" />
+<script>
+// TODO: 자동으로 구해지도록?
+var LH = 20; // LineHeight
+var SB = 16; // ScrollBarWidth
+var DPI = 1;
+
+var time = 0;
+var FR = 23976;
+var FL = 1000000 / FR;
+
+var tabs = [];
+var tab = 0;
+
+function refreshTime(now, fr) {
+	time = now;
+	if (fr) {
+		FL = 1000000 / (FR = fr);
+	}
+}
+
+SmiEditor.prototype.onChangeSaved = function(saved) {
+	// 수정될 수 있는 건 열려있는 탭이므로
+	if (tabs.length && tabs[tab]) {
+		var area = tabs[tab].area;
+		if (saved) {
+			area.removeClass("not-saved");
+		} else {
+			area.addClass("not-saved");
+		}
+	}
+};
+
+function deepCopyObj(obj) {
+	if (obj && typeof obj == "object") {
+		if (Array.isArray(obj)) {
+			return JSON.parse(JSON.stringify(obj));
+		}
+		
+		var out = {};
+		for (var key in obj) {
+			out[key] = deepCopyObj(obj[key]);
+		}
+		return out;
+		
+	} else {
+		return obj;
+	}
+}
+function setDefault(target, dflt) {
+	var count = 0;
+	for (var key in dflt) {
+		if (typeof dflt[key] == "object") {
+			if (Array.isArray(dflt[key])) {
+				target[key] = JSON.parse(JSON.stringify(dflt[key]));
+				count++;
+			} else {
+				if (target[key] && (typeof target[key] == "object") && !Array.isArray(target[key])) {
+					count += setDefault(target[key], dflt[key]);
+				} else {
+					target[key] = deepCopyObj(dflt[key]);
+					count++;
+				}
+			}
+		} else {
+			if (target[key] != null) {
+				// 값 있으면 정상
+			} else {
+				target[key] = dflt[key];
+				count++;
+			}
+		}
+	}
+	return count;
+}
+
+//C# 쪽에서 호출
+function init(jsonSetting) {
+	try {
+		setting = JSON.parse(jsonSetting);
+		
+		// C#에서 보내준 세팅값 오류로 빠진 게 있으면 채워주기
+		if (typeof setting == "object" && !Array.isArray(setting)) {
+			if (setDefault(setting, DEFAULT_SETTING)) {
+				saveSetting();
+			}
+		} else {
+			console.log("기본 세팅 가져오기");
+			setting = deepCopyObj(DEFAULT_SETTING);
+			saveSetting();
+		}
+		
+	} catch (e) {
+		console.log("기본 세팅 가져오기");
+		setting = deepCopyObj(DEFAULT_SETTING);
+		saveSetting();
+	}
+	setSetting(setting);
+	moveWindowsToSetting();
+	
+	var btnSync = $("#btnSync").on("click", function() {
+		tabs[tab].insertSync();
+		tabs[tab].input.focus();
+	});
+	var btnSyncFrame = $("#btnSyncFrame").on("click", function() {
+		tabs[tab].insertSync(true);
+		tabs[tab].input.focus();
+	});
+	var inputWeight = $("#inputWeight").bind("input propertychange", function() {
+		var weight = inputWeight.val();
+		if (isFinite(weight)) {
+			SmiEditor.sync.weight = Number(weight);
+		} else {
+			alert("숫자를 입력하세요.");
+			var cursor = inputWeight.prop("selectionEnd") - 1;
+			inputWeight.val(SmiEditor.sync.weight);
+			inputWeight[0].setSelectionRange(cursor, cursor);
+		}
+	});
+	var inputUnit = $("#inputUnit").bind("input propertychange", function() {
+		var unit = inputUnit.val();
+		if (isFinite(unit)) {
+			SmiEditor.sync.unit = Number(unit);
+		} else {
+			alert("숫자를 입력하세요.");
+			var cursor = inputUnit.prop("selectionEnd") - 1;
+			inputUnit.val(SmiEditor.sync.unit);
+			inputUnit[0].setSelectionRange(cursor, cursor);
+		}
+	});
+	var btnMoveToBack = $("#btnMoveToBack").on("click", function() {
+		tabs[tab].moveSync(false);
+		tabs[tab].input.focus();
+	});
+	var btnMoveToForward = $("#btnMoveToForward").on("click", function() {
+		tabs[tab].moveSync(true);
+		tabs[tab].input.focus();
+	});
+	
+	var btnNewTab = $("#btnNewTab").on("click", function() {
+		openNewTab();
+	});
+	
+	var tabSelector = $("#tabSelector").on("click", ".th:not(#btnNewTab)", function() {
+		var th = $(this);
+		tabSelector.find(".selected").removeClass("selected");
+		var selectedTab = th.addClass("selected").data("tab");
+		if (selectedTab) {
+			tab = tabs.indexOf(selectedTab);
+			$("#editor > .tab").hide();
+			selectedTab.area.show();
+			if (selectedTab.path && selectedTab.path.length > 4 && binder) {
+				binder.checkLoadVideoFile(selectedTab.path);
+			}
+		}
+		SmiEditor.selected = selectedTab;
+		
+	}).on("click", ".btn-close-tab", function(e) {
+		e.preventDefault();
+		
+		var th = $(this).parent();
+		var next = th.next();
+		if (next.length == 0) {
+			next = th.prev();
+		}
+		
+		var selectedTab = th.data("tab");
+		var saved = (selectedTab.input.val() != selectedTab.saved);
+		
+		if (confirm((saved ? "저장되지 않았습니다.\n" : "") + "탭을 닫으시겠습니까?")) {
+			var index = tabs.indexOf(selectedTab);
+			tabs.splice(index, 1);
+			selectedTab.area.remove();
+			th.remove();
+			delete selectedTab;
+			SmiEditor.selected = null;
+			
+			if (tabs.length) {
+				tab = Math.min(index, tabs.length - 1);
+				var selector = "#tabSelector .th:eq(" + tab + ")";
+				setTimeout(function() {
+					$(selector).click();
+				}, 1);
+			}
+		}
+	});
+	$(document).on("keydown", function(e) {
+		// Ctrl+F4 닫기
+		if (e.ctrlKey && e.keyCode == 115 && setting.useTab) {
+			if (tabs.length && tabs[tab]) {
+				$("#tabSelector .th:eq(" + tab + ") .btn-close-tab").click();
+			}
+		}
+	});
+	
+	SmiEditor.Viewer.open();
+}
+
+function setSetting(setting) {
+	SmiEditor.setSetting(setting);
+	
+	// 기본 단축키
+	SmiEditor.withCtrls["N"] = newFile;
+	SmiEditor.withCtrls["O"] = openFile;
+	SmiEditor.withCtrls["S"] = saveFile;
+	SmiEditor.withCtrls["T"] = openNewTab;
+//	SmiEditor.withAlts ["S"] = "openSetting();";
+	SmiEditor.withCtrlShifts["S"] = openSetting;
+	
+	// 가중치 등
+	$("#inputWeight").val(setting.sync.weight);
+	$("#inputUnit"  ).val(setting.sync.unit  );
+	
+	if (setting.useTab) {
+		$("body").addClass("use-tab");
+	} else {
+		$("body").removeClass("use-tab");
+	}
+
+	if (setting.player.control.dll) {
+		var dll = setting.player.control.dll;
+		binder.setPlayer(dll);
+		if (setting.player.control[dll].withRun) {
+			binder.runPlayer(setting.player.control[dll].path);
+		}
+	}
+	
+	binder.setMenus(setting.menu);
+	
+	return setting;
+}
+function moveWindowsToSetting() {
+	binder.moveWindow("editor"
+			, setting.window.x
+			, setting.window.y
+			, setting.window.width
+			, setting.window.height
+			, true);
+	SmiEditor.Viewer.moveWindowToSetting();
+	SmiEditor.Addon .moveWindowToSetting();
+	if (setting.player.window.use) {
+		binder.moveWindow("player"
+				, setting.player.window.x
+				, setting.player.window.y
+				, setting.player.window.width
+				, setting.player.window.height
+				, true);
+		// TODO: false->true일 때 플레이어 위치 다시 구하기?
+	}
+	binder.setFollowWindow(setting.window.follow);
+}
+function setDpiBy(width) {
+	// C#에서 보내준 창 크기와 js에서 브라우저 크기의 불일치로 DPI 배율을 구함
+	setTimeout(function() {
+		DPI = (width + 8) / (window.outerWidth + 10);
+	}, 1000); // 로딩 덜 됐을 수가 있어서 딜레이 줌
+}
+
+var playerDlls = "";
+function setPlayerDlls(dlls) {
+	playerDlls = dlls;
+}
+
+function openSetting() {
+	SmiEditor.settingWindow = window.open("setting.html", "setting", "scrollbars=no,location=no,resizable=no,width=0,height=0");
+	binder.moveWindow("setting"
+			, setting.window.x + (40 * DPI)
+			, setting.window.y + (40 * DPI)
+			, 800 * DPI
+			, (600+30) * DPI
+			, false);
+	binder.focus("setting");
+	return SmiEditor.settingWindow;
+}
+function saveSetting() {
+	if (window.binder) {
+		binder.saveSetting(JSON.stringify(setting));
+	}
+}
+
+function canOpenNewTab() {
+	if (!setting.useTab) {
+		// 탭 미사용 -> 현재 파일 닫기
+		if (tabs.length) {
+			if (tabs[0].input.val() != tabs[0].saved) {
+				if (!confirm("현재 파일을 닫을까요?")) {
+					return false;
+				}
+			}
+			$("#tabSelector > .th:not(#btnNewTab)").remove();
+			$("#editor").empty();
+			delete tabs[0];
+			tabs.splice(0);
+		}
+	}
+	return true;
+}
+
+function newFile() {
+	if (canOpenNewTab()) {
+		openNewTab("");
+	}
+}
+
+function openFile(path, text) {
+	// C#에서 파일 열 동안 canOpenNewTab 결과가 달라질 리는 없겠지만, 일단은 바깥에서 감싸주기	
+	if (canOpenNewTab()) {
+		if (path) {
+			// 새 탭 열기
+			openNewTab(text, path);
+		} else {
+			// C#에서 파일 열기 대화상자 실행
+			binder.openFile();
+		}
+	}
+}
+
+function saveFile(asNew) {
+	var currentTab = tabs[tab];
+	var path = currentTab.path;
+	if (!path) {
+		asNew = true;
+	}
+	var text = currentTab.input.val(); // currentTab.text 동기화 실패 가능성 고려, 현재 값 다시 불러옴
+	
+	if (asNew) {
+		return binder.save(text, "");
+	}
+	
+	if (text == currentTab.saved) {
+		// 마지막 저장 이후 수정된 게 없음
+		return false;
+	}
+	
+	if (currentTab.area.find(".sync.error,.sync.equal").length) {
+		if (!confirm("싱크 오류가 있습니다.\n저장하시겠습니까?")) {
+			return false;
+		}
+	}
+	return binder.save(text, path);
+}
+// 저장 후 C#에서 호출
+function afterSaveFile(path) {
+	tabs[tab].afterSave(path);
+	
+	var title = path ? ("..." + path.substring(path.length - 14, path.length - 4)) : "새 문서";
+	$("#tabSelector .th:eq(" + tab + ") span").text(title);
+}
+
+function openNewTab(text, path) {
+	if (tabs.length >= 4) {
+		alert("탭은 4개까지 열 수 있습니다.");
+		return;
+	}
+	
+	var title = path ? ("..." + path.substring(path.length - 14, path.length - 4)) : "새 문서";
+	
+	var tab = new SmiEditor(text, path);
+	tabs.push(tab);
+	$("#editor").append(tab.area);
+
+	var th = $("<div class='th'>").append($("<span>").text(title));
+	th.append($("<button type='button' class='btn-close-tab'>").text("×"));
+	$("#btnNewTab").before(th);
+	th.data("tab", tab).click();
+	tab.th = th;
+	
+	return tab;
+}
+function confirmLoadVideo(path) {
+	if (confirm("동영상 파일을 같이 열까요?\n" + path)) {
+		binder.loadVideoFile(path);
+	}
+}
+
+// 종료 전 C#에서 호출
+function beforeExit() {
+	var saved = true;
+	for (var i = 0; i < tabs.length; i++) {
+		if (tabs[i].saved != tabs[i].input.val()) {
+			saved = false;
+			break;
+		}
+	}
+	if (saved) {
+		doExit();
+	}
+	if (confirm("저장되지 않은 파일이 있습니다.\n종료하시겠습니까?")) {
+		doExit();
+	}
+}
+function doExit() {
+	saveSetting(); // 창 위치 최신값으로 저장
+	binder.doExit(setting.player.window.use
+		, setting.player.control[setting.player.control.dll].withExit);
+}
+</script>
+<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	user-select: none;
+}
+html, body {
+	width: 100%;
+	height: 100%;
+	background: #f0f0f0;
+}
+button {
+	line-height: 13px;
+}
+#btnSync {}
+#btnSyncFrame {}
+#inputWeight { width: 50px; }
+#inputUnit { width: 50px; }
+#btnMoveToBack {}
+#btnMoveToForward {}
+</style>
+</head>
+<body id="body">
+	<div style="padding: 3px; height: 24px;"><!--
+	--><button type="button" id="btnSync">싱크(F5)</button><!--
+	--><button type="button" id="btnSyncFrame">화면싱크(F6)</button><!--
+	--><label>가중치<input type="text" id="inputWeight" value="0" /></label><!--
+	--><label>싱크 조절<input type="text" id="inputUnit" value="0" /></label><!--
+	--><button type="button" id="btnMoveToBack"  title="싱크 당기기(Ctrl+Shift+↓)">－</button><!--
+	--><button type="button" id="btnMoveToForward" title="싱크 밀기(Ctrl+Shift+↑)">＋</button><!--
+--></div>
+	<div id="tabSelector"><div class="th" id="btnNewTab">＋</div></div>
+	<div id="editor"></div>
+</body>
+</html>

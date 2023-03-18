@@ -1,0 +1,49 @@
+﻿namespace SmiEdit
+{   // TODO: DLL화 필요?
+    public abstract class PlayerBridge
+    {
+        public int hwnd;
+
+        public int SendMessage(int wMsg, int wParam, int lParam)
+        {
+            return (hwnd > 0) ? WinAPI.SendMessage(hwnd, wMsg, wParam, lParam) : 0;
+        }
+
+        public PlayerBridge()
+        {
+            hwnd = FindPlayer();
+        }
+
+        public RECT initialOffset = new RECT();
+        public RECT currentOffset = new RECT();
+
+        // 종료 전 플레이어 원위치
+        public void ResetPosition()
+        {
+            if (initialOffset.top + 100 < initialOffset.bottom)
+            {
+                WinAPI.MoveWindow(hwnd, initialOffset.left, initialOffset.top, initialOffset.right - initialOffset.left, initialOffset.bottom - initialOffset.top, true);
+            }
+        }
+        // 프로그램 설정에 따른 위치로
+        public void MoveWindow()
+        {
+            if (currentOffset.top + 100 < currentOffset.bottom)
+            {
+                WinAPI.MoveWindow(hwnd, currentOffset.left, currentOffset.top, currentOffset.right - currentOffset.left, currentOffset.bottom - currentOffset.top, true);
+            }
+        }
+
+        public abstract int FindPlayer();
+
+        public abstract int OpenFile(string path);
+
+        public abstract int getFps();
+        public abstract int playOrPause();
+        public abstract int pause();
+        public abstract int play();
+        public abstract int stop();
+        public abstract int getTime();
+        public abstract int moveTo(int time);
+    }
+}

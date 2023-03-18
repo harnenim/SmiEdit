@@ -1,0 +1,157 @@
+﻿<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>겹치는 싱크 분리</title>
+	<script src="../lib/jquery-3.2.1.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/common.css" />
+	<script>
+var SmiEditor = opener.SmiEditor;
+
+$(function() {
+	init();
+	normalize();
+});
+	</script>
+	<style>
+body > * {
+	position: absolute;
+}
+
+				#tabBody > div.tab[name=nico] div.input,
+				#tabBody > div.tab[name=nico] textarea.output {
+					position: absolute;
+					top: 0;
+					width: calc(50% - 10px);
+					height: 100%;
+					border: 0;
+				}
+
+					#tabBody > div.tab[name=nico] div.input {
+						left: 0;
+					}
+
+						#tabBody > div.tab[name=nico] div.input input[type=number] {
+							width: 50px;
+						}
+
+						#tabBody > div.tab[name=nico] div.input div.width {
+							padding: 4px;
+						}
+
+						#tabBody > div.tab[name=nico] div.input div.lines {
+							overflow-y: scroll;
+						}
+
+						#tabBody > div.tab[name=nico] div.input div.lines div.line {
+							width: 100%;
+							height: 20px;
+							position: relative;
+						}
+
+							#tabBody > div.tab[name=nico] div.input div.lines div.line > * {
+								position: absolute;
+							}
+
+							#tabBody > div.tab[name=nico] div.input div.lines div.line input.line {
+								left: 0;
+								width: 40px;
+							}
+
+							#tabBody > div.tab[name=nico] div.input div.lines div.line input.start {
+								left: 40px;
+								width: 60px;
+							}
+
+							#tabBody > div.tab[name=nico] div.input div.lines div.line input.end {
+								left: 100px;
+								width: 60px;
+							}
+
+							#tabBody > div.tab[name=nico] div.input div.lines div.line input.text {
+								left: 160px;
+								width: calc(100% - 180px);
+							}
+
+							#tabBody > div.tab[name=nico] div.input div.lines div.line button.removeLine {
+								right: 0;
+							}
+
+							#tabBody > div.tab[name=nico] div.input div.lines button.addLine {
+								width: 100%;
+							}
+
+				#tabBody > div.tab .preview {
+					position: absolute;
+					left: calc(50% + 10px);
+					width: calc(50% - 30px);
+					height: 180px;
+					padding: 10px;
+					color: #fff;
+					text-align: center;
+				}
+					#tabBody > div.tab .preview,
+					#tabBody > div.tab .preview *,
+					#tabBody > div.tab .preview span {
+						background: #000;
+						font-family: 'Malgun Gothic';
+						font-size: 20px;
+					}
+
+				#tabBody > div.tab[name=nico] textarea.output {
+					top: 200px;
+					left: calc(50% + 10px);
+					height: calc(100% - 200px);
+					font-family: 'Malgun Gothic';
+				}
+
+				#tabBody > div.tab[name=nico] .btnNico {
+					position: absolute;
+					top: 0;
+					left: calc(50% - 10px);
+					width: 20px;
+					height: 100%;
+				}
+	</style>
+</head>
+<body>
+	<div class="input">
+		<div class="width">
+			<span>글자 수(한글)</span>
+			<input type="number" value="20" />
+		</div>
+		<div class="lines">
+			<div class="line">
+				<input disabled type="text" class="line" value="줄번호" />
+				<input disabled type="text" class="start" value="시작" />
+				<input disabled type="text" class="end" value="종료" />
+				<input disabled type="text" class="text" value="내용" />
+			</div>
+			<div class="list">
+				<div class="line">
+					<input type="number" class="line" value="1" />
+					<input type="number" class="start" value="2000" />
+					<input type="number" class="end" value="5000" />
+					<input type="text" class="text" value="테스트" />
+					<button type="button" class="removeLine">×</button>
+				</div>
+				<div class="line">
+					<input type="number" class="line" value="2" />
+					<input type="number" class="start" value="3000" />
+					<input type="number" class="end" value="5000" />
+					<input type="text" class="text" value="테스트" />
+					<button type="button" class="removeLine">×</button>
+				</div>
+				<div class="line">
+					<input type="number" class="line" value="1" />
+					<input type="number" class="start" value="3000" />
+					<input type="number" class="end" value="4000" />
+					<input type="text" class="text" value="테스트" />
+					<button type="button" class="removeLine">×</button>
+				</div>
+			</div>
+			<button type="button" class="addLine">＋</button>
+		</div>
+</body>
+</html>
