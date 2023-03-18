@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Subtitle;
 
 namespace SmiManager
-{
+{   // TODO: 옛날에 C#으로 짜둔 건데 재활용할 수 있나...
     static class NicoNico
     {
         private static float FRAME_LENGTH = 1001 / 24.0f; // 24fps
