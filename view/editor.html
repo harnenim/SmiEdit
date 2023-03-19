@@ -107,8 +107,6 @@ function init(jsonSetting) {
 		setting = deepCopyObj(DEFAULT_SETTING);
 		saveSetting();
 	}
-	setSetting(setting);
-	moveWindowsToSetting();
 	
 	var btnSync = $("#btnSync").on("click", function() {
 		tabs[tab].insertSync();
@@ -206,6 +204,9 @@ function init(jsonSetting) {
 	});
 	
 	SmiEditor.Viewer.open();
+	
+	setSetting(setting);
+	moveWindowsToSetting();
 }
 
 function setSetting(setting) {

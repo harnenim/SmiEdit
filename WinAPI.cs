@@ -35,7 +35,6 @@ namespace SmiEdit
             ulong style = GetWindowLongPtr(hwnd, -20).ToUInt64();
             style |= 0x00000080L;
             style |= 0x80880000L;
-
             SetWindowLongPtr32(hwnd, -20, new UIntPtr(style));
         }
 

@@ -272,10 +272,13 @@ namespace SmiEdit
                 return;
             }
             WinAPI.GetWindowRect(windows["editor"], ref offset);
-            if (lastOffset.top != offset.top
-             || lastOffset.left != offset.left
-             || lastOffset.right != offset.right
-             || lastOffset.bottom != offset.bottom)
+            if ((   lastOffset.top != offset.top
+                 || lastOffset.left != offset.left
+                 || lastOffset.right != offset.right
+                 || lastOffset.bottom != offset.bottom
+                )
+             && (offset.top > -32000) // 창 최소화 시 문제
+            )
             {
                 try
                 {
