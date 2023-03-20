@@ -5,9 +5,16 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>싱크 유지 텍스트 대체</title>
 	<script src="../lib/jquery-3.2.1.min.js"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/common.css" />
+	<script src="../lib/popup.js"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css" />
 	<script>
 var SmiEditor = opener.SmiEditor;
+
+function requestClose() {
+	if (confirm("작업을 취소하시겠습니까?")) {
+		window.close();
+	}
+}
 
 //초기 상태 기억
 var origin = {};

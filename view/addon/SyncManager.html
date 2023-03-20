@@ -5,7 +5,8 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<title>화면 싱크 매니저</title>
 	<script src="../lib/jquery-3.2.1.min.js"></script>
-	<link rel="stylesheet" type="text/css" href="../lib/common.css" />
+	<script src="../lib/popup.js"></script>
+	<link rel="stylesheet" type="text/css" href="../lib/popup.css" />
 	<script>
 var SmiEditor = opener.SmiEditor;
 var LINE = opener.LINE;
@@ -23,6 +24,12 @@ function smi2assTime(ms) {
 function ass2smiTime(time) {
 	var vs = time.split(":");
 	return (Number(vs[0]) * 3600000) + (Number(vs[1]) * 60000) + (Number(vs[2].split(".").join("")) * 10);
+}
+
+function requestClose() {
+	if (confirm("작업을 취소하시겠습니까?")) {
+		window.close();
+	}
 }
 
 // 초기 상태 기억
