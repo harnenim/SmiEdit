@@ -10,7 +10,7 @@
 		]
 	,	[	"편집(&S)"
 		,	"찾기/바꾸기(&F)|SmiEditor.Finder.open()"
-		,	"색상코드 입력(&C)|alert('어느 세월에 개발해')" // TODO: C#에서 작업 필요...
+		,	"색상코드 입력(&C)|binder.runColorPicker()"
 		,	"특수태그 정규화(&N)|tabs[tab].normalize()"
 		,	"미리보기창 실행|SmiEditor.Viewer.open()"
 		]

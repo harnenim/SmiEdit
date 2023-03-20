@@ -86,6 +86,18 @@ namespace SmiEdit
             _.DoExit(resetPlayer, exitPlayer);
         }
 
+        #region 플레이어
+        public void PlayOrPause() { _.player.PlayOrPause(); }
+        public void Play() { _.player.Play(); }
+        public void Stop() { _.player.Stop(); }
+        public void MoveTo(int time) { _.player.MoveTo(time); }
+        #endregion
+
+        #region 부가기능
+        public void RunColorPicker()
+        {
+            _.RunColorPicker();
+        }
         public void Normalize(string text)
         {
             // TODO: 기능 수정 필요. 문법 바꾸고 싶어짐...
@@ -101,12 +113,6 @@ namespace SmiEdit
             string output = new SmiFile() { body = input }.ToTxt().Trim();
             _.AfterTransform(output);
         }
-
-        #region 플레이어
-        public void PlayOrPause() { _.player.PlayOrPause(); }
-        public void Play() { _.player.Play(); }
-        public void Stop() { _.player.Stop(); }
-        public void MoveTo(int time) { _.player.MoveTo(time); }
         #endregion
     }
 }

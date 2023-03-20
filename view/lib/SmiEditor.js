@@ -607,6 +607,11 @@ SmiEditor.prototype.setLine = function(text, selection) {
 	this.history.log();
 	this.updateSync();
 }
+SmiEditor.inputText = function(text) {
+	if (SmiEditor.selected) {
+		SmiEditor.selected.inputText(text);
+	}
+}
 SmiEditor.prototype.inputText = function(input, standCursor) {
 	var text = this.input.val();
 	var selection = this.getCursor();

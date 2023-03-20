@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Subtitle;
 
-namespace SmiManager
+namespace SmiEdit.addon
 {   // TODO: 옛날에 C#으로 짜둔 건데 재활용할 수 있나...
     static class NicoNico
     {

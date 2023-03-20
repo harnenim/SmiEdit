@@ -8,6 +8,7 @@ using CefSharp;
 using CefSharp.WinForms;
 using System.Diagnostics;
 using SmiEditBridge;
+using SmiEdit.addon;
 
 namespace SmiEdit
 {
@@ -646,9 +647,26 @@ namespace SmiEdit
         }
         #endregion
 
+        #region 부가기능
+        public void RunColorPicker()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => { RunColorPicker(); }));
+            }
+            else
+            {
+                new ColorPicker(this).ShowDialog(this);
+            }
+        }
+        public void InputText(string text)
+        {
+            Script("SmiEditor.inputText", new object[] { text });
+        }
         public void AfterTransform(string text)
         {
             Script("SmiEditor.afterTransform", new object[] { text });
         }
+        #endregion
     }
 }
