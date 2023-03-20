@@ -216,12 +216,12 @@ namespace SmiEdit
         }
         public void FocusWindow(string target)
         {
-            int hwnd = GetHwnd(target);
-            WinAPI.SetForegroundWindow(hwnd);
             if (target.Equals("player"))
             {
                 return;
             }
+            int hwnd = GetHwnd(target);
+            WinAPI.SetForegroundWindow(hwnd);
         }
         public void SetFollowWindow(bool follow)
         {
