@@ -72,12 +72,6 @@ $(function () {
 			onMouseUp = true;
 		}
 	});
-	doc.on("dragover", function () {
-		// 드래그 중 벗어났으면 해제
-		if (showDrag) {
-			binder.hideDragging();
-		}
-	});
 
 	// 우클릭 방지
 	doc.on("contextmenu", function () {

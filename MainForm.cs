@@ -33,7 +33,7 @@ namespace SmiEdit
             InitializeComponent();
 
             StartPosition = FormStartPosition.Manual;
-            Location = new Point(0, 0);
+            Location = new Point(-10000, -10000); // 처음에 안 보이게
             Size = new Size(0, 0);
 
             SetStyle(ControlStyles.SupportsTransparentBackColor, true);
@@ -56,14 +56,13 @@ namespace SmiEdit
             FormClosed += new FormClosedEventHandler(WebFormClosed);
         }
 
-        delegate void InitAfterLoadHandler();
         public void InitAfterLoad()
         {
             try
             {
                 if (InvokeRequired)
                 {
-                    Invoke(new InitAfterLoadHandler(InitAfterLoad));
+                    Invoke(new Action(() => { InitAfterLoad(); }));
                 }
                 else
                 {
@@ -85,16 +84,12 @@ namespace SmiEdit
             windows.Add(name, hwnd);
             Invoke(new Action(() =>
             {
-                SetTaskbarHide(hwnd);
+                WinAPI.SetTaskbarHide(hwnd);
             }));
         }
         public void RemoveWindow(string name)
         {
             windows.Remove(name);
-        }
-        public void SetTaskbarHide(int hwnd)
-        {
-            WinAPI.SetTaskbarHide(hwnd);
         }
         // window.open 시에 브라우저에 커서 가도록
         public void SetFocus(IWebBrowser chromiumWebBrowser)
@@ -343,42 +338,6 @@ namespace SmiEdit
 
         protected string Script(string name) { return mainView.Script(name, null); }
         protected string Script(string name, object[] args) { return mainView.Script(name, args); }
-        
-        #region 드래그 관련
-
-        protected delegate void DropActionDelegate(DragEventArgs e);
-
-        public void ShowDragging()
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => {
-                    layerForDrag.Visible = true;
-                }));
-            }
-            Script("setShowDrag", new object[] { true });
-        }
-        public void HideDragging()
-        {
-            layerForDrag.Visible = false;
-            Script("setShowDrag", new object[] { false });
-        }
-
-        protected void DragLeaveMain(object sender, EventArgs e) { HideDragging(); }
-        protected void DragOverMain(object sender, DragEventArgs e) { try { e.Effect = DragDropEffects.All; } catch { } }
-        protected void DragDropMain(object sender, DragEventArgs e) {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => { DragDropMain(sender, e); }));
-            }
-            else
-            {
-                DropListFile(e);
-                HideDragging();
-            }
-        }
-
-        #endregion
 
         #region 설정
         private void LoadSetting()
@@ -534,6 +493,51 @@ namespace SmiEdit
         }
         #endregion
 
+        #region 파일 드래그 관련
+        public void ShowDragging()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => { ShowDragging(); }));
+            }
+            else
+            {
+                Console.WriteLine("show");
+                layerForDrag.Visible = true;
+                Script("setShowDrag", new object[] { true });
+            }
+        }
+        public void HideDragging()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => { HideDragging(); }));
+            }
+            else
+            {
+                Console.WriteLine("hide");
+                layerForDrag.Visible = false;
+                Script("setShowDrag", new object[] { false });
+            }
+        }
+
+        protected void DragLeaveMain(object sender, EventArgs e) { HideDragging(); }
+        protected void DragOverMain(object sender, DragEventArgs e) { try { e.Effect = DragDropEffects.All; } catch { } }
+        protected void DragDropMain(object sender, DragEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => { DragDropMain(sender, e); }));
+            }
+            else
+            {
+                DropListFile(e);
+                HideDragging();
+            }
+        }
+
+        #endregion
+
         #region 파일
 
         const string FileDialogFilter = "SAMI 자막 파일|*.smi";
@@ -668,5 +672,13 @@ namespace SmiEdit
             Script("SmiEditor.afterTransform", new object[] { text });
         }
         #endregion
+
+        public void Test(object obj)
+        {
+            Console.WriteLine(obj);
+            //Script("test", new object[] { obj });
+            //mainView.JavascriptObjectRepository.Register("test", obj, false, BindingOptions.DefaultBinder);
+            //Script("eval", new object[] { "console.log(test)" });
+        }
     }
 }

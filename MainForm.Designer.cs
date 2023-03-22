@@ -52,9 +52,9 @@ namespace SmiEdit
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.layerForDrag.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.layerForDrag.Location = new System.Drawing.Point(66, 230);
+            this.layerForDrag.Location = new System.Drawing.Point(0, 24);
             this.layerForDrag.Name = "layerForDrag";
-            this.layerForDrag.Size = new System.Drawing.Size(800, 450);
+            this.layerForDrag.Size = new System.Drawing.Size(800, 426);
             this.layerForDrag.TabIndex = 7;
             this.layerForDrag.Visible = false;
             this.layerForDrag.DragDrop += new System.Windows.Forms.DragEventHandler(this.DragDropMain);
