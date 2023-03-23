@@ -4,37 +4,53 @@
 <meta charset="utf-8">
 <title>설정</title>
 <script src="lib/jquery-3.2.1.min.js"></script>
-<script src="lib/setting.js"></script>
 <script src="lib/popup.js"></script>
 <link rel="stylesheet" type="text/css" href="lib/popup.css" />
 <script>
 var SmiEditor = opener.SmiEditor;
 
 function show(index) {
-	$("#settingArea > form").hide();
-	$("#settingArea > form:eq(" + index + ")").show();
 	$("#settingNav > a.selected").removeClass("selected");
 	$("#settingNav > a:eq(" + index + ")").addClass("selected");
+	$("#settingArea > form.selected").removeClass("selected");
+	var id = $("#settingArea > form:eq(" + index + ")").addClass("selected").attr("id");
+	opened = id;
 }
+var opened = null;
+var submitFuncs = {};
+var refreshFuncs = {};
 
 var saved = {};
-saved.cmd = { status: true, name: "단축키 설정" };
-function checkSaved(key) {
-	if (saved[key].status) return true;
-	return saved[key].status = confirm(saved[key].name + " 변경사항이 사라집니다.");
+function checkSaved(key, ok, no) {
+	if (saved[key].status) {
+		if (ok) ok();
+		return;
+	}
+	confirm(saved[key].name + " 변경사항이 사라집니다.", ok, no);
 }
 function setSaved(key, status) {
-	saved[key].status = status;
+	var item = saved[key];
+	if (item) {
+		item.status = status;
+	}
 }
-function requestClose() {
-	var success = true;
-	for (var key in saved) {
-		if (!checkSaved(key)) {
+function requestClose(keys) {
+	if (!keys) {
+		keys = [];
+		for (var key in saved) {
+			keys.push(key);
+		}
+	}
+	if (keys.length) {
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
+			checkSaved(key, function() {
+				requestClose(keys.slice(i + 1));
+			});
 			success = false;
 			break;
 		}
-	}
-	if (success) {
+	} else {
 		window.close();
 	}
 }
@@ -42,33 +58,35 @@ function requestClose() {
 $(function() {
 	var setting = opener.setting;
 	
-	$("input[type=text][name],input[type=number][name],textarea[name]").each(function() {
-		var input = $(this);
-		var name = input.attr("name");
-		if (name.indexOf("what") > 0) {
-			name = name.split("what").join(setting.player.control.dll);
-		}
-		var value = eval("setting['" + name.split("_").join("']['") + "']");
-		if (typeof value == "number" || typeof value == "string") {
-			input.val(value);
-		} else if (value && value.join) {
-			input.val(value.join("\n"));
-		}
-	});
-	$("input[type=checkbox][name]").each(function() {
-		var input = $(this);
-		var name = input.attr("name");
-		if (name.indexOf("what")) {
-			name = name.split("what").join(setting.player.control.dll);
-		}
-		input.prop("checked", eval("setting['" + name.split("_").join("']['") + "']"));
-	});
-	$("select[name]").each(function() {
-		var select = $(this);
-		var name = select.attr("name");
-		var value = eval("setting." + name.split("_").join("."));
-		select.data({value: value});
-	});
+	function refresh(form, setting) {
+		form.find("input[type=text][name],input[type=number][name],textarea[name]").each(function() {
+			var input = $(this);
+			var name = input.attr("name");
+			if (name.indexOf("what") > 0) {
+				name = name.split("what").join(setting.player.control.dll);
+			}
+			var value = eval("setting['" + name.split("_").join("']['") + "']");
+			if (typeof value == "number" || typeof value == "string") {
+				input.val(value);
+			} else if (value && value.join) {
+				input.val(value.join("\n"));
+			}
+		});
+		form.find("input[type=checkbox][name]").each(function() {
+			var input = $(this);
+			var name = input.attr("name");
+			if (name.indexOf("what")) {
+				name = name.split("what").join(setting.player.control.dll);
+			}
+			input.prop("checked", eval("setting['" + name.split("_").join("']['") + "']"));
+		});
+		form.find("select[name]").each(function() {
+			var select = $(this);
+			var name = select.attr("name");
+			var value = eval("setting." + name.split("_").join("."));
+			select.data({value: value});
+		});
+	}
 	
 	var fieldEditor = $("#fieldEditor");
 	var fieldViewer = $("#fieldViewer");
@@ -79,124 +97,124 @@ $(function() {
 	var inputCommandKey  = $("#inputCommandKey" );
 	var inputCommandFunc = $("#inputCommandFunc");
 
-	function refreshWindow() {
-		var editor = [setting.window, fieldEditor];
-		var viewer = [setting.viewer.window, fieldViewer];
-		var player = [setting.player.window, fieldPlayer];
-
-		var xs = [];
-		if (editor[0].x < viewer[0].x) {
-			xs = [[editor], [viewer]];
-		} else if (editor[0].x > viewer[0].x) {
-			xs = [[viewer], [editor]];
-		} else {
-			xs = [[editor, viewer]];
-		}
-		if (player[0].x < xs[0][0][0].x) {
-			xs = [[player]].concat(xs);
-		} else if (player[0].x == xs[0][0][0].x) {
-			xs[0].push(player);
-		} else if (xs.length > 1) {
-			if (player[0].x < xs[1][0][0].x) {
-				xs = [xs[0], [player], xs[1]];
-			} else if (player[0].x == xs[1][0][0].x) {
-				xs[1].push(player);
+	{	// 창
+		(refreshFuncs["window"] = function(setting) {
+			refresh($("#window"), setting);
+			
+			var editor = [setting.window, fieldEditor];
+			var viewer = [setting.viewer.window, fieldViewer];
+			var player = [setting.player.window, fieldPlayer];
+	
+			var xs = [];
+			if (editor[0].x < viewer[0].x) {
+				xs = [[editor], [viewer]];
+			} else if (editor[0].x > viewer[0].x) {
+				xs = [[viewer], [editor]];
+			} else {
+				xs = [[editor, viewer]];
+			}
+			if (player[0].x < xs[0][0][0].x) {
+				xs = [[player]].concat(xs);
+			} else if (player[0].x == xs[0][0][0].x) {
+				xs[0].push(player);
+			} else if (xs.length > 1) {
+				if (player[0].x < xs[1][0][0].x) {
+					xs = [xs[0], [player], xs[1]];
+				} else if (player[0].x == xs[1][0][0].x) {
+					xs[1].push(player);
+				} else {
+					xs.push([player]);
+				}
 			} else {
 				xs.push([player]);
 			}
-		} else {
-			xs.push([player]);
-		}
-		
-		var ys = [];
-		if (editor[0].y < viewer[0].y) {
-			ys = [[editor], [viewer]];
-		} else if (editor[0].y > viewer[0].y) {
-			ys = [[viewer], [editor]];
-		} else {
-			ys = [[editor, viewer]];
-		}
-		if (player[0].y < ys[0][0][0].y) {
-			ys = [[player]].concat(ys);
-		} else if (player[0].y == ys[0][0][0].y) {
-			ys[0].push(player);
-		} else if (ys.length > 1) {
-			if (player[0].y < ys[1][0][0].y) {
-				ys = [ys[0], [player], ys[1]];
-			} else if (player[0].y == ys[1][0][0].y) {
-				ys[1].push(player);
+			
+			var ys = [];
+			if (editor[0].y < viewer[0].y) {
+				ys = [[editor], [viewer]];
+			} else if (editor[0].y > viewer[0].y) {
+				ys = [[viewer], [editor]];
+			} else {
+				ys = [[editor, viewer]];
+			}
+			if (player[0].y < ys[0][0][0].y) {
+				ys = [[player]].concat(ys);
+			} else if (player[0].y == ys[0][0][0].y) {
+				ys[0].push(player);
+			} else if (ys.length > 1) {
+				if (player[0].y < ys[1][0][0].y) {
+					ys = [ys[0], [player], ys[1]];
+				} else if (player[0].y == ys[1][0][0].y) {
+					ys[1].push(player);
+				} else {
+					ys.push([player]);
+				}
 			} else {
 				ys.push([player]);
 			}
-		} else {
-			ys.push([player]);
-		}
-		
-		switch (xs.length) {
-			case 1: {
-				for (var i = 0; i < xs[0].length; i++) {
-					xs[0][i][1].css({ left: "4%", width: "92%" });
+			
+			switch (xs.length) {
+				case 1: {
+					for (var i = 0; i < xs[0].length; i++) {
+						xs[0][i][1].css({ left: "4%", width: "92%" });
+					}
+					break;
 				}
-				break;
+				case 2: {
+					for (var i = 0; i < xs[0].length; i++) {
+						xs[0][i][1].css({ left: "4%", width: "44%" });
+					}
+					for (var i = 0; i < xs[1].length; i++) {
+						xs[1][i][1].css({ left: "52%", width: "44%" });
+					}
+					break;
+				}
+				case 3: {
+					for (var i = 0; i < xs[0].length; i++) {
+						xs[0][i][1].css({ left: "4%", width: "26%" });
+					}
+					for (var i = 0; i < xs[1].length; i++) {
+						xs[1][i][1].css({ left: "34%", width: "26%" });
+					}
+					for (var i = 0; i < xs[2].length; i++) {
+						xs[2][i][1].css({ left: "64%", width: "26%" });
+					}
+					break;
+				}
 			}
-			case 2: {
-				for (var i = 0; i < xs[0].length; i++) {
-					xs[0][i][1].css({ left: "4%", width: "44%" });
+			switch (ys.length) {
+				case 1: {
+					for (var i = 0; i < ys[0].length; i++) {
+						ys[0][i][1].css({ top: "4%", height: "92%" });
+					}
+					break;
 				}
-				for (var i = 0; i < xs[1].length; i++) {
-					xs[1][i][1].css({ left: "52%", width: "44%" });
+				case 2: {
+					for (var i = 0; i < ys[0].length; i++) {
+						ys[0][i][1].css({ top: "4%", height: "44%" });
+					}
+					for (var i = 0; i < ys[1].length; i++) {
+						ys[1][i][1].css({ top: "52%", height: "44%" });
+					}
+					break;
 				}
-				break;
+				case 3: {
+					for (var i = 0; i < ys[0].length; i++) {
+						ys[0][i][1].css({ top: "4%", height: "26%" });
+					}
+					for (var i = 0; i < ys[1].length; i++) {
+						ys[1][i][1].css({ top: "34%", height: "26%" });
+					}
+					for (var i = 0; i < ys[2].length; i++) {
+						ys[2][i][1].css({ top: "64%", height: "26%" });
+					}
+					break;
+				}
 			}
-			case 3: {
-				for (var i = 0; i < xs[0].length; i++) {
-					xs[0][i][1].css({ left: "4%", width: "26%" });
-				}
-				for (var i = 0; i < xs[1].length; i++) {
-					xs[1][i][1].css({ left: "34%", width: "26%" });
-				}
-				for (var i = 0; i < xs[2].length; i++) {
-					xs[2][i][1].css({ left: "64%", width: "26%" });
-				}
-				break;
-			}
-		}
-		switch (ys.length) {
-			case 1: {
-				for (var i = 0; i < ys[0].length; i++) {
-					ys[0][i][1].css({ top: "4%", height: "92%" });
-				}
-				break;
-			}
-			case 2: {
-				for (var i = 0; i < ys[0].length; i++) {
-					ys[0][i][1].css({ top: "4%", height: "44%" });
-				}
-				for (var i = 0; i < ys[1].length; i++) {
-					ys[1][i][1].css({ top: "52%", height: "44%" });
-				}
-				break;
-			}
-			case 3: {
-				for (var i = 0; i < ys[0].length; i++) {
-					ys[0][i][1].css({ top: "4%", height: "26%" });
-				}
-				for (var i = 0; i < ys[1].length; i++) {
-					ys[1][i][1].css({ top: "34%", height: "26%" });
-				}
-				for (var i = 0; i < ys[2].length; i++) {
-					ys[2][i][1].css({ top: "64%", height: "26%" });
-				}
-				break;
-			}
-		}
-	}
+			setSaved("window", setting == opener.setting);
+		})(setting);
 	
-	{	// 창
-		refreshWindow();
-	
-		$("form#window").on("submit", function(e) {
-			e.preventDefault();
+		submitFuncs["window"] = function() {
 			setting.window.x             = Number($("input[name=window_x]"            ).val());
 			setting.window.y             = Number($("input[name=window_y]"            ).val());
 			setting.window.width         = Number($("input[name=window_width]"        ).val());
@@ -213,13 +231,9 @@ $(function() {
 			setting.window.follow        = $("input[name=window_follow]").prop("checked");
 			opener.saveSetting();
 			opener.moveWindowsToSetting();
-			refreshWindow();
-			return false;
-		});
+			refreshFuncs["window"](setting);
+		};
 		
-		$("#btnRunViewer").on("click", function() {
-			opener.SmiEditor.Viewer.open();
-		});
 		$("#btnGetWindows").on("click", function() {
 			opener.binder.getWindows(["editor", "viewer", "player"]);
 		});
@@ -237,8 +251,12 @@ $(function() {
 	}
 	
 	{	// 싱크
-		$("form#sync").on("submit", function(e) {
-			e.preventDefault();
+		(refreshFuncs["sync"] = function(setting) {
+			refresh($("#sync"), setting);
+			setSaved("sync", setting == opener.setting);
+		})(setting);
+	
+		submitFuncs["sync"] = function() {
 			setting.sync.insert = Number($("input[name=sync_insert]").val());
 			setting.sync.update = Number($("input[name=sync_update]").val());
 			setting.sync.weight = Number($("input[name=sync_weight]").val());
@@ -248,11 +266,35 @@ $(function() {
 			setting.sync.preset = $("input[name=sync_preset]").val();
 			opener.setSetting(setting);
 			opener.saveSetting();
-			return false;
-		});
+		};
 	}
 	
 	{	// 단축키
+		saved.cmd = { status: true, name: "단축키 설정" };
+		
+		(refreshFuncs["cmd"] = function(setting) {
+			if (setting == opener.setting) {
+				checkSaved("cmd", function() {
+					setSaved("cmd", true);
+					inputCommandName.val("");
+					inputCommandKey .val("");
+					inputCommandFunc.val("");
+				});
+				
+			} else {
+				confirm("현재 값은 복원할 수 없습니다.", function() {
+					opener.setting.command = opener.deepCopyObj(setting.command);
+					setSaved("cmd", true);
+					inputCommandName.val("");
+					inputCommandKey .val("");
+					inputCommandFunc.val("");
+					refreshTableCommand();
+					opener.setSetting(setting);
+					opener.saveSetting();
+				});
+			}
+		})(setting);
+	
 		var tbody = tableCommand.find("tbody");
 		var withs = ["withCtrls", "withAlts", "withCtrlAlts", "withCtrlShifts"];
 		var keys = "ABCDEFGHIJKLMKNOPQRSTUVWXYZ1234567890";
@@ -265,13 +307,33 @@ $(function() {
 					var w = withs[j];
 					var td = $("<td>");
 					if (SmiEditor[w].reserved.indexOf(key) >= 0) {
-						td.addClass("fixed").text("예약 단축키");
+						var func = SmiEditor[w][key];
+						var label = func;
+						if (label) {
+							var type = typeof label;
+							if (type == "string") {
+								label = label.trim();
+								if (label.substring(0, 2) == "/*") {
+									label = label.substring(2).split("*/")[0].trim();
+								}
+							} else if (type == "function") {
+								label = label.name;
+							}
+						} else {
+							label = "시스템 단축키";
+						}
+						label = "예약: " + label;
+						td.addClass("fixed").text(label);
 					} else {
 						var func = setting.command[w][key];
 						if (!func || !func.trim()) {
 							func = "";
 						} else {
-							td.addClass("used").text(func);
+							var label = func.trim();
+							if (label.substring(0, 2) == "/*") {
+								label = label.substring(2).split("*/")[0].trim();
+							}
+							td.addClass("used").text(label);
 						}
 						td.data({
 								"name": "setting.command." + w + "['" + key + "']"
@@ -313,13 +375,12 @@ $(function() {
 				// 현재 작업 중인 것
 				return;
 			}
-			if (!checkSaved("cmd")) {
-				return;
-			}
-			
-			inputCommandName.val(data.name);
-			inputCommandKey .val(key);
-			inputCommandFunc.val(data.func);
+			checkSaved("cmd", function() {
+				setSaved("cmd", true);
+				inputCommandName.val(data.name);
+				inputCommandKey .val(key);
+				inputCommandFunc.val(data.func);
+			});
 		});
 		
 		inputCommandKey.on("keydown", function(e) {
@@ -383,13 +444,11 @@ $(function() {
 					// 현재 작업 중인 것
 					return;
 				}
-				if (!checkSaved("cmd")) {
-					return;
-				}
-				
-				inputCommandName.val(name);
-				inputCommandKey .val(key);
-				inputCommandFunc.val(func);
+				checkSaved("cmd", function() {
+					inputCommandName.val(name);
+					inputCommandKey .val(key);
+					inputCommandFunc.val(func);
+				});
 				
 			} else {
 				if (e.shiftKey) {
@@ -424,14 +483,15 @@ $(function() {
 			}
 		});
 
-		$("#areaFunctions").on("click", "dt", function() {
+		$("#areaFunctions").on("click", "li", function() {
 			var func = inputCommandFunc.val();
 			inputCommandFunc.val((func ? func + "\n" : "") + $(this).data("input"));
-			setSaved("cmd", false);
+			if (inputCommandName.val()) {
+				setSaved("cmd", false);
+			}
 		});
-		
-		$("form#cmd").on("submit", function(e) {
-			e.preventDefault();
+
+		submitFuncs["cmd"] = function() {
 			var name = inputCommandName.val();
 			if (name) {
 				var func = inputCommandFunc.val();
@@ -444,14 +504,17 @@ $(function() {
 				opener.setSetting(setting);
 				opener.saveSetting();
 			}
-			return false;
-		});
+		};
 	}
 	
 	{	// 자동완성
-		$("form#ac").on("submit", function(e) {
-			e.preventDefault();
-			$(this).find("textarea").each(function() {
+		(refreshFuncs["ac"] = function(setting) {
+			refresh($("#ac"), setting);
+			setSaved("ac", setting == opener.setting);
+		})(setting);
+	
+		submitFuncs["ac"] = function() {
+			$("#ac").find("textarea").each(function() {
 				var textarea = $(this);
 				var name = "setting['" + textarea.attr("name").split("_").join("']['") + "']";
 				var value = textarea.val();
@@ -464,24 +527,38 @@ $(function() {
 			});
 			opener.setSetting(setting);
 			opener.saveSetting();
-			return false;
-		});
+		};
 	}
 	
 	{	// 스타일
-		$("form#style").on("submit", function(e) {
-			e.preventDefault();
+		saved.style = { status: true, name: "스타일 설정" };
+	
+		(refreshFuncs["style"] = function(setting) {
+			refresh($("#style"), setting);
+			setSaved("style", setting == opener.setting);
+		})(setting);
+		
+		$("#style").on("input propertychange", function() {
+			setSaved("style", false);
+		});
+	
+		submitFuncs["style"] = function() {
 			setting.useTab     = $("input[name=useTab]").prop("checked");
 			setting.css        = $("textarea[name=css]"       ).val();
 			setting.viewer.css = $("textarea[name=viewer_css]").val();
 			setting.newFile    = $("textarea[name=newFile]"   ).val();
+			setSaved("style", true);
 			opener.setSetting(setting);
 			opener.saveSetting();
-			return false;
-		});
+		};
 	}
 	
 	{	// 플레이어
+		(refreshFuncs["player"] = function(setting) {
+			refresh($("#player"), setting);
+			setSaved("player", setting == opener.setting);
+		})(setting);
+	
 		var select = $("select[name=player_control_dll]");
 		if (opener.playerDlls) {
 			var dlls = opener.playerDlls.split(",");
@@ -507,9 +584,8 @@ $(function() {
 			$("input[name=player_control_what_withRun]" ).prop("checked", dllSetting.withRun);
 			$("input[name=player_control_what_withExit]").prop("checked", dllSetting.withExit);
 		});
-	
-		$("form#player").on("submit", function(e) {
-			e.preventDefault();
+
+		submitFuncs["player"] = function() {
 			setting.player.exts = $("input[name=player_exts]").val();
 			var dll = setting.player.control.dll = select.val();
 			var dllSetting = setting.player.control[dll];
@@ -522,9 +598,122 @@ $(function() {
 			dllSetting.withExit = $("input[name=player_control_what_withExit]").prop("checked");
 			opener.setSetting(setting);
 			opener.saveSetting();
-			return false;
-		});
+		};
 	}
+	
+	{	// 메뉴
+		saved.menu = { status: true, name: "메뉴 설정" };
+	
+		var menuList = $("#menuList");
+	
+		function appendMenu(menus) {
+			if (!menus) menus = [""];
+			
+			var fieldset = $("<fieldset>");
+			var legend = $("<legend>");
+			legend.append($("<input type='text'>").val(menus[0]));
+			legend.append($("<button type='button'>").text("✕"));
+			fieldset.append(legend);
+			
+			var ol = $("<ol>");
+			fieldset.append(ol);
+			
+			for (var j = 1; j < menus.length; j++) {
+				var menu = menus[j];
+				var div = menu.indexOf("|");
+				var name = (div > 0) ? menu.substring(0, div) : menu;
+				var func = (div > 0) ? menu.substring(div + 1) : "";
+				appendSubMenu(ol, name, func);
+			}
+			
+			fieldset.append($("<button type='button' class='add-menu'>").text("추가"));
+			
+			menuList.append($("<li>").append(fieldset));
+		}
+		function appendSubMenu(ol, name, func) {
+			if (!ol) return;
+			if (!name) name = "";
+			if (!func) func = "";
+			ol.append(
+				$("<li>")
+					.append($("<input type='text'>").val(name))
+					.append($("<input type='text' class='menu-func'>").val(func))
+					.append($("<button type='button'>").text("✕"))
+			);
+		}
+		(refreshFuncs["menu"] = function(setting) {
+			menuList.empty();
+			for (var i = 0; i < setting.menu.length; i++) {
+				appendMenu(setting.menu[i]);
+			}
+			setSaved("menu", setting == opener.setting);
+		})(setting);
+		
+		$("#menu > .add-menu").on("click", function() {
+			appendMenu();
+			setSaved("menu", false);
+		});
+		
+		menuList.on("click", ".add-menu", function() {
+			appendSubMenu($(this).parent().find("ol"));
+			setSaved("menu", false);
+		});
+		
+		menuList.on("click", "legend > button", function() {
+			var menu = $(this).parents("li");
+			confirm("삭제하시겠습니까?", function() {
+				menu.remove();
+				setSaved("menu", false);
+			});
+		});
+		
+		menuList.on("click", "ol > li > button", function() {
+			var subMenu = $(this).parent();
+			confirm("삭제하시겠습니까?", function() {
+				subMenu.remove();
+				setSaved("menu", false);
+			});
+		});
+		
+		submitFuncs["menu"] = function() {
+			var menus = [];
+			
+			menuList.find("fieldset").each(function() {
+				var fieldset = $(this);
+				var menu = [fieldset.find("legend > input").val()];
+				
+				fieldset.find("li").each(function() {
+					var inputs = $(this).find("input");
+					menu.push(inputs[0].value + "|" + inputs[1].value);
+				});
+				menus.push(menu);
+			});
+			
+			setting.menu = menus;
+			setSaved("menu", true);
+			opener.setSetting(setting);
+			opener.saveSetting();
+		};
+	}
+	
+	$("#btnLoadSetting").on("click", function() {
+		var refreshFunc = refreshFuncs[opened];
+		if (refreshFunc) {
+			refreshFunc(setting);
+		}
+	});
+	
+	$("#btnLoadDefault").on("click", function() {
+		var refreshFunc = refreshFuncs[opened];
+		if (refreshFunc) {
+			refreshFunc(opener.DEFAULT_SETTING);
+		}
+	});
+	
+	$("#btnSubmit").on("click", function() {
+		var submitFunc = submitFuncs[opened];
+		if (submitFunc) submitFunc();
+	});
 	
 	show(0);
 });
@@ -533,72 +722,110 @@ $(function() {
 * {
 	font-size: 14px;
 }
-
+body {
+	background: #f0f0f0;
+}
 textarea {
 	width: 100%;
 	height: 100px;
 	font-family: '돋움체'; /* 여기선 고정폭 문자 써야 할 듯 */
+	resize: vertical;
 }
 
+input[type=number] { width: 50px; }
+
+fieldset {
+	border-color: #888;
+	padding: 8px;
+	margin-top: 8px;
+}
+
+/* 기본 틀 */
+#settingNav {
+	position: fixed;
+	top: 0;
+	left: 8px;
+	right: 8px;
+	height: 40px;
+	padding-top: 8px;
+	border-bottom: 1px solid #888;
+}
+#settingArea {
+	position: fixed;
+	top: 40px;
+	left: 8px;
+	right: 8px;
+	bottom: 48px;
+	overflow-y: scroll;
+	background: #f8f8f8;
+	border: 1px solid #888;
+	border-top: 0;
+	padding: 8px;
+}
+#applyArea {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 48px;
+}
+#btnLoadSetting,
+#btnLoadDefault,
+#btnSubmit {
+	float: right;
+	margin: 8px 8px 8px 0;
+	min-width: 100px;
+	padding: 4px;
+	line-height: 22px;
+	font-size: 16px;
+}
+
+/* 탭 UI */
+#settingNav > a {
+	display: block;
+	float: left;
+	margin: 0 -1px -1px 0;
+	border: 1px solid #888;
+	border-radius: 6px 6px 0 0;
+	background: #eee;
+	color: #000;
+	font-size: 16px;
+	text-decoration: none;
+	height: 32px;
+	line-height: 32px;
+	padding: 0 8px;
+}
+#settingNav > a.selected {
+	background: #f8f8f8;
+	border-bottom-color: #f8f8f8;
+}
+#settingNav > a:hover {
+	background: #f8f8f8;
+}
+#settingArea > form {
+	display: none;
+}
+#settingArea > form.selected {
+	display: block;
+}
+
+/* 창 */
 #fieldEditor,
 #fieldViewer,
 #fieldPlayer {
+	position: absolute;
 	border: 1px solid #000;
 	border-radius: 6px;
 	margin-bottom: 4px;
 	padding: 8px;
 }
 
-#settingNav {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100px;
-	height: 100%;
-	padding: 4px 0 4px 4px;
-	background: #ccc;
-	border-right: 1px solid #888;
-}
-#settingArea {
-	position: fixed;
-	top: 0;
-	left: 100px;
-	width: calc(100% - 100px);
-	height: 100%;
-	overflow-y: scroll;
-	padding: 4px;
-	background: #f0f0f0;
-}
-#settingArea > form {
-	display: none;
-}
-
-#settingNav > a {
-	display : block;
-	margin: -1px -1px 0 0;
-	border: 1px solid #888;
-	border-radius: 6px 0 0 6px;
-	padding: 4px;
-	background: #ddd;
-	color: #000;
-	font-size: 12px;
-	text-decoration: none;
-	line-height: 20px;
-}
-#settingNav > a.selected {
-	background: #f0f0f0;
-	border-right-color: #f0f0f0;
-}
-
-input[type=number] { width: 50px; }
-
-#fieldEditor,
-#fieldViewer,
-#fieldPlayer { position: absolute; }
-
+/* 단축키 */
 #areaTableCommand {
-	height: 250px;
+	height: 210px;
 	overflow-y: scroll;
+    border-bottom: 1px solid #aaa;
+    margin-bottom: 4px;
 }
 #tableCommand {
 	width: 100%;
@@ -626,7 +853,26 @@ input[type=number] { width: 50px; }
 #tableCommand td.used:hover {
 	background: #cfc;
 }
+#areaFunctions li {
+	margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 4px;
+	cursor: pointer;
+}
+#areaFunctions li:hover {
+	background: #ffd;
+}
+#areaFunctions h4 {
+	margin-bottom: 4px;
+}
 
+/* 메뉴 */
+#menu button { width: 16px; }
+#menu input,
+#menu button.add-menu { width: 200px; }
+#menu input.menu-func { width: calc(100% - 216px); }
+#menu > button.add-menu { width: 216px; }
 </style>
 </head>
 <body>
@@ -658,8 +904,6 @@ input[type=number] { width: 50px; }
 				<br />
 				<label>↔: <input type="number" name="viewer_window_width" /></label>
 				<label>↕: <input type="number" name="viewer_window_height" /></label>
-				<br />
-				<button type="button" id="btnRunViewer">재실행</button>
 			</fieldset>
 			<fieldset id="fieldPlayer">
 				<legend>플레이어</legend>
@@ -674,7 +918,6 @@ input[type=number] { width: 50px; }
 		</div>
 		<button type="button" id="btnGetWindows">현재 위치 가져오기</button><br />
 		<label><input type="checkbox" name="window_follow" /> 창 함께 이동</label><br />
-		<button type="submit">적용</button>
 	</form>
 	
 	<form id="sync">
@@ -685,7 +928,6 @@ input[type=number] { width: 50px; }
 		<label>재생 앞뒤 이동 단위: <input type="number" name="sync_move" />ms</label><br />
 		<label>싱크 언어: <input type="text" name="sync_lang" /></label><br />
 		<label>싱크 태그 형태: <input type="text" name="sync_preset" style="width: 400px;" /></label><br />
-		<button type="submit">적용</button>
 	</form>
 	
 	<form id="cmd">
@@ -720,97 +962,83 @@ input[type=number] { width: 50px; }
 			</table>
 		</div>
 		<input type="hidden" id="inputCommandName" />
-		<label>단축키 <input type="text" id="inputCommandKey" readonly /></label>
-		<button type="submit">적용</button>
+		<label>조합 <input type="text" id="inputCommandKey" readonly style="width: 100px;" /></label>
 		<br />
 		<textarea id="inputCommandFunc" spellcheck="false"></textarea>
 		
-		<div id="areaFunctions">
-			사용자 정의 명령 함수 지원
-			<style>
-				dt { margin-top: 8px; cursor: pointer; }
-			</style>
-			<dl>
-				<dt data-input="getText()"
-				>editor.getText() → { text: '전체_텍스트', selection: ['커서_시작', '커서_끝'] }</dt>
-				<dd>전체 내용을 구해옵니다.</dd>
-				
-				<dt data-input="setText(text, [cursor, cursor])"
-				>editor.setText(string '대체_텍스트', number[] ['커서_시작', '커서_끝'])</dt>
-				<dd>전체 내용을 교체합니다.</dd>
-				
-				<dt data-input="getLine()"
-				>editor.getLine() → { text: '현재_줄_텍스트', selection: ['커서_시작', '커서_끝'] }</dt>
-				<dd>커서(끝) 줄의 내용을 가져옵니다.</dd>
-				
-				<dt data-input="setLine(text, [cursor, cursor])"
-				>editor.setLine(string '대체_텍스트', number[] ['커서_시작', '커서_끝'])</dt>
-				<dd>커서(끝) 줄의 내용을 교체합니다.</dd>
-				
-				<dt data-input="inputText(text, false)"
-				>editor.inputText(string '입력_텍스트', bool '커서_고정')</dt>
-				<dd>현재 커서 위치에 내용을 입력합니다.</dd>
-				 
-				<dt data-input="tagging('<i>', false)"
-				>editor.tagging(string '&lt;태그&gt;', bool '커서_위치부터')</dt>
-				<dd>커서가 있는 줄 전체, 혹은 커서 위치 이후 문자열에 태그를 입힙니다.</dd>
-				
-				<dt data-input="taggingRange('<u>')"
-				>editor.taggingRange(tag) { self.taggingRange(tag); };</dt>
-				<dd>tagging(string '&lt;태그&gt;', true)와 같은 동작입니다.</dd>
-				
-				<dt data-input="self.moveToSync()"
-				>editor.moveToSync()</dt>
-				<dd>현재 대사의 싱크를 재생합니다.</dd>
-				
-				<dt data-input="self.findSync()"
-				>editor.findSync()</dt>
-				<dd>현재 재생 중인 대사를 찾습니다.</dd>
-				
-				<dt data-input=""newFile()
-				>newFile()</dt>
-				<dd>새 파일</dd>
-				
-				<dt data-input=""openFile()
-				>openFile()</dt>
-				<dd>파일 열기</dd>
-				
-				<dt data-input="saveFile()"
-				>saveFile()</dt>
-				<dd>파일 저장하기</dd>
-				
-				<dt data-input="saveFile(true)"
-				>saveFile(true)</dt>
-				<dd>다른 이름으로 저장하기</dd>
-				
-				<!--
-				<dt data-input="openNewTab()"
-				>openNewTab()</dt>
-				<dd>새 탭 열기</dd>
-				-->
-				
-				<dt data-input="openSetting()"
-				>openSetting()</dt>
-				<dd>설정창 열기</dd>
-				
-				<dt data-input="openAddon('~~.html')"
-				>openAddon("~~.html")</dt>
-				<dd>직접 만든 부가기능 창을 열 수 있습니다.</dd>
-				
-				<dt></dt>
-				<dd></dd>
-				
-				<dt></dt>
-				<dd></dd>
-				
-				<dt></dt>
-				<dd></dd>
-				
-				<dt></dt>
-				<dd></dd>
-				
-			</dl>
-		</div>
+		<fieldset id="areaFunctions">
+			<legend>사용자 정의 명령 함수 지원</legend>
+			<ul>
+				<li data-input="editor.getText()">
+					<h4>editor.getText() → { text: '전체_텍스트', selection: ['커서_시작', '커서_끝'] }</h4>
+					<p>전체 내용을 구해옵니다.</p>
+				</li>
+				<li data-input="editor.setText(text, [cursor, cursor])">
+					<h4>editor.setText(string '대체_텍스트', number[] ['커서_시작', '커서_끝'])</h4>
+					<p>전체 내용을 교체합니다.</p>
+				</li>
+				<li data-input="editor.getLine()">
+					<h4>editor.getLine() → { text: '현재_줄_텍스트', selection: ['커서_시작', '커서_끝'] }</h4>
+					<p>커서(끝) 줄의 내용을 가져옵니다.</p>
+				</li>
+				<li data-input="editor.setLine(text, [cursor, cursor])">
+					<h4>editor.setLine(string '대체_텍스트', number[] ['커서_시작', '커서_끝'])</h4>
+					<p>커서(끝) 줄의 내용을 교체합니다.</p>
+				</li>
+				<li data-input="editor.inputText(text, false)">
+					<h4>editor.inputText(string '입력_텍스트', bool '커서_고정')</h4>
+					<p>현재 커서 위치에 내용을 입력합니다.</p>
+				</li> 
+				<li data-input="editor.tagging('<i>', false)">
+					<h4>editor.tagging(string '&lt;태그&gt;', bool '커서_위치부터')</h4>
+					<p>커서가 있는 줄 전체, 혹은 커서 위치 이후 문자열에 태그를 입힙니다.</p>
+				</li>
+				<li data-input="editor.taggingRange('<u>')">
+					<h4>editor.taggingRange(tag) { self.taggingRange(tag); };</h4>
+					<p>tagging(string '&lt;태그&gt;', true)와 같은 동작입니다.</p>
+				</li>
+				<li data-input="editor.moveToSync()">
+					<h4>editor.moveToSync()</h4>
+					<p>현재 대사의 싱크를 재생합니다.</p>
+				</li>
+				<li data-input="editor.findSync()">
+					<h4>editor.findSync()</h4>
+					<p>현재 재생 중인 대사를 찾습니다.</p>
+				</li>
+				<li data-input="newFile()">
+					<h4>newFile()</h4>
+					<p>새 파일</p>
+				</li>
+				<li data-input="openFile()">
+					<h4>openFile()</h4>
+					<p>파일 열기</p>
+				</li>
+				<li data-input="saveFile()">
+					<h4>saveFile()</h4>
+					<p>파일 저장하기</p>
+				</li>
+				<li data-input="saveFile(true)">
+					<h4>saveFile(true)</h4>
+					<p>다른 이름으로 저장하기</p>
+				</li>
+				<li data-input="openSetting()">
+					<h4>openSetting()</h4>
+					<p>설정창 열기</p>
+				</li>
+				<li data-input="openAddon('~~.html')">
+					<h4>openAddon("~~.html")</h4>
+					<p>직접 만든 부가기능 창을 열 수 있습니다.</p>
+				</li>
+				<li data-input="">
+					<h4></h4>
+					<p></p>
+				</li>
+				<li data-input="">
+					<h4></h4>
+					<p></p>
+				</li>
+			</ul>
+		</fieldset>
 	</form>
 	
 	<form id="ac">
@@ -818,73 +1046,89 @@ input[type=number] { width: 50px; }
 			줄 단위로 자동완성 문자열을 지정할 수 있습니다.<br />
 			반드시 시작 문자가 일치해야 하며, '|'를 이용해 입력값과 출력값이 다르게 설정할 수 있습니다. 
 		</p>
-		<label>@ <button type="submit">적용</button>
+		<label>@
 			<textarea name="autoComplete_50_1"  spellcheck="false"></textarea>
 		</label>
-		<label># <button type="submit">적용</button>
+		<label>#
 			<textarea name="autoComplete_51_1"  spellcheck="false"></textarea>
 		</label>
-		<label>$ <button type="submit">적용</button>
+		<label>$
 			<textarea name="autoComplete_52_1"  spellcheck="false"></textarea>
 		</label>
-		<label>% <button type="submit">적용</button>
+		<label>%
 			<textarea name="autoComplete_53_1"  spellcheck="false"></textarea>
 		</label>
-		<label>^ <button type="submit">적용</button>
+		<label>^
 			<textarea name="autoComplete_54_1"  spellcheck="false"></textarea>
 		</label>
-		<label>& <button type="submit">적용</button>
+		<label>&
 			<textarea name="autoComplete_55_1"  spellcheck="false"></textarea>
 		</label>
-		<label>( <button type="submit">적용</button>
+		<label>(
 			<textarea name="autoComplete_57_1"  spellcheck="false"></textarea>
 		</label>
-		<label>) <button type="submit">적용</button>
+		<label>)
 			<textarea name="autoComplete_48_1"  spellcheck="false"></textarea>
 		</label>
-		<label>&lt; <button type="submit">적용</button>
+		<label>&lt;
 			<textarea name="autoComplete_188_1" spellcheck="false"></textarea>
 		</label>
-		<label>&gt; <button type="submit">적용</button>
+		<label>&gt;
 			<textarea name="autoComplete_190_1" spellcheck="false"></textarea>
 		</label>
 	</form>
 	
 	<form id="style">
 		<label><input type="checkbox" name="useTab" /> 탭 사용</label><br />
-		<label>에디터 <button type="submit">적용</button>
+		<label>에디터
 			<textarea name="css" spellcheck="false" style="height: 200px;"></textarea>
 		</label>
 		<br />
-		<label>미리보기 <button type="submit">적용</button>
+		<label>미리보기
 			<textarea name="viewer_css" spellcheck="false" style="height: 300px;"></textarea>
 		</label>
 		<br />
-		<label>새 문서 <button type="submit">적용</button>
+		<label>새 문서
 			<textarea name="newFile" spellcheck="false" style="height: 400px;"></textarea>
 		</label>
 	</form>
 	
 	<form id="player">
-		<label>동영상 파일 확장자: <input type="text" name="player_exts" style="width: calc(100% - 140px);" /></label><br />
-		<label>플레이어: <select name="player_control_dll"></select></label><br />
-		<label>플레이어 실행파일: <input type="text" name="player_control_what_path" style="width: calc(100% - 130px);" /></label><br /><!-- TODO: 찾아보기 창이 필요할까? -->
-		<label><input type="checkbox" name="player_control_what_withRun"  /> 프로그램 실행 시 플레이어 실행</label><br />
-		<label><input type="checkbox" name="player_control_what_withExit" /> 프로그램 종료 시 플레이어 종료</label><br />
-		<button type="submit">적용</button>
+		<label>동영상 파일 확장자: <input type="text" name="player_exts" style="width: calc(100% - 140px);" /></label>
+		<fieldset>
+			<legend>플레이어: <select name="player_control_dll"></select></legend>
+			<label>실행파일: <input type="text" name="player_control_what_path" style="width: calc(100% - 70px);" /></label><br /><!-- TODO: 찾아보기 창이 필요할까? -->
+			<label><input type="checkbox" name="player_control_what_withRun"  /> 프로그램 실행 시 플레이어 실행</label><br />
+			<label><input type="checkbox" name="player_control_what_withExit" /> 프로그램 종료 시 플레이어 종료</label><br />
+		</fieldset>
 	</form>
-	
+
 	<form id="menu">
-		<ol>
+		<ol id="menuList">
 			<li>
 				<fieldset>
-					<legend><input type="text" value="파일(&F)" /></legend>
-					
+					<legend>
+						<input type="text" value="파일(&F)" />
+						<button type="button">삭제</button>
+					</legend>
+					<ol>
+						<li><input type="text" value="새 파일(&N)" />
+							<button type="button">삭제</button>
+						</li>
+					</ol>
+					<button type="button" class="add-sub-menu">추가</button>
 				</fieldset>
 			</li>
 		</ol>
-		<button type="submit">적용</button>
+		<button type="button" class="add-menu">추가</button>
+		<div>
+		</div>
 	</form>
+</div>
+<div id="applyArea">
+	<button type="button" id="btnSubmit" accesskey="S">적용(<u>S</u>)</button>
+	<button type="button" id="btnLoadDefault">기본값으로</button>
+	<button type="button" id="btnLoadSetting">현재 설정으로</button>
 </div>
 </body>
 </html>
