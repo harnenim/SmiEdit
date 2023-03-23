@@ -101,6 +101,9 @@ namespace SmiEdit
         public void RunFind      (string param) { _.RunFind      (param); }
         public void RunReplace   (string param) { _.RunReplace   (param); }
         public void RunReplaceAll(string param) { _.RunReplaceAll(param); }
+
+        public void Alert  (string target, string msg) { _.Alert  (target, msg); }
+        public void Confirm(string target, string msg) { _.Confirm(target, msg); }
         #endregion
 
         #region 플레이어

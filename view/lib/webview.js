@@ -15,33 +15,21 @@ function setDroppable() {
 	});
 }
 
+var windowName = "editor";
+
 // alert 재정의
 _alert = alert;
 _confirm = confirm;
 alert = function(msg) {
-	_alert(msg);
-	// TODO
-	//binder.alert(msg);
+	binder.alert(windowName, msg);
 }
 // confirm 재정의
-var afterConfirmYes = null;
-var afterConfirmNo  = null;
+var afterConfirmYes = function() {};
+var afterConfirmNo  = function() {};
 confirm = function(msg, yes, no) {
-	var result = _confirm(msg);
-	if (result) {
-		if (yes) yes();
-	} else {
-		if (no) no();
-	}
-	
-	// TODO
-	/*
-	afterConfirmYes = yes;
-	afterConfirmNo  = no;
-	binder.confirm(msg);
-	*/
-	
-	return result;
+	afterConfirmYes = yes ? yes : function() {};
+	afterConfirmNo  = no  ? no  : function() {};
+	binder.confirm(windowName, msg);
 }
 
 var ctrl  = false;

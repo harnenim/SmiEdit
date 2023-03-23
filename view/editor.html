@@ -313,6 +313,7 @@ function runIfCanOpenNewTab(func) {
 		if (tabs.length) {
 			if (tabs[0].input.val() != tabs[0].saved) {
 				confirm("현재 파일을 닫을까요?", func);
+				return;
 			}
 			$("#tabSelector > .th:not(#btnNewTab)").remove();
 			$("#editor").empty();

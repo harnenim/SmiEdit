@@ -82,6 +82,14 @@ namespace SmiEdit
         }
     }
 
+    public class RequestHandler : CefSharp.Handler.RequestHandler
+    {
+        protected override bool OnBeforeBrowse(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IRequest request, bool userGesture, bool isRedirect)
+        {
+            return false;
+        }
+    }
+
     public class WebView : ChromiumWebBrowser
     {
         #region 스크립트 핸들러

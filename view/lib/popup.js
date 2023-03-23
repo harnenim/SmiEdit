@@ -25,26 +25,41 @@ function sendMsg(msg) {
 	alert(msg);
 }
 
+var windowName = null;
+
 // alert 재정의
 _alert = alert;
 _confirm = confirm;
 alert = function(msg) {
-	_alert(msg);
-	// TODO
-	//binder.alert(msg);
-}
-confirm = function(msg, yes, no) {
-	var result = _confirm(msg);
-	if (result) {
-		if (yes) yes();
+	if (windowName) {
+		if (opener) {
+			opener.binder.alert(windowName, msg);
+		} else {
+			binder.alert(windowName, msg);
+		}
 	} else {
-		if (no) no();
+		_alert(msg);
 	}
-	
-	// TODO
-	afterConfirmYes = yes;
-	afterConfirmNo  = no;
-	//binder.confirm(msg);
-	
-	return result;
+}
+// confirm 재정의
+var afterConfirmYes = function() {};
+var afterConfirmNo  = function() {};
+confirm = function(msg, yes, no) {
+	if (windowName) {
+		afterConfirmYes = yes ? yes : function() {};
+		afterConfirmNo  = no  ? no  : function() {};
+		if (opener) {
+			opener.binder.confirm(windowName, msg);
+		} else {
+			binder.confirm(windowName, msg);
+		}
+	} else {
+		var result = _confirm(msg);
+		if (result) {
+			if (yes) yes();
+		} else {
+			if (no) no();
+		}
+		return result;
+	}
 }

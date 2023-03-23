@@ -91,6 +91,7 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Binder.cs" />
+    <Compile Include="MessageBoxEx.cs" />
     <Compile Include="Popup.cs">
       <SubType>Form</SubType>
     </Compile>

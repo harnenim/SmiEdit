@@ -46,6 +46,7 @@ namespace SmiEdit
             mainView.LoadUrl(Path.Combine(Directory.GetCurrentDirectory(), "view/editor.html"));
             mainView.JavascriptObjectRepository.Settings.LegacyBindingEnabled = true;
             mainView.JavascriptObjectRepository.Register("binder", new Binder(this), false, BindingOptions.DefaultBinder);
+            mainView.RequestHandler = new RequestHandler(); // TODO: 팝업에서 이동을 막아야 되는데...
 
             timer.Interval = 10;
             timer.Enabled = true;
@@ -389,11 +390,45 @@ namespace SmiEdit
         public void RunReplace   (string param) { Script("SmiEditor.Finder.runReplace"   , param); }
         public void RunReplaceAll(string param) { Script("SmiEditor.Finder.runReplaceAll", param); }
 
-        public void UpdateViewerSetting(     ) { ScriptToPopup("viewer", "setSetting", strSettingJson); }
+        public void UpdateViewerSetting(     ) {
+            ScriptToPopup("viewer", "setSetting", strSettingJson);
+            ScriptToPopup("viewer", "setLines", viewerLines);
+        }
         public void UpdateViewerTime(int time) { ScriptToPopup("viewer", "refreshTime", time); }
         private string viewerLines = "[]";
         public void UpdateViewerLines(string lines) {
         	ScriptToPopup("viewer", "setLines", viewerLines = lines);
+        }
+
+        string msgTitle = "하늣 ;>ㅅ<;";
+        public void Alert(string target, string msg)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => { Alert(target, msg); }));
+            }
+            else
+            {
+                MessageBoxEx.Show(GetHwnd(target), msg, msgTitle);
+            }
+        }
+        public void Confirm(string target, string msg)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => { Confirm(target, msg); }));
+            }
+            else
+            {
+                if (MessageBoxEx.Show(GetHwnd(target), msg, msgTitle, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    Script("afterConfirmYes");
+                }
+                else
+                {
+                    Script("afterConfirmNo");
+                }
+            }
         }
         #endregion
 
