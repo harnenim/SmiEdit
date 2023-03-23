@@ -21,11 +21,7 @@ var binder = {
 	}
 };
 
-function requestClose() {
-	if (confirm("작업을 취소하시겠습니까?")) {
-		window.close();
-	}
-}
+requestClose = confirmCancel;
 
 
 function init() {

@@ -37,11 +37,7 @@ function ass2smiTime(time) {
 	return (Number(vs[0]) * 3600000) + (Number(vs[1]) * 60000) + (Number(vs[2].split(".").join("")) * 10);
 }
 
-function requestClose() {
-	if (confirm("작업을 취소하시겠습니까?")) {
-		window.close();
-	}
-}
+requestClose = confirmCancel;
 
 function splitOrigin() {
 	if (!origin) {

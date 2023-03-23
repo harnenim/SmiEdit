@@ -1,7 +1,6 @@
 ﻿var DEFAULT_SETTING =
 {	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
-	// TODO: 설정 기능..이 필요한가??
 	[	[	"파일(&F)"
 		,	"새 파일(&N)|newFile()"
 		,	"열기(&O)|openFile()"
@@ -13,6 +12,7 @@
 		,	"색상코드 입력(&C)|binder.runColorPicker()"
 		,	"특수태그 정규화(&N)|tabs[tab].normalize()"
 		,	"미리보기창 실행|SmiEditor.Viewer.open()"
+		,	"설정(&S)|openSetting()"
 		]
 	,	[	"부가기능(&A)"
 		,	"화면 싱크 매니저(&M)|openAddon('SyncManager')"
@@ -21,7 +21,6 @@
 		,	"싱크 유지 텍스트 대체(&F)|openAddon('Fusion');"
 		,	"맞춤법 검사기|extSubmit(\"post\", \"http://speller.cs.pusan.ac.kr/results\", \"text1\");"
 		,	"국어사전|extSubmit(\"get\", \"https://ko.dict.naver.com/%23/search\", \"query\");"
-		,	"설정(&S)|openSetting()"
 		]
 	,	[	"도움말(&H)"
 		,	"프로그램 정보|alert(\"설명 페이지 만들어야 되는데 귀찮\\n\\n변태적인 SMI 자막 제작 기능을 위해 만든 허접한 프로그램\")"
@@ -48,8 +47,8 @@
 	}
 ,	command:
 	{	withCtrls:
-		{	'1': 'editor.tagging("<font color=\\"#aaaaaa\\">")'
-		,	'2': '// 여러 줄에 자동으로 줄표 넣어주기\n'
+		{	'1': '/*색상태그*/\n" + "editor.tagging("<font color=\\"#aaaaaa\\">")'
+		,	'2': '/*여러 줄에 자동으로 줄표 넣어주기... 버그 있나?*/\n'
 			   + 'var text = editor.getText();\n'
 			   + 'var lines = text.text.split("\\n");\n'
 			   + 'var lineNo = text.text.substring(0, text.selection[0]).split("\\n").length - 1;\n'
@@ -74,10 +73,10 @@
 			   + '	lines.splice(lineRange[0], (lineRange[1] - lineRange[0]), newText);\n'
 			   + '	editor.setText(lines.join("\\n"), lineRange[0]);\n'
 			   + '}'
-		,	'3': 'editor.inputText("<br><b>　</b>")'
-		,	'4': 'editor.taggingRange("<i>")'
-		,	'5': 'editor.taggingRange("<u>")'
-		,	'6': '// RUBY 태그 생성([쓰기|읽기])\n'
+		,	'3': '/*공백줄*/\n" + "editor.inputText("<br><b>　</b>")'
+		,	'4': '/*기울임*/\n" + "editor.taggingRange("<i>")'
+		,	'5': '/*밑줄*/\n" + "editor.taggingRange("<u>")'
+		,	'6': '/*RUBY 태그 생성([쓰기|읽기])*/\n'
 			   + 'var text = editor.getText();\n'
 			   + 'if (text.selection[0] == text.selection[1]) {\n'
 			   + '	return;\n'
@@ -107,21 +106,22 @@
 			   + '}\nvar result = blocks.join("");\n'
 			   + '\n'
 			   + 'editor.setText(prev + result + next, [text.selection[0], text.selection[0] + result.length]);'
-		,	'M': 'openAddon("SyncManager");' // 예제
+		,	'M': '/*화면 싱크 매니저 실행*/\n" + "openAddon("SyncManager");' // 예제
 		}
 	,	withAlts:
-		{	"1": "var text = editor.getText();\nextSubmit(\"post\", \"http://speller.cs.pusan.ac.kr/results\", { text1: text.text.substring(text.selection[0], text.selection[1]) });"
-		,	"2": "var text = editor.getText();\nextSubmit(\"get\", \"https://ko.dict.naver.com/%23/search\", { query: text.text.substring(text.selection[0], text.selection[1]) });"
+		{	"1": "/*맞춤법 검사기*/\n" + "var text = editor.getText();\nextSubmit(\"post\", \"http://speller.cs.pusan.ac.kr/results\", { text1: text.text.substring(text.selection[0], text.selection[1]) });"
+		,	"2": "/*국어사전*/\n" + "var text = editor.getText();\nextSubmit(\"get\", \"https://ko.dict.naver.com/%23/search\", { query: text.text.substring(text.selection[0], text.selection[1]) });"
 		,	'M': 'openAddon("SyncManager");' // 예제
 		,	'N': 'openAddon("Normalizer");' // 예제 -> self.normalize()가 나은가...?
 		}
 	,	withCtrlAlts:
-		{	'C': 'openAddon("Combine");'
-		,	'D': 'openAddon("Devide");'
-		,	'F': 'openAddon("Fusion");'
+		{	'C': '/*겹치는 대사 합치기*/\n" + "openAddon("Combine");'
+		,	'D': '/*겹치는 대사 나누기*/\n" + "openAddon("Devide");'
+		,	'F': '/*싱크 유지 텍스트 대체*/\n" + "openAddon("Fusion");'
 		}
 	,	withCtrlShifts:
-		{	'F': 'editor.fillSync();'
+		{	'F': '/*중간 싱크 생성*/\n" + "editor.fillSync();'
+		,	'S': '/*설정*/\n" + "openSetting();'
 		,	'Q': 'editor.findSync();' // 웹브라우저로 테스트할 때 Alt+Q 안 돼서 넣은 건데 익숙해져버림...
 		}
 	}
@@ -158,9 +158,9 @@
 		+	"<STYLE TYPE=\"text/css\">\n"
 		+	"<!--\n"
 		+	"P { margin-left:8pt; margin-right:8pt; margin-bottom:2pt; margin-top:2pt;\n"
-		+	"text-align:center; font-size:14pt; font-family:맑은 고딕, 굴림, arial, sans-serif;\n"
-		+	"font-weight:normal; color:white;\n"
-		+	"background-color:black; }\n"
+		+	"    text-align:center; font-size:14pt; font-family:맑은 고딕, 굴림, arial, sans-serif;\n"
+		+	"    font-weight:normal; color:white;\n"
+		+	"    background-color:black; }\n"
 		+	".KRCC { Name:한국어; lang:ko-KR; SAMIType:CC; }\n"
 		+	"-->\n"
 		+	"</STYLE>\n"
@@ -175,8 +175,8 @@
 		+	"\n"
 		+	"</BODY>\n"
 		+	"</SAMI>"
-,	viewer: {
-		window:
+,	viewer:
+	{	window:
 		{	x: 640
 		,	y: 720
 		,	width: 1280
@@ -204,7 +204,7 @@
 		,	height: 720
 		,	use: true
 		}
-	,	exts: "mp4,mkv,avi,ts,m2ts" // 동영상 파일 찾기 우선순위 순으로 -> TODO: 기능 안 만듦...
+	,	exts: "mp4,mkv,avi,ts,m2ts" // 동영상 파일 찾기 우선순위 순으로
 	,	control: { // C#에서 플레이어 브리지 dll 폴더 긁어서 전달해주는 기능 필요?
 			dll: "PotPlayer" // 재생기 설정
 		,	PotPlayer:

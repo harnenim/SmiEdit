@@ -22,15 +22,19 @@ function setDroppable() {
 }
 
 function call(names, p0, p1, p2, p3, p4, p5, p6, p7, p8, p9) {
-	if (names != "refreshTime") {
+	if (names.indexOf("refreshTime") < 0) {
 		console.log(names);
 	}
-	var func = window;
+	var obj = window;
 	names = names.split(".");
-	for (var i = 0, name; name = names[i]; i++) {
-		func = func[name];
+	for (var i = 0; i < names.length - 1; i++) {
+		obj = obj[names[i]];
 	}
-	return func(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+	try {
+		var name = names[names.length - 1];
+		obj[name](p0, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+	} catch (e) {
+	}
 }
 
 $(function () {
@@ -80,3 +84,27 @@ $(function () {
 
 	if (window.binder) binder.initAfterLoad();
 });
+
+//alert 재정의
+_alert = alert;
+_confirm = confirm;
+alert = function(msg) {
+	_alert(msg);
+	// TODO
+	//binder.alert(msg);
+}
+confirm = function(msg, yes, no) {
+	var result = _confirm(msg);
+	if (result) {
+		if (yes) yes();
+	} else {
+		if (no) no();
+	}
+	
+	// TODO
+	afterConfirmYes = yes;
+	afterConfirmNo  = no;
+	//binder.confirm(msg);
+	
+	return result;
+}
