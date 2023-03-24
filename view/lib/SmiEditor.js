@@ -101,15 +101,15 @@ SmiEditor.setSetting = function(setting) {
 		}
 		
 		// 예약 단축키
-		SmiEditor.withCtrls["D"] = "/*줄 삭제*/ editor.deleteLine();";
-		SmiEditor.withCtrls["F"] = "/*찾기*/ SmiEditor.Finder.open();";
-		SmiEditor.withCtrls["H"] = "/*바꾸기*/ SmiEditor.Finder.openChange();";
-		SmiEditor.withCtrls["Q"] = "/*현재 위치 재생*/ editor.moveToSync();";
-		SmiEditor.withCtrls["Y"] = "/*다시 실행*/ editor.history.forward();";
-		SmiEditor.withCtrls["Z"] = "/*실행 취소*/ editor.history.back();";
-		SmiEditor.withAlts["Q"] = "/*재생 위치 찾기*/ editor.findSync();";
+		SmiEditor.withCtrls["D"] = "/* 줄 삭제        */ editor.deleteLine();";
+		SmiEditor.withCtrls["F"] = "/* 찾기           */ SmiEditor.Finder.open();";
+		SmiEditor.withCtrls["H"] = "/* 바꾸기         */ SmiEditor.Finder.openChange();";
+		SmiEditor.withCtrls["Q"] = "/* 현재 위치 재생 */ editor.moveToSync();";
+		SmiEditor.withCtrls["Y"] = "/* 다시 실행      */ editor.history.forward();";
+		SmiEditor.withCtrls["Z"] = "/* 실행 취소      */ editor.history.back();";
+		SmiEditor.withAlts ["Q"] = "/* 재생 위치 찾기 */ editor.findSync();";
 		SmiEditor.withCtrls.reserved += "DFHQYZ";
-		SmiEditor.withAlts.reserved += "Q";
+		SmiEditor.withAlts .reserved += "Q";
 		
 		// 설정값 반영
 		for (var i = 0; i < withs.length; i++) {
@@ -196,7 +196,6 @@ SmiEditor.prototype.bindEvent = function() {
 	});
 	
 	this.input.on("mousedown", function(e) {
-		// PageUp/Down 아닐 경우 커서 위치 초기화
 		editor.history.log();
 	});
 };
@@ -223,16 +222,23 @@ SmiEditor.activateKeyEvent = function() {
 				}
 				case 34: { // PgDn
 					if (hasFocus) {
-						/*
-						e.preventDefault();
-						editor.movePage(true);
-						*/
 						if (!e.shiftKey) {
 							editor.fixScrollAroundEvent();
 						}
 						editor.history.logIfCursorMoved();
 					}
 					break;
+				}
+				case 35: { // End
+					if (hasFocus) {
+						// 공백 줄일 경우 End키 이벤트 방지
+						// 블록지정일 경우 selectionStart가 문제될 수도 있긴 한데... 그렇게 쓰는 경우는 거의 없을 듯
+						var text = editor.input.val();
+						var index = editor.input[0].selectionEnd;
+						if (((index == 0) || (text[index-1] == '\n')) && (text[index] == '\n')) {
+							e.preventDefault();
+						} 
+					}
 				}
 				case 38: { // ↑
 					if (e.shiftKey) {
@@ -245,6 +251,7 @@ SmiEditor.activateKeyEvent = function() {
 								if (editor) {
 									e.preventDefault();
 									editor.moveSync(true);
+									return;
 								}
 							}
 						}
@@ -255,12 +262,14 @@ SmiEditor.activateKeyEvent = function() {
 								if (editor) {
 									e.preventDefault();
 									editor.moveSync(true);
+									return;
 								}
 							} else {
 								// 스크롤 이동
 								if (hasFocus) {
 									e.preventDefault();
 									editor.input.scrollTop(Math.max(0, editor.input.scrollTop() - LH));
+									return;
 								}
 							}
 						} else {
@@ -269,14 +278,21 @@ SmiEditor.activateKeyEvent = function() {
 								if (hasFocus) {
 									e.preventDefault();
 									editor.moveLine(false);
+									return;
 								}
 							} else {
 								
 							}
 						}
 					}
-					if (editor) {
-						editor.history.logIfCursorMoved();
+					if (hasFocus) {
+						// 커서가 맨 윗줄일 경우 맨 앞으로 가는 이벤트 방지
+						// 블록지정일 경우 애매...
+						if (editor.input.val().substring(0, editor.input[0].selectionEnd).indexOf("\n") < 0) {
+							e.preventDefault();
+						} else {
+							editor.history.logIfCursorMoved();
+						}
 					}
 					return;
 				}
@@ -290,6 +306,7 @@ SmiEditor.activateKeyEvent = function() {
 								if (editor) {
 									e.preventDefault();
 									editor.moveSync(false);
+									return;
 								}
 							}
 						}
@@ -300,12 +317,14 @@ SmiEditor.activateKeyEvent = function() {
 								if (editor) {
 									e.preventDefault();
 									editor.moveSync(false);
+									return;
 								}
 							} else {
 								// 스크롤 이동
 								if (hasFocus) {
 									e.preventDefault();
 									editor.input.scrollTop(editor.input.scrollTop() + LH);
+									return;
 								}
 							}
 						} else {
@@ -314,14 +333,21 @@ SmiEditor.activateKeyEvent = function() {
 								if (hasFocus) {
 									e.preventDefault();
 									editor.moveLine(true);
+									return;
 								}
 							} else {
 								
 							}
 						}
 					}
-					if (editor) {
-						editor.history.logIfCursorMoved();
+					if (hasFocus) {
+						// 커서가 맨 아랫줄일 경우 맨 뒤로 가는 이벤트 방지
+						// 블록지정일 경우 애매...
+						if (editor.input.val().substring(editor.input[0].selectionStart).indexOf("\n") < 0) {
+							e.preventDefault();
+						} else {
+							editor.history.logIfCursorMoved();
+						}
 					}
 					return;
 				}
@@ -352,7 +378,7 @@ SmiEditor.activateKeyEvent = function() {
 							}
 						}
 					}
-					if (editor) {
+					if (hasFocus) {
 						editor.history.logIfCursorMoved();
 					}
 					return;
@@ -384,7 +410,7 @@ SmiEditor.activateKeyEvent = function() {
 							}
 						}
 					}
-					if (editor) {
+					if (hasFocus) {
 						editor.history.logIfCursorMoved();
 					}
 					return;
@@ -448,16 +474,12 @@ SmiEditor.activateKeyEvent = function() {
 					break;
 				}
 				case 13: { // Enter
-					if (hasFocus) { // 크로뮴 textarea 버그 있음...
+					if (hasFocus) {
 						if (e.ctrlKey) { // Ctrl+Enter → <br>
 							e.preventDefault();
 							editor.insertBR();
 						} else {
-							/*
-							e.preventDefault();
-							editor.inputTextLikeNative("\n");
-							editor.input.scrollLeft(0); // 엔터일 땐 스크롤 맨 왼쪽
-							*/
+							// 크로뮴 textarea 줄바꿈 스크롤 버그...
 							editor.fixScrollAroundEvent(0);
 						}
 					}
@@ -503,7 +525,7 @@ SmiEditor.activateKeyEvent = function() {
 						}
 					}
 				}
-	
+				
 				if (f) {
 					e.preventDefault();
 					if (!hasFocus && editor) editor.input.focus();
@@ -512,7 +534,7 @@ SmiEditor.activateKeyEvent = function() {
 					if (type == "function") {
 						f();
 					} else if (type == "string") {
-						eval("(function(){" + f + "})()");
+						eval("(function(){ " + f + " })()");
 					}
 				}
 			}
@@ -581,6 +603,7 @@ SmiEditor.prototype.setText = function(text, selection) {
 	this.input.val(text);
 	if (selection) {
 		this.setCursor(selection[0], selection[1]);
+		this.scrollToCursor();
 	} else {
 		var cursor = this.input[0].selectionStart;
 		this.setCursor(cursor, cursor);
@@ -1604,11 +1627,6 @@ SmiEditor.Viewer = {
 					, true);
 		}
 	,	refresh: function() {
-			/*
-			if (this.window && this.window.refresh) {
-				this.window.refresh();
-			}
-			*/
 			binder.updateViewerLines(JSON.stringify(SmiEditor.selected ? SmiEditor.selected.lines : [["", 0, TYPE.TEXT]]));
 		}
 };
@@ -1775,5 +1793,4 @@ SmiEditor.prototype.shake = function() {
 			lastSync = [i, line];
 		}
 	}
-	
 };
