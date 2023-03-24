@@ -1,4 +1,4 @@
-﻿var showDrag = false;
+var showDrag = false;
 function setShowDrag(dragging) {
 	showDrag = dragging;
 }
