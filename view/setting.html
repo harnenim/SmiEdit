@@ -103,116 +103,76 @@ $(function() {
 		(refreshFuncs["window"] = function(setting) {
 			refresh($("#window"), setting);
 			
-			var editor = [setting.window, fieldEditor];
+			// 값에 맞춰 fieldset 이동
+			var editor = [setting.window       , fieldEditor];
 			var viewer = [setting.viewer.window, fieldViewer];
 			var player = [setting.player.window, fieldPlayer];
-	
-			var xs = [];
-			if (editor[0].x < viewer[0].x) {
-				xs = [[editor], [viewer]];
-			} else if (editor[0].x > viewer[0].x) {
-				xs = [[viewer], [editor]];
-			} else {
-				xs = [[editor, viewer]];
+			
+			var ecss = {};
+			var vcss = {};
+			var pcss = {};
+			
+			function setLeft(css, x) {
+				css.left = x + 1;
 			}
-			if (player[0].x < xs[0][0][0].x) {
-				xs = [[player]].concat(xs);
-			} else if (player[0].x == xs[0][0][0].x) {
-				xs[0].push(player);
-			} else if (xs.length > 1) {
-				if (player[0].x < xs[1][0][0].x) {
-					xs = [xs[0], [player], xs[1]];
-				} else if (player[0].x == xs[1][0][0].x) {
-					xs[1].push(player);
-				} else {
-					xs.push([player]);
+			function setRight(css, x) {
+				css.width = (x - css.left - 2) + "%";
+				css.left = css.left + "%";
+			}
+			function setTop(css, y) {
+				css.top = y + 1;
+			}
+			function setBottom(css, y) {
+				css.height = (y - css.top - 2) + "%";
+				css.top = css.top + "%";
+			}
+
+			var targetXY = [
+				[	[ editor[0].x, function(x) { setLeft(ecss, x); } ]
+				,	[ editor[0].x + editor[0].width, function(x) { setRight(ecss, x); } ]
+				,	[ viewer[0].x, function(x) { setLeft(vcss, x); } ]
+				,	[ viewer[0].x + viewer[0].width, function(x) { setRight(vcss, x); } ]
+				,	[ player[0].x, function(x) { setLeft(pcss, x); } ]
+				,	[ player[0].x + player[0].width, function(x) { setRight(pcss, x); } ]
+				]
+			,	[	[ editor[0].y, function(y) { setTop(ecss, y); } ]
+				,	[ editor[0].y + editor[0].height, function(y) { setBottom(ecss, y); } ]
+				,	[ viewer[0].y, function(y) { setTop(vcss, y); } ]
+				,	[ viewer[0].y + viewer[0].height, function(y) { setBottom(vcss, y); } ]
+				,	[ player[0].y, function(y) { setTop(pcss, y); } ]
+				,	[ player[0].y + player[0].height, function(y) { setBottom(pcss, y); } ]
+				]
+			];
+			for (var xy = 0; xy < 2; xy++) {
+				var targets = targetXY[xy];
+				targets.sort(function(a, b) { return a[0] - b[0]; });
+				
+				var last = [targets[0]];
+				var ps = [last];
+				for (var i = 1; i < targets.length; i++) {
+					var curr = targets[i];
+					if (curr[0] == last[0][0]) {
+						last.push(curr);
+					} else {
+						last = [curr];
+						ps.push(last);
+					}
 				}
-			} else {
-				xs.push([player]);
+				function getPos(i) {
+					return 1 + ((98 / (ps.length - 1)) * i);
+				}
+				for (var i = 0; i < ps.length; i++) {
+					var curr = ps[i];
+					for (var j = 0; j < curr.length; j++) {
+						curr[j][1](getPos(i));
+					}
+				}
 			}
 			
-			var ys = [];
-			if (editor[0].y < viewer[0].y) {
-				ys = [[editor], [viewer]];
-			} else if (editor[0].y > viewer[0].y) {
-				ys = [[viewer], [editor]];
-			} else {
-				ys = [[editor, viewer]];
-			}
-			if (player[0].y < ys[0][0][0].y) {
-				ys = [[player]].concat(ys);
-			} else if (player[0].y == ys[0][0][0].y) {
-				ys[0].push(player);
-			} else if (ys.length > 1) {
-				if (player[0].y < ys[1][0][0].y) {
-					ys = [ys[0], [player], ys[1]];
-				} else if (player[0].y == ys[1][0][0].y) {
-					ys[1].push(player);
-				} else {
-					ys.push([player]);
-				}
-			} else {
-				ys.push([player]);
-			}
+			fieldEditor.css(ecss);
+			fieldViewer.css(vcss);
+			fieldPlayer.css(pcss);
 			
-			switch (xs.length) {
-				case 1: {
-					for (var i = 0; i < xs[0].length; i++) {
-						xs[0][i][1].css({ left: "4%", width: "92%" });
-					}
-					break;
-				}
-				case 2: {
-					for (var i = 0; i < xs[0].length; i++) {
-						xs[0][i][1].css({ left: "4%", width: "44%" });
-					}
-					for (var i = 0; i < xs[1].length; i++) {
-						xs[1][i][1].css({ left: "52%", width: "44%" });
-					}
-					break;
-				}
-				case 3: {
-					for (var i = 0; i < xs[0].length; i++) {
-						xs[0][i][1].css({ left: "4%", width: "26%" });
-					}
-					for (var i = 0; i < xs[1].length; i++) {
-						xs[1][i][1].css({ left: "34%", width: "26%" });
-					}
-					for (var i = 0; i < xs[2].length; i++) {
-						xs[2][i][1].css({ left: "64%", width: "26%" });
-					}
-					break;
-				}
-			}
-			switch (ys.length) {
-				case 1: {
-					for (var i = 0; i < ys[0].length; i++) {
-						ys[0][i][1].css({ top: "4%", height: "92%" });
-					}
-					break;
-				}
-				case 2: {
-					for (var i = 0; i < ys[0].length; i++) {
-						ys[0][i][1].css({ top: "4%", height: "44%" });
-					}
-					for (var i = 0; i < ys[1].length; i++) {
-						ys[1][i][1].css({ top: "52%", height: "44%" });
-					}
-					break;
-				}
-				case 3: {
-					for (var i = 0; i < ys[0].length; i++) {
-						ys[0][i][1].css({ top: "4%", height: "26%" });
-					}
-					for (var i = 0; i < ys[1].length; i++) {
-						ys[1][i][1].css({ top: "34%", height: "26%" });
-					}
-					for (var i = 0; i < ys[2].length; i++) {
-						ys[2][i][1].css({ top: "64%", height: "26%" });
-					}
-					break;
-				}
-			}
 			setSaved("window", setting == opener.setting);
 		})(setting);
 	
@@ -817,10 +777,12 @@ fieldset {
 #fieldViewer,
 #fieldPlayer {
 	position: absolute;
-	border: 1px solid #000;
-	border-radius: 6px;
-	margin-bottom: 4px;
-	padding: 8px;
+}
+#fieldEditor:hover,
+#fieldViewer:hover,
+#fieldPlayer:hover {
+	z-index: 9999;
+	background: #f8f8f8;
 }
 
 /* 단축키 */
@@ -875,7 +837,7 @@ fieldset {
 #menu input,
 #menu button.add-menu { width: 200px; }
 #menu input.menu-func { width: calc(100% - 216px); }
-#menu > button.add-menu { width: 216px; }
+#menu > button.add-menu { width: 216px; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -928,7 +890,7 @@ fieldset {
 		<label>싱크 수정 시 <input type="number" name="sync_update" />줄 아래로 이동</label><br />
 		<label>싱크 가중치: <input type="number" name="sync_weight" />ms</label><br />
 		<label>싱크 조절 단위: <input type="number" name="sync_unit" />ms</label><br />
-		<label>재생 앞뒤 이동 단위: <input type="number" name="sync_move" />ms</label><br />
+		<label>재생 이동 단위: <input type="number" name="sync_move" />ms</label><br />
 		<label>싱크 언어: <input type="text" name="sync_lang" /></label><br />
 		<label>싱크 태그 형태: <input type="text" name="sync_preset" style="width: 400px;" /></label><br />
 	</form>
@@ -1124,8 +1086,6 @@ fieldset {
 			</li>
 		</ol>
 		<button type="button" class="add-menu">추가</button>
-		<div>
-		</div>
 	</form>
 </div>
 <div id="applyArea">

@@ -1,11 +1,11 @@
-﻿var DEFAULT_SETTING =
+var DEFAULT_SETTING =
 {	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
 		,	"새 파일(&N)|newFile()"
-		,	"열기(&O)|openFile()"
+		,	"열기(&O)...|openFile()"
 		,	"저장(&S)|saveFile()"
-		,	"다른 이름으로 저장(&A)|saveFile(true)"
+		,	"다른 이름으로 저장(&A)...|saveFile(true)"
 		]
 	,	[	"편집(&S)"
 		,	"찾기/바꾸기(&F)|SmiEditor.Finder.open()"
@@ -23,10 +23,11 @@
 		,	"국어사전|extSubmit(\"get\", \"https://ko.dict.naver.com/%23/search\", \"query\");"
 		]
 	,	[	"도움말(&H)"
-		,	"프로그램 정보|alert(\"설명 페이지 만들어야 되는데 귀찮\\n\\n변태적인 SMI 자막 제작 기능을 위해 만든 허접한 프로그램\")"
+		,	"프로그램 정보|openHelp('info')"
+		,	"기본 단축키|openHelp('key')"
 		,	"화면 싱크 매니저 사용법(구버전임)|SmiEditor.Addon.open('https://noitamina.moe/SyncManager/index.html')"
-		,	"싱크 표현에 대하여|alert(\"설명 페이지 만들어야 되는데 귀찮\\n\\n본 프로그램에선 일반적인 프로그램과 달리, 화면 싱크 기능이 존재합니다.\\n화면 싱크는 싱크 줄 맨 뒤의 닫는 꺽쇠(>) 앞의 공백문자로 구분되며\\n화면 싱크 매니저를 통해 Aegisub에서 편집할 수 있도록 지원합니다.\\n\\n그 외에, 탭문자로 중간 싱크를 체크하고 있으며\\n정규화를 거치면 자동으로 중간 싱크가 생성됩니다.\\n해당 기능과 관련해서, 한 싱크의 대사가 여러 줄이 되는 경우를 권장하지 않습니다.\")"
-		,	"특수 태그에 대하여|alert(\"설명 페이지 만들어야 되는데 귀찮\\n\\n다음과 같은 특수 태그가 존재하며, 정규화를 통해 출력값을 만들어줍니다.\\n해당 기능은 탭문자로 체크된 중간 싱크를 생성합니다.\\n(─라고 써놓고 파싱 로직 수정하다 말았음)\\n\\n<font color=\\\"#9abcde\\\" fade=\\\"in\\\">페이드 인</font>\\n<font color=\\\"#89abcd\\\" fade=\\\"out\\\">페이드 아웃</font>\\n<font typing='typewriter'>테스트텍스트</font>\\n<font typing='keyboard'>테스트텍스트</font>\\n<font typing='keyboard(]'>테스트텍스트</font>\\n<font typing='keyboard[]'>테스트텍스트</font>\\n<font typing='keyboard invisible'>테스트텍스트</font>\\n<font typing='keyboard hangeul'>test텍스트</font>\\n\\n페이드 기능은 한 대사에 여러개를 넣을 수 있지만\\n타이핑 기능은 한 대사에 하나로 제한됩니다.\")"
+		,	"싱크 표현에 대하여|openHelp('aboutSync')"
+		,	"특수 태그에 대하여|openHelp('aboutTag')"
 		]
 	]
 ,	window:
@@ -47,8 +48,8 @@
 	}
 ,	command:
 	{	withCtrls:
-		{	'1': '/*색상태그*/\n" + "editor.tagging("<font color=\\"#aaaaaa\\">")'
-		,	'2': '/*여러 줄에 자동으로 줄표 넣어주기... 버그 있나?*/\n'
+		{	'1': '/* 색상태그 */\n' + 'editor.tagging("<font color=\\"#aaaaaa\\">")'
+		,	'2': '/* 여러 줄에 자동으로 줄표 넣어주기 */\n'
 			   + 'var text = editor.getText();\n'
 			   + 'var lines = text.text.split("\\n");\n'
 			   + 'var lineNo = text.text.substring(0, text.selection[0]).split("\\n").length - 1;\n'
@@ -60,7 +61,7 @@
 			   + '	}\n'
 			   + '	lineRange[0]--;\n'
 			   + '}\n'
-			   + 'while (lineRange[1] < lines.length) {\n'
+			   + 'while (lineRange[1] < Math.min(lines.length, lineRange[0] + 5)) { // 과도한 작업 방지\n'
 			   + '	if (lines[lineRange[1]].substring(0, 6).toUpperCase() == "<SYNC ") {\n'
 			   + '		lineRange[1]--;\n'
 			   + '		break;\n'
@@ -70,13 +71,14 @@
 			   + 'if (lineRange[0] < lineRange[1]) {\n'
 			   + '	lineRange[1]++;\n'
 			   + '	var newText = "- " + lines.slice(lineRange[0], lineRange[1]).join("<br>- ");\n'
+			   + '	var cursor = lines.slice(0, lineRange[0]).join("\\n").length + 1;\n'
 			   + '	lines.splice(lineRange[0], (lineRange[1] - lineRange[0]), newText);\n'
-			   + '	editor.setText(lines.join("\\n"), lineRange[0]);\n'
+			   + '	editor.setText(lines.join("\\n"), [cursor, cursor]);\n'
 			   + '}'
-		,	'3': '/*공백줄*/\n" + "editor.inputText("<br><b>　</b>")'
-		,	'4': '/*기울임*/\n" + "editor.taggingRange("<i>")'
-		,	'5': '/*밑줄*/\n" + "editor.taggingRange("<u>")'
-		,	'6': '/*RUBY 태그 생성([쓰기|읽기])*/\n'
+		,	'3': '/* 공백줄 */\n' + 'editor.inputText("<br><b>　</b>")'
+		,	'4': '/* 기울임 */\n' + 'editor.taggingRange("<i>")'
+		,	'5': '/* 밑줄 */\n'   + 'editor.taggingRange("<u>")'
+		,	'6': '/* RUBY 태그 생성([쓰기|읽기]) */\n'
 			   + 'var text = editor.getText();\n'
 			   + 'if (text.selection[0] == text.selection[1]) {\n'
 			   + '	return;\n'
@@ -106,22 +108,22 @@
 			   + '}\nvar result = blocks.join("");\n'
 			   + '\n'
 			   + 'editor.setText(prev + result + next, [text.selection[0], text.selection[0] + result.length]);'
-		,	'M': '/*화면 싱크 매니저 실행*/\n" + "openAddon("SyncManager");' // 예제
+		,	'M': '/* 화면 싱크 매니저 실행 */\n' + 'openAddon("SyncManager");' // 예제
 		}
 	,	withAlts:
-		{	"1": "/*맞춤법 검사기*/\n" + "var text = editor.getText();\nextSubmit(\"post\", \"http://speller.cs.pusan.ac.kr/results\", { text1: text.text.substring(text.selection[0], text.selection[1]) });"
-		,	"2": "/*국어사전*/\n" + "var text = editor.getText();\nextSubmit(\"get\", \"https://ko.dict.naver.com/%23/search\", { query: text.text.substring(text.selection[0], text.selection[1]) });"
+		{	'1': '/* 맞춤법 검사기 */\n' + 'var text = editor.getText();\nextSubmit("post", "http://speller.cs.pusan.ac.kr/results", { text1: text.text.substring(text.selection[0], text.selection[1]) });'
+		,	'2': '/* 국어사전 */\n'      + 'var text = editor.getText();\nextSubmit("get", "https://ko.dict.naver.com/%23/search", { query: text.text.substring(text.selection[0], text.selection[1]) });'
 		,	'M': 'openAddon("SyncManager");' // 예제
 		,	'N': 'openAddon("Normalizer");' // 예제 -> self.normalize()가 나은가...?
 		}
 	,	withCtrlAlts:
-		{	'C': '/*겹치는 대사 합치기*/\n" + "openAddon("Combine");'
-		,	'D': '/*겹치는 대사 나누기*/\n" + "openAddon("Devide");'
-		,	'F': '/*싱크 유지 텍스트 대체*/\n" + "openAddon("Fusion");'
+		{	'C': '/* 겹치는 대사 합치기 */\n' + 'openAddon("Combine");'
+		,	'D': '/* 겹치는 대사 나누기 */\n' + 'openAddon("Devide");'
+		,	'F': '/* 싱크 유지 텍스트 대체 */\n' + 'openAddon("Fusion");'
 		}
 	,	withCtrlShifts:
-		{	'F': '/*중간 싱크 생성*/\n" + "editor.fillSync();'
-		,	'S': '/*설정*/\n" + "openSetting();'
+		{	'F': '/* 중간 싱크 생성 */\n' + 'editor.fillSync();'
+		,	'S': '/* 설정 */\n' + 'openSetting();'
 		,	'Q': 'editor.findSync();' // 웹브라우저로 테스트할 때 Alt+Q 안 돼서 넣은 건데 익숙해져버림...
 		}
 	}

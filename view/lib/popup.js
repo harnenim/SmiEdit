@@ -1,4 +1,4 @@
-﻿$(document).on("keydown", function(e) {
+$(document).on("keydown", function(e) {
 	switch (e.keyCode) {
 		case 27: { // Esc
 			requestClose();
@@ -46,11 +46,13 @@ var afterConfirmYes = function() {};
 var afterConfirmNo  = function() {};
 confirm = function(msg, yes, no) {
 	if (windowName) {
-		afterConfirmYes = yes ? yes : function() {};
-		afterConfirmNo  = no  ? no  : function() {};
 		if (opener) {
+			opener.afterConfirmYes = yes ? yes : function() {};
+			opener.afterConfirmNo  = no  ? no  : function() {};
 			opener.binder.confirm(windowName, msg);
 		} else {
+			afterConfirmYes = yes ? yes : function() {};
+			afterConfirmNo  = no  ? no  : function() {};
 			binder.confirm(windowName, msg);
 		}
 	} else {
