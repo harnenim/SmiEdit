@@ -71,7 +71,7 @@ namespace SmiEdit
                     windows.Add("editor", Handle.ToInt32());
 
                     Script("init", strSettingJson); // C#에서 객체 그대로 못 보내주므로 json string 만드는 걸로
-                    Script("setPlayerDlls", "|(없음),PotPlayer|팟플레이어"); // TODO: dll 폴더 내용물 체크하는 것 필요...
+                    Script("setPlayerDlls", "NoPlayer|(없음),PotPlayer|팟플레이어"); // TODO: dll 폴더 내용물 체크하는 것 필요...
                     Script("setDroppable");
 
                     WinAPI.GetWindowRect(windows["editor"], ref lastOffset);
@@ -297,12 +297,26 @@ namespace SmiEdit
              && (offset.top > -32000) // 창 최소화 시 문제
             )
             {
+                int moveX = offset.left - lastOffset.left;
+                int moveY = offset.top - lastOffset.top;
+            	
                 try
                 {
                     int viewer = windows["viewer"];
                     if (viewer > 0)
                     {
-                        WinAPI.MoveWindow(viewer, offset.left - lastOffset.left, offset.top - lastOffset.top, ref viewerOffset);
+                        int vMoveX = moveX;
+                        int vMoveY = moveY;
+                        WinAPI.GetWindowRect(viewer, ref viewerOffset);
+                        if (viewerOffset.left - lastOffset.left > lastOffset.right - viewerOffset.left)
+                        {   // 오른쪽 경계에 더 가까울 땐 오른쪽을 따라감
+                            vMoveX = offset.right - lastOffset.right;
+                        }
+                        if (viewerOffset.top - lastOffset.top > lastOffset.top - viewerOffset.top)
+                        {   // 아래쪽 경계에 더 가까울 땐 아래쪽을 따라감
+                            vMoveY = offset.bottom - lastOffset.bottom;
+                        }
+                        WinAPI.MoveWindow(viewer, vMoveX, vMoveY, ref viewerOffset);
                     }
                 }
                 catch { }
@@ -310,7 +324,18 @@ namespace SmiEdit
                 int player = this.player.hwnd;
                 if (player > 0)
                 {
-                    this.player.MoveWindow(offset.left - lastOffset.left, offset.top - lastOffset.top);
+                    int pMoveX = moveX;
+                    int pMoveY = moveY;
+                    SmiEditBridge.RECT playerOffset = this.player.GetWindowPosition();
+                    if (playerOffset.left - lastOffset.left > lastOffset.right - playerOffset.left)
+                    {   // 오른쪽 경계에 더 가까울 땐 오른쪽을 따라감
+                        pMoveX = offset.right - lastOffset.right;
+                    }
+                    if (playerOffset.top - lastOffset.top > playerOffset.top - viewerOffset.top)
+                    {   // 아래쪽 경계에 더 가까울 땐 아래쪽을 따라감
+                        pMoveY = offset.bottom - lastOffset.bottom;
+                    }
+                    this.player.MoveWindow(pMoveX, pMoveY);
                 }
 
                 lastOffset = offset;
@@ -480,7 +505,18 @@ namespace SmiEdit
             else
             {
                 // TODO: DLL 불러오기 필요?
-                player = new PotPlayerBridge(exe);
+                if (dll.Equals("NoPlayer"))
+                {
+                    player = new NoPlayer(exe);
+                }
+                else if (dll.Equals("PotPlayer"))
+                {
+                    player = new PotPlayerBridge(exe);
+                }
+                else
+                {
+                    player = null;
+                }
             }
         }
 
