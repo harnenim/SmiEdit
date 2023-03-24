@@ -21,7 +21,14 @@ namespace SmiEdit
             mainView.JavascriptObjectRepository.Settings.LegacyBindingEnabled = true;
             mainView.JavascriptObjectRepository.Register("binder", new PopupBinder(this), false, BindingOptions.DefaultBinder);
 
+            FormClosing += new FormClosingEventHandler(WebFormClosing);
             FormClosed += new FormClosedEventHandler(WebFormClosed);
+        }
+
+        public void WebFormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = true;
+            Hide();
         }
 
         public void WebFormClosed(object sender, FormClosedEventArgs e)

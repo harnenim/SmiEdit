@@ -9,7 +9,7 @@ namespace SmiEdit
     {
         private readonly MainForm mainForm;
 
-        public const bool useCustomPopup = false;
+        public const int useCustomPopup = 0; // 1: viewer만 / 2: viewer & finder
 
         public LSH(MainForm mainForm)
         {
@@ -22,37 +22,30 @@ namespace SmiEdit
             , IPopupFeatures popupFeatures, IWindowInfo windowInfo, IBrowserSettings browserSettings
             , ref bool noJavascriptAccess, out IWebBrowser newBrowser)
         {
-            if (useCustomPopup)
+            string name = targetFrameName;
+            if ((useCustomPopup > 0 && name.Equals("viewer")) || (useCustomPopup > 1 && name.Equals("finder")))
             {
-                string name = targetFrameName;
-                if (name.Equals("finder") || name.Equals("viewer"))
+                Popup popup = mainForm.GetPopup(name);
+                if (popup == null)
                 {
-                    Popup popup = mainForm.GetPopup(name);
-                    if (popup == null)
-                    {
-                        popup = new Popup(mainForm, name, targetUrl);
-                        popup.Text = name.Equals("finder") ? "찾기/바꾸기" : "미리보기";
-                        popup.Show();
-                        mainForm.SetWindow(name, popup.Handle.ToInt32(), popup);
-                    }
-                    else
-                    {
-                        try
-                        {
-                            WinAPI.SetForegroundWindow(popup.Handle.ToInt32());
-                            popup.mainView.Focus();
-                            popup.SetFocus();
-                        }
-                        finally { }
-                    }
-                    newBrowser = null;
-                    return true;
+                    popup = new Popup(mainForm, name, targetUrl);
+                    popup.Text = name.Equals("viewer") ? "미리보기" : "찾기/바꾸기";
+                    popup.Show();
+                    mainForm.SetWindow(name, popup.Handle.ToInt32(), popup);
                 }
                 else
                 {
-                    newBrowser = null;
-                    return false;
+                    try
+                    {
+                        popup.Show();
+                        WinAPI.SetForegroundWindow(popup.Handle.ToInt32());
+                        popup.mainView.Focus();
+                        popup.SetFocus();
+                    }
+                    finally { }
                 }
+                newBrowser = null;
+                return true;
             }
             else
             {
@@ -69,10 +62,7 @@ namespace SmiEdit
             {
                 int hwnd = browser.GetHost().GetWindowHandle().ToInt32();
                 mainForm.SetWindow(names[0], hwnd);
-                if (!useCustomPopup)
-                {
-                    mainForm.SetFocus(chromiumWebBrowser);
-                }
+                mainForm.SetFocus(hwnd);
             }
         }
 

@@ -130,10 +130,5 @@ namespace SmiEdit
             _.AfterTransform(output);
         }
         #endregion
-
-        public void Test(object obj)
-        {
-            _.Test(obj);
-        }
     }
 }

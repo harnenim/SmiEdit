@@ -52,6 +52,7 @@ namespace SmiEdit
             timer.Enabled = true;
             timer.Tick += FollowWindow;
             timer.Tick += RefreshPlayer;
+            timer.Tick += FocusIfRequested;
             timer.Start();
 
             FormClosing += new FormClosingEventHandler(BeforeExit);
@@ -84,15 +85,10 @@ namespace SmiEdit
         {
             RemoveWindow(name); // 남아있을 수 있음
             windows.Add(name, hwnd);
-            if (name.Equals("viewer") || name.Equals("finder"))
+            if ((LSH.useCustomPopup < 1 && name.Equals("viewer"))
+                || (LSH.useCustomPopup < 2 && name.Equals("finder")))
             {
-                if (!LSH.useCustomPopup)
-                {
-                    Invoke(new Action(() =>
-                    {
-                        WinAPI.SetTaskbarHide(hwnd);
-                    }));
-                }
+                WinAPI.SetTaskbarHide(hwnd);
             }
         }
         public void SetWindow(string name, int hwnd, Popup popup)
@@ -111,18 +107,41 @@ namespace SmiEdit
             return popups.ContainsKey(name) ? popups[name] : null;
         }
         // window.open 시에 브라우저에 커서 가도록
-        public void SetFocus(IWebBrowser chromiumWebBrowser)
+        public void SetFocus(int hwnd)
         {
-            if (InvokeRequired)
+            if (LSH.useCustomPopup > 0)
             {
-                Invoke(new Action(() =>
-                {
-                    SetFocus(chromiumWebBrowser);
-                }));
+                requestFocus = hwnd;
+            }
+            else if (InvokeRequired)
+            {
+                Invoke(new Action(() => { SetFocus(hwnd); }));
             }
             else
             {
-                chromiumWebBrowser.Focus();
+                mainView.Focus();
+            }
+        }
+        private int requestFocus = 0;
+        public void FocusIfRequested(object sender, EventArgs e)
+        {
+            if (requestFocus > 0)
+            {
+                if (InvokeRequired)
+                {
+                    Invoke(new Action(() => { FocusIfRequested(sender, e); }));
+                }
+                else
+                {
+                    Console.WriteLine("focus");
+                    mainView.Focus();
+                    requestFocus = -requestFocus;
+                }
+            }
+            else if (requestFocus < 0)
+            {
+                WinAPI.SetForegroundWindow(-requestFocus);
+                requestFocus = 0;
             }
         }
 
@@ -387,23 +406,17 @@ namespace SmiEdit
 
         protected void ScriptToPopup(string name, string func, object arg)
         {
-            if (LSH.useCustomPopup)
+            if (LSH.useCustomPopup < 1 && name.Equals("viewer"))
             {
-                if (popups.ContainsKey(name))
-                {
-                    popups[name].Script(func, arg);
-                }
+                Script("SmiEditor.Viewer.window." + func, arg);
             }
-            else
+            else if (LSH.useCustomPopup < 2 && name.Equals("finder"))
             {
-                if (name.Equals("viewer"))
-                {
-                    Script("SmiEditor.Viewer.window." + func, arg);
-                }
-                else if (name.Equals("finder"))
-                {
-                    Script("SmiEditor.Finder.window." + func, arg);
-                }
+                Script("SmiEditor.Finder.window." + func, arg);
+            }
+            else if (popups.ContainsKey(name))
+            {
+                popups[name].Script(func, arg);
             }
         }
         
@@ -427,8 +440,7 @@ namespace SmiEdit
 
         string msgTitle = "하늣 ;>ㅅ<;";
         public void Alert(string target, string msg)
-        {
-            if (InvokeRequired)
+        {if (InvokeRequired)
             {
                 Invoke(new Action(() => { Alert(target, msg); }));
             }
@@ -465,8 +477,6 @@ namespace SmiEdit
                 StreamReader sr = new StreamReader("view/setting.json", Encoding.UTF8);
                 strSettingJson = sr.ReadToEnd();
                 sr.Close();
-
-                //setting = JObject.Parse(strSettingJson);
             }
             catch (Exception e)
             {
@@ -478,8 +488,6 @@ namespace SmiEdit
         {
             this.strSettingJson = strSettingJson;
             Console.WriteLine("save setting: " + strSettingJson);
-
-            //setting = JObject.Parse(strSettingJson);
 
             StreamWriter sw = new StreamWriter("view/setting.json", false, Encoding.UTF8);
             sw.WriteLine(strSettingJson);
@@ -819,13 +827,5 @@ namespace SmiEdit
             Script("SmiEditor.afterTransform", text);
         }
         #endregion
-
-        public void Test(object obj)
-        {
-            Console.WriteLine(obj);
-            //Script("test", new object[] { obj });
-            //mainView.JavascriptObjectRepository.Register("test", obj, false, BindingOptions.DefaultBinder);
-            //Script("eval", new object[] { "console.log(test)" });
-        }
     }
 }
