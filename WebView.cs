@@ -69,7 +69,7 @@ namespace SmiEdit
             {
                 int hwnd = browser.GetHost().GetWindowHandle().ToInt32();
                 mainForm.SetWindow(names[0], hwnd);
-                if (names[0].Equals("finder"))
+                if (!useCustomPopup)
                 {
                     mainForm.SetFocus(chromiumWebBrowser);
                 }
