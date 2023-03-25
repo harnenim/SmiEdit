@@ -28,6 +28,7 @@ var SmiEditor = function(text, path) {
 	if (text) {
 		text = text.split("\r\n").join("\n");
 		this.input.val(text);
+		this.setCursor(0)
 		this.saved = text;
 	} else {
 		this.saved = "";
@@ -46,7 +47,7 @@ var SmiEditor = function(text, path) {
 	
 	this.history = new History(this.input, 32, function() {
 		editor.scrollToCursor();
-		editor.updateSync([0, editor.lines.length]); // 커서 위치와 관계없이 갱신
+		editor.updateSync();
 	});
 	setTimeout(function() {
 		editor.act = new AutoCompleteTextarea(editor.input, SmiEditor.autoComplete, function() {
@@ -812,20 +813,22 @@ SmiEditor.prototype.toggleSyncType = function() {
 	for (var i = lineNo; i >= 0; i--) {
 		if (this.lines[i][LINE.SYNC]) {
 			var line = this.lines[i];
+			var newLine = {}; newLine[LINE.SYNC] = line[LINE.SYNC];
 			if (line[LINE.TYPE] == TYPE.BASIC) { // 화면 싱크 할당
 				var index = line[LINE.TEXT].lastIndexOf(">");
-				line[LINE.TEXT] = line[LINE.TEXT].substring(0, index) + " " + line[LINE.TEXT].substring(index);
-				line[LINE.TYPE] = TYPE.FRAME;
+				newLine[LINE.TEXT] = line[LINE.TEXT].substring(0, index) + " " + line[LINE.TEXT].substring(index);
+				newLine[LINE.TYPE] = TYPE.FRAME;
 				if (i < lineNo) cursor++;
 			} else if (line[LINE.TYPE] == TYPE.FRAME) { // 화면 싱크 해제
 				var index = line[LINE.TEXT].lastIndexOf(" >");
-				line[LINE.TEXT] = line[LINE.TEXT].substring(0, index) + line[LINE.TEXT].substring(index + 1);
-				line[LINE.TYPE] = TYPE.BASIC;
+				newLine[LINE.TEXT] = line[LINE.TEXT].substring(0, index) + line[LINE.TEXT].substring(index + 1);
+				newLine[LINE.TYPE] = TYPE.BASIC;
 				if (i < lineNo) cursor--;
 			} else {
 				return;
 			}
-			this.input.val(text = linesToText(this.lines));
+			this.input.val(text = linesToText(this.lines.slice(0, i).concat(newLine, this.lines.slice(i + 1))));
+			this.updateSync();
 			this.setCursor(cursor, cursor);
 			
 			this.history.log();
