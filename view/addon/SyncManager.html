@@ -157,6 +157,7 @@ function splitOrigin() {
 	var requiredEnd = false;
 	for (var i = syncs.length - 1; i >= 0; i--) {
 		var sync = syncs[i];
+		if (sync.end == 0) sync.end = 35999999; // 마지막 싱크는 종료 시간이 없을 수 있음
 		if (sync.startType == 2) {
 			var text = $("<span>").html(sync.lines.join("\\N").split(/<br>/gi).join("\\N")).text().trim();
 			if (requiredEnd) {

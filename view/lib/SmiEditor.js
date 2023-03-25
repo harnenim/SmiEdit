@@ -232,13 +232,29 @@ SmiEditor.activateKeyEvent = function() {
 				}
 				case 35: { // End
 					if (hasFocus) {
-						// 공백 줄일 경우 End키 이벤트 방지
-						// 블록지정일 경우 selectionStart가 문제될 수도 있긴 한데... 그렇게 쓰는 경우는 거의 없을 듯
-						var text = editor.input.val();
-						var index = editor.input[0].selectionEnd;
-						if (((index == 0) || (text[index-1] == '\n')) && (text[index] == '\n')) {
-							e.preventDefault();
-						} 
+						if (e.ctrlKey) {
+							// TODO: Ctrl+End 왜 기본 동작 안 하지...?
+							var text = editor.input.val();
+							var cursor = text.length;
+							if (e.shiftKey) {
+								// 블록지정 올라가다 내려갈 경우 문제될 수도 있긴 한데...
+								editor.setCursor(editor.input[0].selectionStart, cursor);
+							} else {
+								editor.setCursor(cursor);
+							}
+							setTimeout(function() {
+								editor.scrollToCursor();
+							}, 1);
+						
+						} else {
+							// 공백 줄일 경우 End키 이벤트 방지
+							// 블록지정일 경우 selectionStart가 문제될 수도 있긴 한데... 그렇게 쓰는 경우는 거의 없을 듯
+							var text = editor.input.val();
+							var index = editor.input[0].selectionEnd;
+							if (((index == 0) || (text[index-1] == '\n')) && (text[index] == '\n')) {
+								e.preventDefault();
+							}
+						}
 					}
 				}
 				case 38: { // ↑
