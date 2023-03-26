@@ -73,6 +73,10 @@ namespace SmiEdit
         {
             _.OpenFile();
         }
+        public void OpenFileForVideo()
+        {
+            _.OpenFileForVideo();
+        }
         public void CheckLoadVideoFile(string smiPath)
         {
             _.CheckLoadVideoFile(smiPath);

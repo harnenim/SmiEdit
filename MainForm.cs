@@ -534,6 +534,10 @@ namespace SmiEdit
                     {
                         player = new PotPlayer();
                     }
+                    if (player != null)
+                    {
+                        player.SetEditorHwnd(Handle.ToInt32());
+                    }
                 }
 
                 // 플레이어 있으면 exe 파일 설정
@@ -729,6 +733,19 @@ namespace SmiEdit
                     LoadFile(dialog.FileName);
                 }
             }
+        }
+        public void OpenFileForVideo()
+        {
+            // player에 현재 재생 중인 파일명 요청
+            player.GetFileName();
+        }
+        protected override void WndProc(ref Message m)
+        {
+            // 파일명 말곤 수신할 일 없다는 가정
+            // TODO: 이거...... 브리지를 다시 만들어야 하나??
+            //string path = player.AfterGetFileName(Message m);
+
+            base.WndProc(ref m);
         }
         private void LoadFile(string path)
         {

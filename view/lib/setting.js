@@ -4,6 +4,7 @@ var DEFAULT_SETTING =
 	[	[	"파일(&F)"
 		,	"새 파일(&N)|newFile()"
 		,	"열기(&O)...|openFile()"
+		,	"현재 동영상의 자막 열기|openFileForVideo()"
 		,	"저장(&S)|saveFile()"
 		,	"다른 이름으로 저장(&A)...|saveFile(true)"
 		]

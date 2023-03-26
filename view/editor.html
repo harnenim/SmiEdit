@@ -346,6 +346,12 @@ function openFile(path, text) {
 		}
 	});
 }
+function openFileForVideo(path, text) {
+	runIfCanOpenNewTab(function() {
+		// C#에서 동영상의 자막 파일 탐색
+		binder.openFileForVideo();
+	});
+}
 
 function saveFile(asNew) {
 	var currentTab = tabs[tab];
