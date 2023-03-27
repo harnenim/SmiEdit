@@ -1,5 +1,37 @@
+// 업데이트 메시지
+var checkVersion;
+{	checkVersion = function(version) {
+		if (!version) version = "";
+
+		var notify = [];
+		if (version < lastNotifyForCommand) {
+			notify.push("단축키");
+		}
+		if (version < lastNotifyForAutoComplete) {
+			notify.push("자동완성");
+		}
+		if (version < lastNotifyForStyle) {
+			notify.push("스타일");
+		}
+		if (version < lastNotifyForMenu) {
+			notify.push("메뉴");
+		}
+		if (notify.length) {
+			// 창 초기화 전에 동작하지 않도록 의도적으로 timeout 넣음
+			setTimeout(function() {
+				alert(notify.join(", ") + " 기본값이 변경되었습니다.\n설정에서 검토하시기 바랍니다.");
+			}, 1000);
+		}
+	}
+	var lastNotifyForCommand = "";
+	var lastNotifyForAutoComplete = "";
+	var lastNotifyForStyle = "";
+	var lastNotifyForMenu = "2023.03.27.v2";
+}
+
 var DEFAULT_SETTING =
-{	menu:
+{	version: "2023.03.27.v2"
+,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
 		,	"새 파일(&N)|newFile()"
@@ -20,6 +52,7 @@ var DEFAULT_SETTING =
 		,	"겹치는 대사 합치기(&C)|openAddon('Combine');"
 		,	"겹치는 대사 나누기(&D)|openAddon('Devide');"
 		,	"싱크 유지 텍스트 대체(&F)|openAddon('Fusion');"
+		,	"노래방 자막(&K)|openAddon('Karaoke');"
 		,	"맞춤법 검사기|extSubmit(\"post\", \"http://speller.cs.pusan.ac.kr/results\", \"text1\");"
 		,	"국어사전|extSubmit(\"get\", \"https://ko.dict.naver.com/%23/search\", \"query\");"
 		]

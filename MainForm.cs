@@ -490,7 +490,7 @@ namespace SmiEdit
             Console.WriteLine("save setting: " + strSettingJson);
 
             StreamWriter sw = new StreamWriter("view/setting.json", false, Encoding.UTF8);
-            sw.WriteLine(strSettingJson);
+            sw.Write(strSettingJson);
             sw.Close();
             
             UpdateViewerSetting();
@@ -574,6 +574,19 @@ namespace SmiEdit
                     mainView.Focus();
                     break;
             }
+        }
+        private void CloseMenuStrip(object sender, EventArgs e)
+        {
+            Console.WriteLine("CloseMenuStrip");
+            foreach (ToolStripMenuItem item in menuStrip.Items)
+            {
+                item.Checked = false;
+                item.HideDropDown();
+            }
+        }
+        private void KeyDownInMenuStrip(object sender, PreviewKeyDownEventArgs e)
+        {
+            Console.WriteLine($"KeyDownInMenuStrip: {e.KeyCode}");
         }
 
         public void SetMenus(string[][] menus)
