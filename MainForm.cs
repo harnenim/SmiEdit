@@ -487,12 +487,18 @@ namespace SmiEdit
         public void SaveSetting(string strSettingJson)
         {
             this.strSettingJson = strSettingJson;
-            Console.WriteLine("save setting: " + strSettingJson);
 
-            StreamWriter sw = new StreamWriter("view/setting.json", false, Encoding.UTF8);
-            sw.Write(strSettingJson);
-            sw.Close();
-            
+            try
+            {
+                StreamWriter sw = new StreamWriter("view/setting.json", false, Encoding.UTF8);
+                sw.Write(strSettingJson);
+                sw.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
             UpdateViewerSetting();
         }
 
@@ -559,6 +565,36 @@ namespace SmiEdit
                     }
                 }
             }
+        }
+
+        public void LoadAddonSetting(string path)
+        {
+            string setting = "";
+            try
+            {
+                StreamReader sr = new StreamReader($"view/addon/{path}", Encoding.UTF8);
+                setting = sr.ReadToEnd();
+                sr.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            Script("afterLoadAddonSetting", setting.Replace("\r\n", "\n"));
+        }
+        public void SaveAddonSetting(string path, string text)
+        {
+            try
+            {
+                StreamWriter sw = new StreamWriter($"view/addon/{path}", false, Encoding.UTF8);
+                sw.Write(text);
+                sw.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            Script("afterSaveAddonSetting");
         }
         #endregion
 

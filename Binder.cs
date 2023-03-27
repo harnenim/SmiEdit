@@ -90,10 +90,16 @@ namespace SmiEdit
             _.DoExit(resetPlayer, exitPlayer);
         }
         
-        #region 팝업 통신 (opener 못 쓰는 경우)
+        #region 팝업 통신
+        // 이거 결국 안 쓰나?
         public void SendMsg(string target, string msg) {
             _.SendMsg(target, msg);
         }
+        // addon 설정 용
+        public void LoadAddonSetting(string path) { _.LoadAddonSetting(path); }
+        public void SaveAddonSetting(string path, string text) { _.SaveAddonSetting(path, text); }
+
+        // viewer/finder opener 못 쓰게 될 경우 고려
         public void UpdateViewerSetting() { _.UpdateViewerSetting(); }
         public void UpdateViewerLines(string lines) { _.UpdateViewerLines(lines); }
 

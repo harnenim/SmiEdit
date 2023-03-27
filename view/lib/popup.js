@@ -65,3 +65,20 @@ confirm = function(msg, yes, no) {
 		return result;
 	}
 }
+
+// opener가 있는 addon에서만 쓰임
+var loadAddonSetting;
+var saveAddonSetting;
+if (opener) {
+	opener.afterLoadAddonSetting = function(){};
+	loadAddonSetting = function(name, afterLoad) {
+		opener.afterLoadAddonSetting = afterLoad ? afterLoad : function(){};
+		opener.binder.loadAddonSetting(name);
+	}
+	
+	opener.afterSaveAddonSetting = function(){};
+	saveAddonSetting = function(name, text, afterSave) {
+		opener.afterSaveAddonSetting = afterSave ? afterSave : function(){};
+		opener.binder.saveAddonSetting(name, text);
+	}
+}

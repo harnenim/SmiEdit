@@ -1,22 +1,22 @@
-var DEFAULT_LIST =
-	( "2023.03.27\n混凝土006\n春夏冬004\n稲妻22\n後悔22\n条件22\n窮屈22\n逃亡22\n衝動22\n運命22\n抑制22\n血管22\n頂戴22"
-	+ "\n曖昧22\n矛盾12\n都合12\n表裏21\n物足21\n一人03\n二人03\n明日03\n剝離21\n剥離21\n欠片03\n彷徨03\n時代12\n子供12"
-	+ "\n無力12\n間違12\n降下21\n言葉21\n季節12\n形見21\n時計12\n刹那21\n笑顔12\n深紅21\n脳裏21\n未来12\n永久11\n風邪11"
-	+ "\n魂4\n操3\n証3\n炎3\n抗3\n命3\n働3\n漂3\n姿3\n涙3\n扉3\n瞳3\n心3\n必3\n失3\n輝3\n喜3\n鎧3\n印3\n誘3\n欺3\n形3"
-	+ "\n淚3\n儚3\n光3\n表3\n嵐3\n争3\n貫3\n絆3\n私3\n囁3\n体3\n隣3\n綻3\n呪3\n滴3\n桜3\n辿2\n確2\n招2\n抱2\n暴2\n筋2"
-	+ "\n進2\n続2\n叶2\n紐2\n結2\n掴2\n戦2\n痕2\n放2\n脳2\n嘘2\n風2\n奪2\n道2\n勇2\n僕2\n俺2\n劇2\n空2\n洞2\n君2\n救2"
-	+ "\n大2\n刻2\n月2\n長2\n物2\n傷2\n旋2\n律2\n奏2\n登2\n壊2\n恋2\n夢2\n歌2\n静2\n寂2\n還2\n擦2\n優2\n霧2\n深2\n森2"
-	+ "\n迷2\n千2\n年2\n遠2\n灰2\n色2\n愛2\n由2\n露2\n重2\n全2\n憂2\n高2\n後2\n完2\n星2\n遺2\n億2\n開2\n青2\n乾2\n渇2"
-	+ "\n流2\n舟2\n船2\n音2\n誇2\n恵2\n響2\n瞬2\n覚2\n胸2\n石2\n鈍2\n返2\n一2\n汚2\n怖2\n感2\n神2\n眠2\n畏2\n何2\n苦2"
-	+ "\n人2\n片2\n答2\n遥2\n息2\n奥2\n願2\n描2\n跡2\n虹2\n絶2\n望2\n的2\n反2\n界2\n逆2\n叫2\n黙2\n最2\n秒2\n動2\n外2"
-	+ "\n愚2\n現2\n実2\n軋2\n殻2\n中2\n隠2\n窓2\n夜2\n街2\n始2\n走2\n闇2\n八2\n険2\n今2\n屈2\n違2\n裏2\n顔2\n夏2\n謎2"
-	+ "\n白2\n昼2\n達2\n惑2\n真2\n法2\n信2\n思2\n悲2\n豊2\n溢2\n花2\n崩2\n永2\n殺2\n命2\n沈2\n海2\n鐘2\n鳥2\n数2\n守2"
-	+ "\n想2\n運2\n誰2\n赤2\n黑2\n檀2\n屑2\n雪2\n嘆2\n凍2\n寞2\n分2\n上2\n柔2\n前2\n祈2\n独2\n暗2\n寒2\n約2\n束2\n強2"
-	+ "\n肌2\n淡2\n潮2\n小2\n狭2\n教2\n室2\n飾2\n笑2\n映2\n側2\n繋2\n塞2\n影2\n少2\n近2\n橋2\n七2\n眩2\n喉2\n潜2\n伝2"
-	+ "\n足2\n先2\n臆2\n病2\n波2\n将2\n忘2\n点2\n声2\n帰2\n本2\n嬉2\n間2\n楽2\n冒2\n密2\n休2\n仲2\n喧2\n然2\n転2\n校2"
-	+ "\n電2\n眺2\n頰2\n頬2\n両2\n親2\n叱2\n島2\n翔2\n州2\n麗2\n零2\n戻2\n届2\n通2\n作2\n語2\n傍2\n観2\n同2\n握2\n痛2"
-	+ "\n粉2\n天2\n仄2\n冷2\n残2\n紅2\n鮮2\n離2\n癒2\n匂2\n臭2\n潰2\n能2\n委2\n試2\n歩2\n広2\n遊2\n互2\n犯2\n共2\n像2"
-	+ "\n弄2\n探2\n震2\n恐2\n璧2\n歪2\n条2\n線2\n絡2\n解2\n逸2\n脈2\n明2\n熱2\n交2\n耳2\n叩2\n他2\n朝2\n指2\n十2\n服2");
+var DEFAULT_LIST = ("2023.03.27"
+	+ "\n五里霧中1112\n混凝土006\n春夏冬004\n真っ赤111\n夜明け111\n真実22\n往来22\n並行22\n曖昧22\n頂戴22\n血管22\n抑制22\n運命22\n衝動22\n逃亡22\n毎日22"
+	+ "\n窮屈22\n条件22\n後悔22\n稲妻22\n朝食22\n東京22\n体温22\n彩り31\n着信22\n完成22\n自覚12\n自分12\n無情12\n期待12\n未来12\n脳裏21\n深紅21\n笑顔12"
+	+ "\n記憶12\n刹那21\n時計12\n形見21\n季節12\n言葉21\n降下21\n間違12\n無力12\n子供12\n時代12\n彷徨03\n欠片03\n剥離21\n剝離21\n明日03\n二人03\n一人03"
+	+ "\n物足21\n表裏21\n都合12\n矛盾12\n夕日21\n2人03\n縁取21\n仕事12\n速度21\n化粧12\n貴方03\n光る21\n光り21\n光っ21\n見上11\n風邪11\n永久11\n目指11"
+	+ "\n魂4\n諦3\n疑3\n桜3\n滴3\n呪3\n綻3\n隣3\n体3\n囁3\n私3\n絆3\n貫3\n争3\n嵐3\n表3\n光3\n儚3\n淚3\n形3\n欺3\n誘3\n印3\n鎧3\n喜3\n輝3\n失3\n必3\n心3"
+	+ "\n瞳3\n扉3\n幸3\n涙3\n姿3\n漂3\n働3\n命3\n抗3\n炎3\n証3\n操3\n翼3\n鞄3\n昔3\n獣3\n例2\n荒2\n燦2\n回2\n０2\n漠2\n迫2\n方2\n箱2\n服2\n十2\n指2\n朝2"
+	+ "\n他2\n叩2\n耳2\n交2\n熱2\n明2\n脈2\n逸2\n解2\n絡2\n線2\n条2\n歪2\n璧2\n恐2\n震2\n探2\n弄2\n像2\n共2\n犯2\n互2\n遊2\n広2\n歩2\n試2\n委2\n能2\n潰2"
+	+ "\n臭2\n匂2\n癒2\n離2\n鮮2\n紅2\n残2\n冷2\n仄2\n天2\n粉2\n痛2\n握2\n同2\n観2\n傍2\n語2\n作2\n通2\n届2\n戻2\n零2\n麗2\n州2\n翔2\n島2\n叱2\n親2\n両2"
+	+ "\n頬2\n頰2\n眺2\n電2\n校2\n転2\n然2\n喧2\n仲2\n休2\n密2\n冒2\n楽2\n間2\n嬉2\n本2\n帰2\n声2\n点2\n忘2\n将2\n波2\n病2\n臆2\n先2\n足2\n伝2\n潜2\n喉2"
+	+ "\n眩2\n七2\n橋2\n近2\n少2\n影2\n塞2\n繋2\n側2\n映2\n笑2\n飾2\n室2\n教2\n狭2\n小2\n潮2\n淡2\n肌2\n強2\n束2\n約2\n寒2\n暗2\n独2\n祈2\n前2\n柔2\n上2"
+	+ "\n寞2\n凍2\n嘆2\n雪2\n屑2\n檀2\n黑2\n赤2\n誰2\n運2\n想2\n守2\n数2\n鳥2\n鐘2\n海2\n沈2\n命2\n殺2\n永2\n崩2\n花2\n溢2\n豊2\n悲2\n思2\n信2\n法2\n惑2"
+	+ "\n達2\n昼2\n白2\n謎2\n夏2\n顔2\n裏2\n違2\n屈2\n今2\n険2\n八2\n闇2\n走2\n始2\n街2\n夜2\n窓2\n隠2\n中2\n殻2\n軋2\n実2\n現2\n愚2\n外2\n動2\n秒2\n最2"
+	+ "\n黙2\n叫2\n逆2\n界2\n反2\n的2\n望2\n絶2\n虹2\n跡2\n描2\n願2\n奥2\n息2\n遥2\n答2\n片2\n人2\n苦2\n何2\n畏2\n眠2\n神2\n感2\n怖2\n汚2\n一2\n返2\n鈍2"
+	+ "\n石2\n胸2\n瞬2\n響2\n恵2\n誇2\n音2\n船2\n舟2\n流2\n渇2\n乾2\n青2\n開2\n億2\n遺2\n星2\n完2\n後2\n高2\n憂2\n全2\n重2\n露2\n由2\n愛2\n色2\n灰2\n遠2"
+	+ "\n年2\n千2\n迷2\n森2\n深2\n霧2\n粕2\n優2\n擦2\n還2\n寂2\n静2\n歌2\n夢2\n恋2\n壊2\n登2\n奏2\n律2\n旋2\n傷2\n物2\n長2\n月2\n刻2\n大2\n救2\n君2\n洞2"
+	+ "\n空2\n劇2\n俺2\n僕2\n勇2\n道2\n奪2\n風2\n嘘2\n脳2\n放2\n痕2\n戦2\n掴2\n結2\n紐2\n叶2\n頼2\n続2\n進2\n筋2\n暴2\n抱2\n招2\n確2\n辿2\n布2\n甘2\n翳2"
+	+ "\n覗2\n拭2\n正2\n悪2\n瓶2\n壁2\n直2\n嫌2\n話2\n塩2\n盾2\n黒2\n選2\n勝2\n12\n憎2\n妬2\n認2\n為2\n弱2\n虫2\n許2\n雨2\n酷2\n煽2\n砕2\n堪2\n針2"
+);
 
 var kanjiList = [];
 function refreshKanji() {
@@ -38,6 +38,7 @@ function refreshKanji() {
 			kanjiList.push([word, mora]);
 		}
 	}
+	$("#inputKanji").val(savedKanjiList.substring(savedKanjiList.indexOf("\n") + 1)); // 첫 줄은 기본값 버전이므로 제외
 }
 function sortFunc(a, b) {
 	if (a[1].length < b[1].length) {
@@ -48,19 +49,16 @@ function sortFunc(a, b) {
 	return (a[2] < b[2]) ? 1 : -1;
 }
 
-// TODO: C#에 요청할까...?
-var savedKanjiList = localStorage.getItem("kanjiList");
-/*
-readFile("Karaoke.txt", function(text) {
-});
-*/
-
 windowName = "addon";
 
-(function(text) {
+//var savedKanjiList = localStorage.getItem("kanjiList");
+var KANJI_FILE = "Karaoke.txt";
+var savedKanjiList = "";
+
+function afterLoadKanji(text) {
 	if (!text) {
 		// 최초 실행
-		localStorage.setItem("kanjiList", savedKanjiList = DEFAULT_LIST);
+		saveKanjiList(savedKanjiList = DEFAULT_LIST);
 		refreshKanji();
 		
 	} else {
@@ -68,11 +66,15 @@ windowName = "addon";
 		var curr = savedKanjiList.split("\n");
 		var dflt = DEFAULT_LIST  .split("\n");
 		if (curr[0] != dflt[0]) { // 버전이 다를 경우
+			var version = dflt[0];
+			curr = curr.slice(1);
+			dflt = dflt.slice(1);
+
 			var exists = {}; // 현재 설정에 있는 것 체크
-			for (var i = 1; i < curr.length; i++) {
+			for (var i = 0; i < curr.length; i++) {
 				exists[curr[i].substring(0, curr[i].length/2)] = i;
 			}
-			for (var i = 1; i < dflt.length; i++) {
+			for (var i = 0; i < dflt.length; i++) {
 				var item = exists[dflt[i].substring(0, dflt[i].length/2)];
 				if (item) {
 					// 이미 존재하면 기본값으로 덮어쓰려고 했는데
@@ -81,12 +83,26 @@ windowName = "addon";
 					curr.push(dflt[i]); // 현재 설정에 기본값 추가
 				}
 			}
-			curr[0] = dflt[0];
-			localStorage.setItem("kanjiList", savedKanjiList = curr.join("\n"));
+			curr = curr.sort(function sortFunc(a, b) {
+				if (a.length < b.length) {
+					return 1;
+				} else if (a.length > b.length) {
+					return -1;
+				}
+				return (a.substring(a.length/2) < b.substring(b.length/2)) ? 1 : -1;
+			});
+			savedKanjiList = version + "\n" + curr.join("\n");
+			saveKanjiList();
 		}
 		refreshKanji();
 	}
-})(savedKanjiList);
+}
+//afterReadSetting(savedKanjiList);
+
+function saveKanjiList() {
+	//localStorage.setItem("kanjiList", savedKanjiList);
+	saveAddonSetting(KANJI_FILE, savedKanjiList);
+}
 
 var gana
 	= "あいうえお" + "アイウエオ"
@@ -145,6 +161,10 @@ for (var i = 0; i < gana.length; i++) {
 }
 
 $(function() {
+	loadAddonSetting(KANJI_FILE, function(text) {
+		afterLoadKanji(savedKanjiList = text);
+	});
+
 	var inputLyrics = $("#inputLyrics");
 	var inputDivider = $("#inputDivider");
 	
@@ -170,7 +190,7 @@ $(function() {
 
 	var btnOpenKanji = $("#btnOpenKanji");
 	var formKanji = $("#formKanji");
-	var inputKanji = $("#inputKanji").val(savedKanjiList.substring(savedKanjiList.indexOf("\n") + 1)); // 첫 줄은 기본값 버전이므로 제외
+	var inputKanji = $("#inputKanji"); // 첫 줄은 기본값 버전이므로 제외
 	var btnApplyKanji = $("#btnApplyKanji");
 
 	var lefts = [	null
@@ -1082,14 +1102,22 @@ $(function() {
 			}
 			list.push([item, mora, sum]);
 		}
-		list = list.sort(sortFunc);
+		list = list.sort(function(a, b) {
+			if (a[1].length < b[1].length) {
+				return 1;
+			} else if (a[1].length > b[1].length) {
+				return -1;
+			}
+			return (a[2] < b[2]) ? 1 : -1;
+		});
 		
 		for (var i = 0; i < list.length; i++) {
 			list[i] = list[i][0];
 		}
 		
 		var result = list.join("\n");
-		localStorage.setItem("kanjiList", savedKanjiList = savedKanjiList.substring(0, savedKanjiList.indexOf("\n") + 1) + result);
+		savedKanjiList = savedKanjiList.substring(0, savedKanjiList.indexOf("\n") + 1) + result;
+		saveKanjiList();
 		refreshKanji();
 		inputKanji.val(result);
 		inputKanji.scrollTop(0);
