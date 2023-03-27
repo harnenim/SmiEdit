@@ -348,6 +348,9 @@ function openFile(path, text) {
 	});
 }
 function openFileForVideo(path, text) {
+	alert("개발 중입니다...");
+	return;
+
 	runIfCanOpenNewTab(function() {
 		// C#에서 동영상의 자막 파일 탐색
 		binder.openFileForVideo();

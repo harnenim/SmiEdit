@@ -791,8 +791,11 @@ namespace SmiEdit
         protected override void WndProc(ref Message m)
         {
             // 파일명 말곤 수신할 일 없다는 가정
-            // TODO: 이거...... 브리지를 다시 만들어야 하나??
-            //string path = player.AfterGetFileName(Message m);
+            if (player != null)
+            {
+                string path = player.AfterGetFileName(m);
+                if (path != null && path.Length > 0) LoadFile(path);
+            }
 
             base.WndProc(ref m);
         }

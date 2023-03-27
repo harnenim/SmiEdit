@@ -57,9 +57,9 @@ namespace SmiEdit
         public void OnAfterCreated(IWebBrowser chromiumWebBrowser, IBrowser browser)
         {
             List<string> names = browser.GetFrameNames();
-            Console.WriteLine($"OnAfterCreated: {names}");
             if (names.Count > 0)
             {
+                Console.WriteLine($"OnAfterCreated: {names[0]}");
                 int hwnd = browser.GetHost().GetWindowHandle().ToInt32();
                 mainForm.SetWindow(names[0], hwnd);
                 mainForm.SetFocus(hwnd);
