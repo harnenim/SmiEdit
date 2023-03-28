@@ -140,14 +140,10 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
-    <ProjectReference Include="..\SmiEditBridge\SmiEditBridge.csproj">
-      <Project>{992DE08D-CD78-4BB8-B426-176BBAEA277E}</Project>
-      <Name>SmiEditBridge</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
+    <Content Include="bridge\list.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="view\addon\Combine.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -157,10 +153,19 @@
     <Content Include="view\addon\Fusion.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="view\addon\Karaoke.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="view\addon\Karaoke.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="view\addon\Nico.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="view\addon\Normalizer.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="view\addon\Shake.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="view\addon\SyncManager.html">
@@ -188,6 +193,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="view\lib\AutoCompleteTextarea.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="view\lib\editor.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="view\lib\History.js">
@@ -220,6 +228,20 @@
     <Content Include="view\viewer.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SmiEditBridge\SmiEditBridge\SmiEditBridge.csproj">
+      <Project>{dfe0d759-c398-4e88-a957-8973a0941b13}</Project>
+      <Name>SmiEditBridge</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SmiEditBridge\SmiEditBridge_NoPlayer\SmiEditBridge_NoPlayer.csproj">
+      <Project>{ee0510d9-c061-4831-bac8-67256727b165}</Project>
+      <Name>SmiEditBridge_NoPlayer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SmiEditBridge\SmiEditBridge_PotPlayer\SmiEditBridge_PotPlayer.csproj">
+      <Project>{05f45c0d-679e-4863-bf8f-25dd1eeadb87}</Project>
+      <Name>SmiEditBridge_PotPlayer</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

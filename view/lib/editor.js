@@ -162,7 +162,9 @@ function init(jsonSetting) {
 			tab = tabs.indexOf(selectedTab);
 			$("#editor > .tab").hide();
 			selectedTab.area.show();
-			if (selectedTab.path && selectedTab.path.length > 4 && binder) {
+			if (_for_video_) { // 동영상 파일명으로 자막 파일을 연 경우 동영상 열기 불필요
+				_for_video_ = false;
+			} else if (selectedTab.path && selectedTab.path.length > 4 && binder) {
 				binder.checkLoadVideoFile(selectedTab.path);
 			}
 		}
@@ -335,12 +337,12 @@ function newFile() {
 	runIfCanOpenNewTab(openNewTab);
 }
 
-function openFile(path, text) {
+function openFile(path, text, forVideo) {
 	// C#에서 파일 열 동안 canOpenNewTab 결과가 달라질 리는 없겠지만, 일단은 바깥에서 감싸주기
 	runIfCanOpenNewTab(function() {
 		if (path) {
 			// 새 탭 열기
-			openNewTab(text, path);
+			openNewTab(text, path, forVideo);
 		} else {
 			// C#에서 파일 열기 대화상자 실행
 			binder.openFile();
@@ -348,9 +350,6 @@ function openFile(path, text) {
 	});
 }
 function openFileForVideo(path, text) {
-	alert("개발 중입니다...");
-	return;
-
 	runIfCanOpenNewTab(function() {
 		// C#에서 동영상의 자막 파일 탐색
 		binder.openFileForVideo();
@@ -394,7 +393,8 @@ function afterSaveFile(path) {
 	$("#tabSelector .th:eq(" + tab + ") span").text(title);
 }
 
-function openNewTab(text, path) {
+var _for_video_ = false;
+function openNewTab(text, path, forVideo) {
 	if (tabs.length >= 4) {
 		alert("탭은 4개까지 열 수 있습니다.");
 		return;
@@ -409,6 +409,8 @@ function openNewTab(text, path) {
 	var th = $("<div class='th'>").append($("<span>").text(title));
 	th.append($("<button type='button' class='btn-close-tab'>").text("×"));
 	$("#btnNewTab").before(th);
+	
+	_for_video_ = forVideo;
 	th.data("tab", tab).click();
 	tab.th = th;
 	

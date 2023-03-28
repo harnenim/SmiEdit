@@ -794,12 +794,23 @@ namespace SmiEdit
             if (player != null)
             {
                 string path = player.AfterGetFileName(m);
-                if (path != null && path.Length > 0) LoadFile(path);
+                if (path != null && path.Length > 0)
+                {
+                    int index = path.LastIndexOf(".");
+                    if (index > 0)
+                    {
+                        LoadFile(path.Substring(0, index) + ".smi", true);
+                    }
+                }
             }
 
             base.WndProc(ref m);
         }
         private void LoadFile(string path)
+        {
+            LoadFile(path, false);
+        }
+        private void LoadFile(string path, bool forVideo)
         {
             string text = "";
             Encoding encoding = TextFile.BOM.DetectEncoding(path); // TODO: BOM 없으면 버그 있나...?
@@ -810,10 +821,13 @@ namespace SmiEdit
                 sr = new StreamReader(path, encoding);
                 text = sr.ReadToEnd();
             }
-            catch { }
+            catch
+            {
+                Script("alert", "파일을 열지 못했습니다.");
+            }
             finally { if (sr != null) sr.Close(); }
 
-            Script("openFile", new object[] { path, text });
+            Script("openFile", new object[] { path, text, forVideo });
         }
 
         string[] videoExts = new string[] { "mkv", "mp4", "avi", "m2ts", "ts" }; // TODO: 우선순위 설정 기능...?
