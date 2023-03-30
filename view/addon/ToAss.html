@@ -34,10 +34,11 @@ $(function() {
 		var input = $("#input").val();
 		
 		// C#에 요청
-		if (opener && opener.binder) {
+		if (opener && opener.binder && opener.binder.toAss) {
 			opener.binder.toAss(input, "afterGetOutput");
 		} else {
-			afterGetOutput(input);
+			// 테스트 코드
+			opener.afterGetOutput(input);
 		}
 	});
 });
@@ -50,21 +51,31 @@ opener.afterGetOutput = function(output) {
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: calc(50% - 10px);
+	width: 40%;
 	bottom: 0;
+}
+#comment {
+	position: absolute;
+	top: 0;
+	left: 40%;
+	width: 60%;
+	height: 50px;
+    padding: 4px;
+    background: #fff;
+    line-height: 21px;
 }
 #btnExport {
 	position: absolute;
-	top: 0;
-	left: calc(50% - 10px);
+	top: 50px;
+	left: 40%;
 	width: 20px;
 	bottom: 0;
 }
 #output {
 	position: absolute;
-	top: 0;
-	left: calc(50% + 10px);
-	width: calc(50% - 10px);
+	top: 50px;
+	left: calc(40% + 20px);
+	width: calc(60% - 20px);
 	bottom: 0;
 }
 	</style>
@@ -72,6 +83,10 @@ opener.afterGetOutput = function(output) {
 <body>
 	<textarea id="input" spellcheck="false"></textarea>
 	<button id="btnExport">＞</button>
+	<div id="comment">
+		이곳의 결과물은 완성본이 아니며, Aegisub에 복사한 후 추가 작업이 필요합니다.<br />
+		화면 싱크를 사용한 경우 Default가 아닌 （］,［）,［］로 분류됩니다.
+	</div>
 	<textarea id="output"></textarea>
 </body>
 </html>

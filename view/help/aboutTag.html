@@ -11,31 +11,128 @@
 windowName = "help";
 	</script>
 	<style>
+#example {
+	width: 100%;
+	height: calc(100% - 230px);
+	overflow: scroll;
+	white-space: nowrap;
+}
+#example td {
+	padding: 4px;
+}
+#example tr.future td {
+	text-decoration: line-through;
+}
 	</style>
 </head>
 <body>
-설명 페이지 만들어야 되는데 귀찮<br />
+이 프로그램에선 중간 작업용 특수 태그가 존재하며<br />
+정규화를 통해 최종 완성본을 만들어줍니다.<br />
 <br />
-다음과 같은 특수 태그가 존재하며, 정규화를 통해 출력값을 만들어줍니다.<br />
-해당 기능은 탭문자로 체크된 중간 싱크를 생성합니다.<br />
-<s>─라고 써놓고 파싱 로직 수정하다 말았음</s><br />
+정규화 과정에서 한 싱크에 여러 줄의 텍스트가 있는 경우<br />
+해당 싱크는 탭문자로 체크된 균등한 싱크로 나뉘게 됩니다.<br />
 <br />
-&lt;font color="#9abcde" fade="in"&gt;페이드 인&lt;/font&gt;<br />
-&lt;font color="#89abcd" fade="out"&gt;페이드 아웃&lt;/font&gt;<br />
-&lt;font typing='typewriter'&gt;테스트텍스트&lt;/font&gt;<br />
-&lt;font typing='keyboard'&gt;테스트텍스트&lt;/font&gt;<br />
-&lt;font typing='keyboard(]'&gt;테스트텍스트&lt;/font&gt;<br />
-&lt;font typing='keyboard[]'&gt;테스트텍스트&lt;/font&gt;<br />
-&lt;font typing='keyboard invisible'&gt;테스트텍스트&lt;/font&gt;<br />
-&lt;font typing='keyboard hangeul'&gt;test텍스트&lt;/font&gt;<br />
+정규화 기능의 예시는 다음과 같습니니다.<br />
+<s>─라고 써놓고 파싱 로직 수정하다 말았음 (취소선인 것 적용 예정)</s><br />
 <br />
-이렇게 바꾸려고는 하는데<br />
-지금 당장은 키보드 문법이 이렇게 생겼음<br />
+<div id="example">
+	<table>
+		<colgroup>
+			<col />
+			<col />
+		</colgroup>
+		<thead>
+			<tr>
+				<th>입력</th>
+				<th>변환 결과</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font color="#9abcde" fade="in"&gt;페이드 인&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr>
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font color="#89abcd" fade="out"&gt;페이드 아웃&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr>
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font typing='typewriter'&gt;테스트텍스트&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr>
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font typing='keyboard'&gt;테스트텍스트&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr class="future">
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font typing='keyboard(]'&gt;테스트텍스트&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr class="future">
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font typing='keyboard[]'&gt;테스트텍스트&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr>
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font typing='keyboard(0,1)'&gt;테스트텍스트&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr>
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font typing='keyboard(1,1)'&gt;테스트텍스트&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr>
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font typing='keyboard invisible'&gt;테스트텍스트&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr>
+				<td>&lt;Sync Start=1000&gt;&lt;P Class=KRCC&gt;<br />
+					&lt;font typing='keyboard hangeul'&gt;test텍스트&lt;/font&gt;<br />
+					&lt;Sync Start=2000&gt;&lt;P Class=KRCC&gt;
+				</td>
+				<td>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
 <br />
-&lt;font typing='keyboard(0,1)'&gt;테스트텍스트&lt;/font&gt;<br />
-&lt;font typing='keyboard(1,1)'&gt;테스트텍스트&lt;/font&gt;<br />
-<br />
-페이드 기능은 한 대사에 여러개를 넣을 수 있지만<br />
-타이핑 기능은 한 대사에 하나로 제한됩니다.
+페이드 기능은 동시에 여러 개를 넣을 수 있지만<br />
+타이핑 기능은 하나씩으로 제한됩니다.
 </body>
 </html>

@@ -17,20 +17,25 @@ var checkVersion;
 			notify.push("메뉴");
 		}
 		if (notify.length) {
-			// 창 초기화 전에 동작하지 않도록 의도적으로 timeout 넣음
+			/* 창 초기화 전에 동작하지 않도록 의도적으로 timeout
+			 * 
+			 * 설정값을 불러온 후, 설정값에 따라 창 위치를 옮기기 때문에
+			 * 설정값 불러오는 과정에서의 버전 확인은 창 구성 이전일 수밖에 없고
+			 * 창 구성 이후 콜백을 추가하기엔 지나치게 복잡도가 높아짐
+			 */
 			setTimeout(function() {
 				alert(notify.join(", ") + " 기본값이 변경되었습니다.\n설정에서 검토하시기 바랍니다.");
-			}, 1000);
+			}, 1);
 		}
 	}
 	var lastNotifyForCommand = "";
 	var lastNotifyForAutoComplete = "";
 	var lastNotifyForStyle = "";
-	var lastNotifyForMenu = "2023.03.29.v1";
+	var lastNotifyForMenu = "2023.03.30.v1";
 }
 
 var DEFAULT_SETTING =
-{	version: "2023.03.29.v1"
+{	version: "2023.03.30.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -61,9 +66,9 @@ var DEFAULT_SETTING =
 	,	[	"도움말(&H)"
 		,	"프로그램 정보|openHelp('info')"
 		,	"기본 단축키|openHelp('key')"
-		,	"화면 싱크 매니저 사용법(구버전임)|SmiEditor.Addon.open('https://noitamina.moe/SyncManager/index.html')"
 		,	"싱크 표현에 대하여|openHelp('aboutSync')"
 		,	"특수 태그에 대하여|openHelp('aboutTag')"
+		,	"화면 싱크 매니저 도움말|openHelp('SyncManager')"
 		]
 	]
 ,	window:
@@ -71,14 +76,14 @@ var DEFAULT_SETTING =
 	,	y: 0
 	,	width: 640
 	,	height: 920
-	,	follow: true // 미리보기/플레이어 창 따라오기... 설정하지 말고 무조건?
+	,	follow: true // 미리보기/플레이어 창 따라오기
 	}
 ,	sync:
 	{	insert: 1    // 싱크 입력 시 커서 이동
-	,	update: 2    // 싱크 수정 시 커서 이동 (기본: 0 / 싱크 새로 찍기: 2 등)
+	,	update: 2    // 싱크 수정 시 커서 이동 / 예) 싱크 새로 찍기: 2
 	,	weight: -450 // 가중치 설정
-	,	unit: 42     // 싱크 조절량 설정 (24fps이면 1프레임당 41.7ms)
-	,	move: 2000   // 앞으로/뒤로 이동 단위
+	,	unit: 42     // 싱크 조절량 설정 (기본값: 24fps이면 1프레임당 41.7ms)
+	,	move: 2000   // 재생 이동 단위
 	,	lang: "KRCC" // 그냥 아래 preset 설정으로 퉁치는 게 나은가...?
 	,	preset: "<Sync Start={sync}><P Class={lang}{type}>" // 싱크 태그 형태
 	}
@@ -144,23 +149,24 @@ var DEFAULT_SETTING =
 			   + '}\nvar result = blocks.join("");\n'
 			   + '\n'
 			   + 'editor.setText(prev + result + next, [text.selection[0], text.selection[0] + result.length]);'
-		,	'M': '/* 화면 싱크 매니저 실행 */\n' + 'openAddon("SyncManager");' // 예제
+		,	'M': '/* 화면 싱크 매니저 실행 */\n' + 'openAddon("SyncManager");'
 		}
 	,	withAlts:
-		{	'1': '/* 맞춤법 검사기 */\n' + 'var text = editor.getText();\nextSubmit("post", "http://speller.cs.pusan.ac.kr/results", { text1: text.text.substring(text.selection[0], text.selection[1]) });'
-		,	'2': '/* 국어사전 */\n'      + 'var text = editor.getText();\nextSubmit("get", "https://ko.dict.naver.com/%23/search", { query: text.text.substring(text.selection[0], text.selection[1]) });'
-		,	'M': 'openAddon("SyncManager");' // 예제
-		,	'N': 'openAddon("Normalizer");' // 예제 -> self.normalize()가 나은가...?
+		{	'1': '/* 맞춤법 검사기 */\n'
+		       + 'var text = editor.getText();\n'
+		       + 'extSubmit("post", "http://speller.cs.pusan.ac.kr/results", { text1: text.text.substring(text.selection[0], text.selection[1]) });'
+		,	'2': '/* 국어사전 */\n'
+		       + 'var text = editor.getText();\n'
+		       + 'extSubmit("get", "https://ko.dict.naver.com/%23/search", { query: text.text.substring(text.selection[0], text.selection[1]) });'
 		}
 	,	withCtrlAlts:
-		{	'C': '/* 겹치는 대사 합치기 */\n' + 'openAddon("Combine");'
-		,	'D': '/* 겹치는 대사 나누기 */\n' + 'openAddon("Devide");'
+		{	'C': '/* 겹치는 대사 합치기 */\n'    + 'openAddon("Combine");'
+		,	'D': '/* 겹치는 대사 나누기 */\n'    + 'openAddon("Devide");'
 		,	'F': '/* 싱크 유지 텍스트 대체 */\n' + 'openAddon("Fusion");'
 		}
 	,	withCtrlShifts:
 		{	'F': '/* 중간 싱크 생성 */\n' + 'editor.fillSync();'
 		,	'S': '/* 설정 */\n' + 'openSetting();'
-		,	'Q': 'editor.findSync();' // 웹브라우저로 테스트할 때 Alt+Q 안 돼서 넣은 건데 익숙해져버림...
 		}
 	}
 ,	autoComplete:
@@ -203,10 +209,7 @@ var DEFAULT_SETTING =
 		+	"-->\n"
 		+	"</STYLE>\n"
 		+	"<!--\n"
-		+	"우선 이 자막은 상업적으로 이용할만한 가치가 없으므로 이건 생략\n"
-		+	"\n"
-		+	"오역이 있으면 수정하지 마시고 블로그나 트위터 멘션을 주세요.\n"
-		+	"하느@harne_\n"
+		+	"개인적인 코멘트를 넣을 곳\n"
 		+	"-->\n"
 		+	"</HEAD>\n"
 		+	"<BODY>\n"
