@@ -632,9 +632,13 @@ namespace SmiEdit
             }
             Script("afterSaveAddonSetting");
         }
-#endregion
+        #endregion
 
         #region 메뉴
+        private void MouseDownInMenuStrip(object sender, MouseEventArgs e)
+        {
+            menuStrip.Focus();
+        }
         private void KeyDownInMenuStrip(object sender, KeyEventArgs e)
         {   
             switch (e.KeyCode)
@@ -682,6 +686,7 @@ namespace SmiEdit
                     ,   Name = menuName.Split('(')[0]
                     ,   Size = new Size(60, 20)
                     };
+                    menuItem.MouseDown += clickMenuStrip;
                     menuStrip.Items.Add(menuItem);
 
                     for (int i = 1; i < menu.Length; i++)

@@ -44,6 +44,7 @@ namespace SmiEdit
             this.menuStrip.Size = new System.Drawing.Size(800, 24);
             this.menuStrip.TabIndex = 1;
             this.menuStrip.Text = "menuStrip";
+            this.menuStrip.MouseDown += (clickMenuStrip = new MouseEventHandler(MouseDownInMenuStrip));
             this.menuStrip.KeyDown += new System.Windows.Forms.KeyEventHandler(this.KeyDownInMenuStrip);
             this.menuStrip.MenuDeactivate += new System.EventHandler(this.EscapeMenuFocusAfterCheck);
             this.menuStrip.LostFocus += new System.EventHandler(this.CloseMenuStrip);
@@ -97,6 +98,8 @@ namespace SmiEdit
         protected TransparentPanel layerForDrag;
         protected Timer timer;
         private MenuStrip menuStrip;
+
+        private MouseEventHandler clickMenuStrip;
     }
 }
 
