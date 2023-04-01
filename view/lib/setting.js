@@ -30,12 +30,12 @@ var checkVersion;
 	}
 	var lastNotifyForCommand = "";
 	var lastNotifyForAutoComplete = "";
-	var lastNotifyForStyle = "";
+	var lastNotifyForStyle = "2023.04.02.v1";
 	var lastNotifyForMenu = "2023.03.31.v1";
 }
 
 var DEFAULT_SETTING =
-{	version: "2023.03.31.v1"
+{	version: "2023.04.02.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -197,6 +197,7 @@ var DEFAULT_SETTING =
 		+	".sync.error { background: #f88; }\n"
 		+	".sync.equal { background: #8f8; }\n"
 		+	".sync.range { color     : #888; }\n"
+		+	"#editor .input { padding-bottom: 900px; } /* 에디터 하단 추가 스크롤 되도록 */\n"
 ,	newFile:"<SAMI>\n"
 		+	"<HEAD>\n"
 		+	"<TITLE>제목</TITLE>\n"
@@ -214,6 +215,8 @@ var DEFAULT_SETTING =
 		+	"-->\n"
 		+	"</HEAD>\n"
 		+	"<BODY>\n"
+		+	"\n"
+		+	"\n"
 		+	"\n"
 		+	"</BODY>\n"
 		+	"</SAMI>"
