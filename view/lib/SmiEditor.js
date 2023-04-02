@@ -155,6 +155,7 @@ SmiEditor.PlayerAPI = {
 };
 SmiEditor.getSyncTime = function(sync) {
 	if (!sync) sync = (time + SmiEditor.sync.weight);
+	// 프레임 단위 싱크 보정
 	return Math.max(1, Math.floor(Math.floor((sync / FL) + 0.5) * FL));
 }
 SmiEditor.makeSyncLine = function(time, type) {
@@ -574,7 +575,7 @@ SmiEditor.prototype.scrollToCursor = function(lineNo) {
 	if (top < scrollTop) { // 커서가 보이는 영역보다 위
 		this.input.scrollTop(top);
 	} else {
-		top += LH + SB - this.input.height();
+		top += LH + SB - this.input.css("height").split("px")[0] + 2;
 		if (top > scrollTop) { // 커서가 보이는 영역보다 아래
 			this.input.scrollTop(top);
 		}
