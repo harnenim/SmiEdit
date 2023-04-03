@@ -3,7 +3,7 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.Runtime.InteropServices;
 
-namespace SmiEdit
+namespace Jamaker
 {
 	public class MessageBoxEx
 	{

@@ -1,4 +1,4 @@
-﻿namespace SmiEdit.addon
+﻿namespace Jamaker.addon
 {
     partial class ColorPicker
     {

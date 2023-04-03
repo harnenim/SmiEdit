@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmiEdit", "SmiEdit.csproj", "{E61B05F0-30E9-4CBA-B372-E25B91D6D927}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jamaker", "Jamaker.csproj", "{E61B05F0-30E9-4CBA-B372-E25B91D6D927}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlayerBridge", "..\PlayerBridge\PlayerBridge\PlayerBridge.csproj", "{DFE0D759-C398-4E88-A957-8973A0941B13}"
 EndProject

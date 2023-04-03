@@ -7,11 +7,11 @@ using System.Windows.Forms;
 using CefSharp;
 using CefSharp.WinForms;
 using System.Diagnostics;
-using SmiEdit.addon;
+using Jamaker.addon;
 using Subtitle;
 using System.Reflection;
 
-namespace SmiEdit
+namespace Jamaker
 {
     public partial class MainForm : Form
     {
@@ -33,7 +33,7 @@ namespace SmiEdit
             };
             settings.CefCommandLineArgs.Add("disable-web-security");
             Cef.Initialize(settings);
-            CefSharpSettings.ShutdownOnExit = false;
+            CefSharpSettings.ShutdownOnExit = false; // Release일 땐 false 해줘야 함
 
             InitializeComponent();
 

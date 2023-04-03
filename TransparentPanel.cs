@@ -2,7 +2,7 @@
 using System.Windows.Forms;
 using System.Drawing;
 
-namespace SmiEdit
+namespace Jamaker
 {
     public class TransparentPanel : Panel
     {

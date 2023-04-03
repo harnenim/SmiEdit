@@ -3,7 +3,7 @@ using CefSharp.WinForms;
 using System;
 using System.Windows.Forms;
 
-namespace SmiEdit
+namespace Jamaker
 {
     public partial class Popup : Form
     {

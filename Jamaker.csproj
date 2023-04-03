@@ -12,8 +12,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{E61B05F0-30E9-4CBA-B372-E25B91D6D927}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>SmiEdit</RootNamespace>
-    <AssemblyName>SmiEdit</AssemblyName>
+    <RootNamespace>Jamaker</RootNamespace>
+    <AssemblyName>Jamaker</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

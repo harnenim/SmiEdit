@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace SmiEdit.addon
+namespace Jamaker.addon
 {
     public partial class Prompt : Form
     {

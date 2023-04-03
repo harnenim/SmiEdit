@@ -4,7 +4,7 @@ using System.Windows.Forms;
 using CefSharp;
 using CefSharp.WinForms;
 
-namespace SmiEdit
+namespace Jamaker
 {
     public class LSH : ILifeSpanHandler
     {

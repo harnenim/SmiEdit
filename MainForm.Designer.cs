@@ -1,6 +1,6 @@
 ﻿using System.Windows.Forms;
 
-namespace SmiEdit
+namespace Jamaker
 {
     partial class MainForm
     {
@@ -32,9 +32,9 @@ namespace SmiEdit
         {
             this.components = new System.ComponentModel.Container();
             this.menuStrip = new System.Windows.Forms.MenuStrip();
-            this.layerForDrag = new SmiEdit.TransparentPanel();
+            this.layerForDrag = new Jamaker.TransparentPanel();
             this.timer = new System.Windows.Forms.Timer(this.components);
-            this.mainView = new SmiEdit.WebView();
+            this.mainView = new Jamaker.WebView();
             this.SuspendLayout();
             // 
             // menuStrip
@@ -87,7 +87,7 @@ namespace SmiEdit
             this.Controls.Add(this.mainView);
             this.MainMenuStrip = this.menuStrip;
             this.Name = "MainForm";
-            this.Text = "SmiEdit";
+            this.Text = "Jamaker";
             this.ResumeLayout(false);
             this.PerformLayout();
         }

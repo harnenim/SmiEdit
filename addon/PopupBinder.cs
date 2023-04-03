@@ -1,4 +1,4 @@
-﻿namespace SmiEdit
+﻿namespace Jamaker
 {
     class PopupBinder
     {

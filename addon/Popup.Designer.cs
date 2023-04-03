@@ -1,4 +1,4 @@
-﻿namespace SmiEdit
+﻿namespace Jamaker
 {
     partial class Popup
     {

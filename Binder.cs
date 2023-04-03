@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Subtitle;
 
-namespace SmiEdit
+namespace Jamaker
 {
     class Binder
     {
