@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Windows.Forms;
 using CefSharp;
 using CefSharp.WinForms;
 
@@ -32,7 +33,7 @@ namespace SmiEdit
                     if (name.Equals("viewer"))
                     {
                         popup.Text = "미리보기";
-                        popup.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
+                        popup.FormBorderStyle = FormBorderStyle.Sizable;
                     }
                     else
                     {
@@ -57,6 +58,12 @@ namespace SmiEdit
             }
             else
             {
+                /*
+                if (name.Equals("viewer") || name.Equals("finder"))
+                {
+                    windowInfo.Style |= 0x80880080;
+                }
+                */
                 newBrowser = null;
                 return false;
             }
