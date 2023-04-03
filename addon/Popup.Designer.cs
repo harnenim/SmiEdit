@@ -28,7 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.mainView = new WebView();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Popup));
+            this.mainView = new Jamaker.WebView();
             this.SuspendLayout();
             // 
             // mainView
@@ -51,6 +52,7 @@
             this.ClientSize = new System.Drawing.Size(424, 181);
             this.Controls.Add(this.mainView);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "Popup";

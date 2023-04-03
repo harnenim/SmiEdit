@@ -31,6 +31,7 @@ namespace Jamaker
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.menuStrip = new System.Windows.Forms.MenuStrip();
             this.layerForDrag = new Jamaker.TransparentPanel();
             this.timer = new System.Windows.Forms.Timer(this.components);
@@ -44,9 +45,8 @@ namespace Jamaker
             this.menuStrip.Size = new System.Drawing.Size(800, 24);
             this.menuStrip.TabIndex = 1;
             this.menuStrip.Text = "menuStrip";
-            this.menuStrip.MouseDown += (clickMenuStrip = new MouseEventHandler(MouseDownInMenuStrip));
-            this.menuStrip.KeyDown += new System.Windows.Forms.KeyEventHandler(this.KeyDownInMenuStrip);
             this.menuStrip.MenuDeactivate += new System.EventHandler(this.EscapeMenuFocusAfterCheck);
+            this.menuStrip.KeyDown += new System.Windows.Forms.KeyEventHandler(this.KeyDownInMenuStrip);
             this.menuStrip.LostFocus += new System.EventHandler(this.CloseMenuStrip);
             // 
             // layerForDrag
@@ -85,11 +85,13 @@ namespace Jamaker
             this.Controls.Add(this.layerForDrag);
             this.Controls.Add(this.menuStrip);
             this.Controls.Add(this.mainView);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip;
             this.Name = "MainForm";
             this.Text = "Jamaker";
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         #endregion

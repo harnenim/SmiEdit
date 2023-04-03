@@ -43,6 +43,9 @@
   <PropertyGroup>
     <StartupObject />
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>jamaker.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="CefSharp, Version=111.2.20.0, Culture=neutral, PublicKeyToken=40c4b6fc221f4138, processorArchitecture=MSIL">
       <HintPath>packages\CefSharp.Common.111.2.20\lib\net452\CefSharp.dll</HintPath>
@@ -119,6 +122,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="addon\Prompt.resx">
       <DependentUpon>Prompt.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
@@ -126,6 +130,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="addon\Popup.resx">
       <DependentUpon>Popup.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -162,6 +167,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="bridge\readme.txt" />
+    <Content Include="jamaker.ico" />
     <Content Include="PlayerBridge.dll" />
     <Content Include="view\addon\Combine.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -211,13 +217,19 @@
     <Content Include="view\help\info.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="view\help\img\jamaker.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="view\help\key.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="view\help\img\naming.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="view\help\SyncManager.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="view\help\SyncManager.png">
+    <Content Include="view\help\img\SyncManager.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="view\lib\AutoCompleteTextarea.css">

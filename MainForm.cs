@@ -36,6 +36,7 @@ namespace Jamaker
             CefSharpSettings.ShutdownOnExit = false; // Release일 땐 false 해줘야 함
 
             InitializeComponent();
+            menuStrip.MouseDown += (clickMenuStrip = new MouseEventHandler(MouseDownInMenuStrip)); // 디자이너에 넣으면 오류 발생
 
             StartPosition = FormStartPosition.Manual;
             Location = new Point(-10000, -10000); // 처음에 안 보이게
