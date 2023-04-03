@@ -45,7 +45,7 @@ var DEFAULT_SETTING =
 		,	"저장(&S)|saveFile()"
 		,	"다른 이름으로 저장(&A)...|saveFile(true)"
 		]
-	,	[	"편집(&S)"
+	,	[	"편집(&E)"
 		,	"찾기/바꾸기(&F)|SmiEditor.Finder.open()"
 		,	"색상코드 입력(&C)|binder.runColorPicker()"
 		,	"특수태그 정규화|tabs.length && tabs[tab].normalize()"
