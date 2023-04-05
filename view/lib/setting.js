@@ -30,12 +30,12 @@ var checkVersion;
 	}
 	var lastNotifyForCommand = "";
 	var lastNotifyForAutoComplete = "";
-	var lastNotifyForStyle = "2023.04.03.v2";
-	var lastNotifyForMenu = "2023.03.31.v1";
+	var lastNotifyForStyle = "2023.04.02.v1";
+	var lastNotifyForMenu = "2023.04.05.v1";
 }
 
 var DEFAULT_SETTING =
-{	version: "2023.04.03.v2"
+{	version: "2023.04.05.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -60,6 +60,7 @@ var DEFAULT_SETTING =
 		,	"싱크 유지 텍스트 대체(&F)|openAddon('Fusion');"
 		,	"노래방 자막(&K)|openAddon('Karaoke');"
 		,	"흔들기 효과(&S)|openAddon('Shake');"
+		,	"니코동 효과(&N)|openAddon('Nico');"
 		,	"ASS 자막으로 변환(&A)|openAddon('ToAss');"
 		,	"맞춤법 검사기|extSubmit(\"post\", \"http://speller.cs.pusan.ac.kr/results\", \"text1\");"
 		,	"국어사전|extSubmit(\"get\", \"https://ko.dict.naver.com/%23/search\", \"query\");"
