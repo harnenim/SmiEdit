@@ -584,9 +584,11 @@ $(function() {
 			if (!menus) menus = [""];
 			
 			var fieldset = $("<fieldset>");
-			var legend = $("<legend>");
-			legend.append($("<input type='text'>").val(menus[0]));
-			legend.append($("<button type='button'>").text("✕"));
+			var legend = $("<legend>")
+				.append($("<input type='text'>").val(menus[0]))
+				.append($("<button type='button' class='prev'>").text("∧"))
+				.append($("<button type='button' class='next'>").text("∨"))
+				.append($("<button type='button' class='remove'>").text("✕"));
 			fieldset.append(legend);
 			
 			var ol = $("<ol>");
@@ -611,8 +613,10 @@ $(function() {
 			ol.append(
 				$("<li>")
 					.append($("<input type='text'>").val(name))
+					.append($("<button type='button' class='prev'>").text("∧"))
+					.append($("<button type='button' class='next'>").text("∨"))
 					.append($("<input type='text' class='menu-func'>").val(func))
-					.append($("<button type='button'>").text("✕"))
+					.append($("<button type='button' class='remove'>").text("✕"))
 			);
 		}
 		(refreshFuncs["menu"] = function(setting) {
@@ -632,8 +636,24 @@ $(function() {
 			appendSubMenu($(this).parent().find("ol"));
 			setSaved("menu", false);
 		});
-		
-		menuList.on("click", "legend > button", function() {
+
+		menuList.on("click", "legend > button.prev", function() {
+			var menu = $(this).parents("li");
+			var prev = menu.prev();
+			if (prev.length) {
+				prev.before(menu);
+				setSaved("menu", false);
+			}
+		});
+		menuList.on("click", "legend > button.next", function() {
+			var menu = $(this).parents("li");
+			var next = menu.next();
+			if (next.length) {
+				next.after(menu);
+				setSaved("menu", false);
+			}
+		});
+		menuList.on("click", "legend > button.remove", function() {
 			var menu = $(this).parents("li");
 			confirm("삭제하시겠습니까?", function() {
 				menu.remove();
@@ -641,7 +661,23 @@ $(function() {
 			});
 		});
 		
-		menuList.on("click", "ol > li > button", function() {
+		menuList.on("click", "ol > li > button.prev", function() {
+			var subMenu = $(this).parent();
+			var prev = subMenu.prev();
+			if (prev.length) {
+				prev.before(subMenu);
+				setSaved("menu", false);
+			}
+		});
+		menuList.on("click", "ol > li > button.next", function() {
+			var subMenu = $(this).parent();
+			var next = subMenu.next();
+			if (next.length) {
+				next.after(subMenu);
+				setSaved("menu", false);
+			}
+		});
+		menuList.on("click", "ol > li > button.remove", function() {
 			var subMenu = $(this).parent();
 			confirm("삭제하시겠습니까?", function() {
 				subMenu.remove();
@@ -856,7 +892,7 @@ fieldset {
 #menu button { width: 16px; }
 #menu input,
 #menu button.add-menu { width: 200px; }
-#menu input.menu-func { width: calc(100% - 216px); }
+#menu input.menu-func { width: calc(100% - 248px); }
 #menu > button.add-menu { width: 216px; margin-top: 8px; }
 </style>
 </head>
@@ -1092,22 +1128,7 @@ fieldset {
 	</form>
 
 	<form id="menu">
-		<ol id="menuList">
-			<li>
-				<fieldset>
-					<legend>
-						<input type="text" value="파일(&F)" />
-						<button type="button">삭제</button>
-					</legend>
-					<ol>
-						<li><input type="text" value="새 파일(&N)" />
-							<button type="button">삭제</button>
-						</li>
-					</ol>
-					<button type="button" class="add-sub-menu">추가</button>
-				</fieldset>
-			</li>
-		</ol>
+		<ol id="menuList"></ol>
 		<button type="button" class="add-menu">추가</button>
 	</form>
 </div>
