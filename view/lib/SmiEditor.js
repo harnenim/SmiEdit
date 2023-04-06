@@ -57,7 +57,7 @@ var SmiEditor = function(text, path) {
 	}, 1);
 };
 
-SmiEditor.setSetting = function(setting) {
+SmiEditor.setSetting = function(setting, appendStyle) {
 	SmiEditor.sync = setting.sync;
 	
 	{	// AutoComplete
@@ -125,15 +125,22 @@ SmiEditor.setSetting = function(setting) {
 		}
 	}
 
-	{	// 스타일
-		if (!SmiEditor.style) {
-			$("head").append(SmiEditor.style = $("<style>"));
-			
-			// 최초 접근일 경우 키보드 이벤트도 활성화
-			SmiEditor.activateKeyEvent();
-		}
-		SmiEditor.style.html(setting.css);
+	// 스타일
+	SmiEditor.refreshStyle(setting, appendStyle);
+}
+SmiEditor.refreshStyle = function(setting, appendStyle) {
+	if (!SmiEditor.style) {
+		$("head").append(SmiEditor.style = $("<style>"));
+		
+		// 최초 접근일 경우 키보드 이벤트도 활성화
+		SmiEditor.activateKeyEvent();
 	}
+	var css = setting.css;
+	if (appendStyle) {
+		css += appendStyle;
+	}
+	
+	SmiEditor.style.html(css);
 }
 
 SmiEditor.sync = {

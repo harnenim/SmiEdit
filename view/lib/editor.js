@@ -217,18 +217,7 @@ function init(jsonSetting) {
 }
 
 function setSetting(setting) {
-	SmiEditor.setSetting(setting);
-	
-	// 기본 단축키
-	SmiEditor.withCtrls["N"] = newFile;
-	SmiEditor.withCtrls["O"] = openFile;
-	SmiEditor.withCtrls["S"] = saveFile;
-	SmiEditor.withCtrls.reserved += "NOS";
-	
-	// 가중치 등
-	$("#inputWeight").val(setting.sync.weight);
-	$("#inputUnit"  ).val(setting.sync.unit  );
-	
+	// 탭 on/off 먼저 해야 height값 계산 가능
 	if (setting.useTab) {
 		$("body").addClass("use-tab");
 	} else {
@@ -239,7 +228,18 @@ function setSetting(setting) {
 		}
 	}
 
-	var dll = setting.player.control.dll;
+	SmiEditor.setSetting(setting, getAppendStyle());
+	
+	// 기본 단축키
+	SmiEditor.withCtrls["N"] = newFile;
+	SmiEditor.withCtrls["O"] = openFile;
+	SmiEditor.withCtrls["S"] = saveFile;
+	SmiEditor.withCtrls.reserved += "NOS";
+	
+	// 가중치 등
+	$("#inputWeight").val(setting.sync.weight);
+	$("#inputUnit"  ).val(setting.sync.unit  );
+		var dll = setting.player.control.dll;
 	if (dll) {
 		var playerSetting = setting.player.control[dll];
 		if (playerSetting) {
@@ -300,7 +300,15 @@ function openSetting() {
 function saveSetting() {
 	if (window.binder) {
 		binder.saveSetting(JSON.stringify(setting));
+		
+		// 창 위치/크기 조절하고 일정 시간 지나면 C#에서 여기가 호출됨
+		SmiEditor.refreshStyle(setting, getAppendStyle());
 	}
+}
+function getAppendStyle() {
+	// 에디터 하단 여백 재조정
+	var append = "\n#editor .input { padding-bottom: " + ($("#editor").height() - SB - LH - 2) + "px; }";
+	return append;
 }
 
 function openHelp(name) {

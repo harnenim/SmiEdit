@@ -30,12 +30,12 @@ var checkVersion;
 	}
 	var lastNotifyForCommand = "";
 	var lastNotifyForAutoComplete = "";
-	var lastNotifyForStyle = "2023.04.02.v1";
+	var lastNotifyForStyle = "2023.04.06.v1";
 	var lastNotifyForMenu = "2023.04.05.v1";
 }
 
 var DEFAULT_SETTING =
-{	version: "2023.04.05.v1"
+{	version: "2023.04.06.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -198,7 +198,22 @@ var DEFAULT_SETTING =
 		+	".sync.error { background: #f88; }\n"
 		+	".sync.equal { background: #8f8; }\n"
 		+	".sync.range { color     : #888; }\n"
-		+	"#editor .input { padding-bottom: 900px; } /* 에디터 하단 추가 스크롤 되도록 */\n"
+		+	".tab.not-saved { background: #f86; } /* 저장 안 됐을 때 표시 */\n"
+		+	"\n"
+		+	"/* 다크테마 예제 * /\n"
+		+	".sync     { border-color: #fff; }\n"
+		+	".sync.error { background: #088; }\n"
+		+	".sync.equal { background: #808; }\n"
+		+	".sync.range { color     : #888; }\n"
+		+	"* { color: #fff; }\n"
+		+	"body, .th.selected, .th:hover, .tab > .col-sync { background: #0f0f0f; }\n"
+		+	".th.selected { border-bottom-color: #0f0f0f; }\n"
+		+	"#tabSelector { background: #333; }\n"
+		+	".th { background: #222; }\n"
+		+	"input, textarea { background: #000; }\n"
+		+	"button { background: #222; }\n"
+		+	".tab > .input { border-color: #666; }\n"
+		+	"/* */\n"
 ,	newFile:"<SAMI>\n"
 		+	"<HEAD>\n"
 		+	"<TITLE>제목</TITLE>\n"
