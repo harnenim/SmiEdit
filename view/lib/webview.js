@@ -19,11 +19,11 @@ var windowName = "editor";
 
 // alert 재정의
 _alert = alert;
-_confirm = confirm;
 alert = function(msg) {
 	binder.alert(windowName, msg);
 }
 // confirm 재정의
+_confirm = confirm;
 var afterConfirmYes = function() {};
 var afterConfirmNo  = function() {};
 confirm = function(msg, yes, no) {

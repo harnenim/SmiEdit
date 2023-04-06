@@ -1280,7 +1280,7 @@ SmiEditor.prototype.moveLine = function(toNext) {
 		}
 		this.input.val(lines.slice(0, lineRange[0]).concat(lines[lineRange[1]+1], lines.slice(lineRange[0], lineRange[1]+1), lines.slice(lineRange[1]+2)).join("\n"));
 		
-		var targetTop = (lineRange[1]+2) * LH - this.input.height() + SB;
+		var targetTop = (lineRange[1]+2) * LH - this.input.css("height").split("px")[0] + SB;
 		if (targetTop > this.input.scrollTop()) {
 			this.input.scrollTop(targetTop);
 		}
