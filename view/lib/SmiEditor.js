@@ -569,9 +569,14 @@ SmiEditor.prototype.setCursor = function(start, end) {
 	this.input[0].setSelectionRange(start, end ? end : start);
 }
 SmiEditor.prototype.scrollToCursor = function(lineNo) {
+	var left = 0;
 	if (typeof lineNo == "undefined") {
 		var cursor = this.input[0].selectionEnd;
-		lineNo = this.input.val().substring(0, cursor).split("\n").length - 1;
+		var linesBeforeCursor = this.input.val().substring(0, cursor).split("\n");
+		lineNo = linesBeforeCursor.length - 1;
+		
+		// 좌우 스크롤 계산
+		left = this.getWidth(linesBeforeCursor[lineNo]);
 	}
 	var top = lineNo * LH;
 	var scrollTop = this.input.scrollTop();
@@ -583,7 +588,27 @@ SmiEditor.prototype.scrollToCursor = function(lineNo) {
 			this.input.scrollTop(top);
 		}
 	}
-	// ※ 현재 좌우 스크롤까지 계산하진 않음... 연산량이 어떨지...
+	
+	var scrollLeft = this.input.scrollLeft();
+	if (left < scrollLeft) { // 커서가 보이는 영역보다 왼쪽
+		this.input.scrollLeft(left);
+	} else {
+		left += SB - this.input.width() + 2;
+		if (left > scrollLeft) { // 커서가 보이는 영역보다 오른쪽
+			this.input.scrollLeft(left);
+		}
+	}
+}
+SmiEditor.prototype.getWidth = function(text) {
+	var checker = SmiEditor.prototype.widthChecker;
+	if (!checker) {
+		$("body").append(checker = SmiEditor.prototype.widthChecker = $("<span>"));
+		checker.css({ "white-space": "pre" });
+	}
+	checker.css({ font: this.input.css("font") }).text(text).show();
+	var width = checker.width();
+	checker.hide();
+	return width;
 }
 
 SmiEditor.prototype.fixScrollAroundEvent = function(scrollLeft) {
@@ -680,7 +705,7 @@ SmiEditor.prototype.inputTextLikeNative = function(input) {
 SmiEditor.prototype.reSyncPrompt = function() {
 	var editor = this;
 	prompt("싱크 시작 시간을 입력하세요.", function(value) {
-		if (!isFinite(value)) {
+		if (!value || !isFinite(value)) {
 			alert("잘못된 값입니다.");
 			return;
 		}
