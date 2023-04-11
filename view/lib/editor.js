@@ -9,6 +9,7 @@ var FL = 1000000 / FR;
 
 var tabs = [];
 var tab = 0;
+var closingTab = null;
 
 // C# 쪽에서 호출
 function refreshTime(now, fr) {
@@ -156,6 +157,10 @@ function init(jsonSetting) {
 	
 	var tabSelector = $("#tabSelector").on("click", ".th:not(#btnNewTab)", function() {
 		var th = $(this);
+		if (th[0] == closingTab) {
+			return;
+		}
+		
 		tabSelector.find(".selected").removeClass("selected");
 		var selectedTab = th.addClass("selected").data("tab");
 		if (selectedTab) {
@@ -175,30 +180,25 @@ function init(jsonSetting) {
 		e.preventDefault();
 		
 		var th = $(this).parent();
-		var next = th.next();
-		if (next.length == 0) {
-			next = th.prev();
-		}
+		closingTab = th[0];
+		setTimeout(function() { // 탭 선택 이벤트 방지... e.preventDefault()로 안 되네...
+			closingTab == null;
+		}, 1);
 		
 		var selectedTab = th.data("tab");
 		var saved = (selectedTab.input.val() != selectedTab.saved);
 		
 		confirm((saved ? "저장되지 않았습니다.\n" : "") + "탭을 닫으시겠습니까?", function() {
-			var index = tabs.indexOf(selectedTab);
-			tabs.splice(index, 1);
-			selectedTab.area.remove();
-			th.remove();
-			delete selectedTab;
-			SmiEditor.selected = null;
-			SmiEditor.Viewer.refresh();
-			
-			if (tabs.length) {
-				tab = Math.min(index, tabs.length - 1);
-				var selector = "#tabSelector .th:eq(" + tab + ")";
-				setTimeout(function() {
+			var index = closeTab(th);
+
+			setTimeout(function() {
+				// 선택돼있던 탭을 닫았을 경우 다른 탭 선택
+				if (tabs.length && $("#tabSelector .th.selected").length == 0) {
+					tab = Math.min(index, tabs.length - 1);
+					var selector = "#tabSelector .th:eq(" + tab + ")";
 					$(selector).click();
-				}, 1);
-			}
+				}
+			}, 1);
 		});
 	});
 	$(document).on("keydown", function(e) {
@@ -333,16 +333,32 @@ function runIfCanOpenNewTab(func) {
 		// 탭 미사용 -> 현재 파일 닫기
 		if (tabs.length) {
 			if (tabs[0].input.val() != tabs[0].saved) {
-				confirm("현재 파일을 닫을까요?", func);
+				confirm("현재 파일을 닫을까요?", function() {
+					$("#tabSelector > .th:not(#btnNewTab)").each(function() {
+						closeTab($(this));
+					});
+					func();
+				});
 				return;
 			}
-			$("#tabSelector > .th:not(#btnNewTab)").remove();
-			$("#editor").empty();
-			delete tabs[0];
-			tabs.splice(0);
+			$("#tabSelector > .th:not(#btnNewTab)").each(function() {
+				closeTab($(this));
+			});
 		}
 	}
 	if (func) func();
+}
+function closeTab(th) {
+	var targetTab = th.data("tab");
+	var index = tabs.indexOf(targetTab);
+	tabs.splice(index, 1);
+	targetTab.area.remove();
+	th.remove();
+	delete targetTab;
+	
+	SmiEditor.selected = null;
+	SmiEditor.Viewer.refresh();
+	return index;
 }
 
 function newFile() {

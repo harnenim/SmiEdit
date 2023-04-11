@@ -107,7 +107,6 @@ function devide() {
 	
 	var keeps = null;
 	function devideKeeps() {
-		console.log(keeps);
 		var last = keeps[0];
 		
 		if (keeps.length == 1) {
@@ -133,7 +132,7 @@ function devide() {
 						}
 						if (!clear) break;
 					} else {
-						
+						// 마지막 줄이 다름
 					}
 					last = sync;
 				}
@@ -141,6 +140,35 @@ function devide() {
 					// 현재가 기준선
 					devider = cut;
 					break;
+				}
+			}
+			
+			if (devider == 0) {
+				// 맨 윗줄 기준으로 함께 바뀌는 줄을 찾음
+				for (var cut = lineCount - 1; cut >= 0; cut--) { // 자르는 기준선 줄여가며 테스트
+					last = keeps[0];
+					var clear = true;
+					for (var i = 1; i < keeps.length; i++) {
+						var sync = keeps[i];
+						if (last.text[0] == sync.text[0]) { // 첫 줄이 같음
+							// 자르는 기준선보다 위가 모두 일치해야 함
+							for (var j = 1; j < cut; j++) {
+								if (last.text[j] != sync.text[j]) { // 다른 게 있으면 끝내기
+									clear = false;
+									break;
+								}
+							}
+							if (!clear) break;
+						} else {
+							// 마지막 줄이 다름
+						}
+						last = sync;
+					}
+					if (clear) {
+						// 현재가 기준선
+						devider = cut;
+						break;
+					}
 				}
 			}
 			
@@ -195,7 +223,7 @@ function devide() {
 			}
 			if (!sync.text[0]) {
 				// 공백일 경우 윗줄에도 추가
-				upper.push(sync);
+				upper.push({ sync: sync.sync, text: sync.text });
 			}
 			lower.push(sync);
 		}

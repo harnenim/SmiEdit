@@ -678,7 +678,7 @@ SmiEditor.prototype.reSync = function(sync) {
 		// 적용할 싱크 없음
 		return;
 	}
-	var add = sync - this.lines[lineNo = i][1];
+	var add = sync - this.lines[lineNo = i][LINE.SYNC];
 	var lines = this.lines.slice(0, lineNo);
 	
 	for (; i < this.lines.length; i++) {
