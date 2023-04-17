@@ -1,6 +1,3 @@
-// TODO: 자동으로 구해지도록?
-var LH = 20; // LineHeight
-var SB = 16; // ScrollBarWidth
 var DPI = 1;
 
 var time = 0;

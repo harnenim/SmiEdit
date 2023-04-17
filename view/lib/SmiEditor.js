@@ -1,3 +1,7 @@
+// TODO: 자동으로 구해지도록?
+var LH = 20; // LineHeight
+var SB = 16; // ScrollBarWidth
+
 var LINE = {
 		TEXT: 0
 	,	SYNC: 1
@@ -58,21 +62,25 @@ var SmiEditor = function(text, path) {
 };
 
 SmiEditor.setSetting = function(setting, appendStyle) {
-	SmiEditor.sync = setting.sync;
+	if (setting.sync) {
+		SmiEditor.sync = setting.sync;
+	}
 	
 	{	// AutoComplete
 		for (var key in SmiEditor.autoComplete) {
 			delete SmiEditor.autoComplete[key];
 		}
-		for (var key in setting.autoComplete) {
-			SmiEditor.autoComplete[key] = setting.autoComplete[key];
+		if (setting.autoComplete) {
+			for (var key in setting.autoComplete) {
+				SmiEditor.autoComplete[key] = setting.autoComplete[key];
+			}
 		}
 	}
 
 	{	// 단축키
 		var withs = ["withCtrls", "withAlts", "withCtrlAlts", "withCtrlShifts"];
 		var keys = "pqrstuvwxyz{ABCDEFGHIJKLMKNOPQRSTUVWXYZ1234567890";
-		SmiEditor.fn = setting.command.fn; // F숫자 조합은 기본값 추가 없이 그대로 사용
+		SmiEditor.fn = setting.command ? setting.command.fn : {}; // F숫자 조합은 기본값 추가 없이 그대로 사용
 		
 		// 설정값 초기화
 		for (var i = 0; i < withs.length; i++) {
@@ -92,14 +100,16 @@ SmiEditor.setSetting = function(setting, appendStyle) {
 		SmiEditor.withAlts.reserved += "s";
 
 		// 메뉴
-		for (var i = 0; i < setting.menu.length; i++) {
-			var menu = setting.menu[i][0];
-			var index = menu.indexOf("&") + 1;
-			if (index > 0 && index < menu.length) {
-				var key = menu[index];
-				if ("A" <= key && key <= "Z") {
-					SmiEditor.withAlts[key] = "/*메뉴 접근*/ binder.focusToMenu(" + key.charCodeAt() + ");";
-					SmiEditor.withAlts.reserved += key;
+		if (setting.menu) {
+			for (var i = 0; i < setting.menu.length; i++) {
+				var menu = setting.menu[i][0];
+				var index = menu.indexOf("&") + 1;
+				if (index > 0 && index < menu.length) {
+					var key = menu[index];
+					if ("A" <= key && key <= "Z") {
+						SmiEditor.withAlts[key] = "/*메뉴 접근*/ binder.focusToMenu(" + key.charCodeAt() + ");";
+						SmiEditor.withAlts.reserved += key;
+					}
 				}
 			}
 		}
@@ -112,13 +122,15 @@ SmiEditor.setSetting = function(setting, appendStyle) {
 		SmiEditor.withCtrls.reserved += "FHYZ";
 		
 		// 설정값 반영
-		for (var i = 0; i < withs.length; i++) {
-			var withCmd = withs[i];
-			var command = setting.command[withCmd];
-			for (var key in command) {
-				var func = command[key];
-				if (func) {
-					SmiEditor[withCmd][key] = func;
+		if (setting.command) {
+			for (var i = 0; i < withs.length; i++) {
+				var withCmd = withs[i];
+				var command = setting.command[withCmd];
+				for (var key in command) {
+					var func = command[key];
+					if (func) {
+						SmiEditor[withCmd][key] = func;
+					}
 				}
 			}
 		}
@@ -1219,7 +1231,7 @@ SmiEditor.prototype.updateSync = function(range) {
 		if (SmiEditor.PlayerAPI && SmiEditor.PlayerAPI.setLines) {
 			SmiEditor.PlayerAPI.setLines(newLines);
 		}
-		if (SmiEditor.Viewer) {
+		if (SmiEditor.Viewer.window) {
 			SmiEditor.Viewer.refresh();
 		}
 		self.syncUpdating = false;

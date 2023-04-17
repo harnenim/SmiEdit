@@ -6,14 +6,18 @@
 	<title>겹치는 싱크 분리</title>
 	<script src="../lib/jquery-3.2.1.min.js"></script>
 	<script src="../lib/popup.js"></script>
+	<script src="../lib/AutoCompleteTextarea.js"></script>
+	<script src="../lib/History.js"></script>
+	<script src="../lib/SmiEditor.js"></script>
 	<link rel="stylesheet" type="text/css" href="../lib/popup.css" />
+	<link rel="stylesheet" type="text/css" href="../lib/AutoCompleteTextarea.css" />
 	<script>
 windowName = "addon";
 
 // 초기 상태 기억
 // TODO: 경우에 따라 opener 분리 필요
 var origin = null;
-var tab = opener.SmiEditor.selected;
+var tab = opener && opener.SmiEditor.selected;
 if (tab) {
 	origin = tab.getText();
 }
@@ -275,6 +279,16 @@ function devide() {
 
 $(function() {
 	init();
+	
+	SmiEditor.setSetting({ autoComplete: opener ? opener.setting.autoComplete : {} });
+	var editor = new SmiEditor($("#input").val());
+	$("#input").remove();
+	
+	$("body").prepend(editor.input.attr("id", "input"));
+	SmiEditor.selected = editor;
+	SmiEditor.activateKeyEvent();
+	
+	LH = Number(editor.input.css("line-height").split("px")[0]);
 	
 	$("#btnDevide").on("click", devide);
 	devide();

@@ -4,14 +4,15 @@ var AutoCompleteTextarea = function(ta, sets, onSelect) {
 	this.onSelect = onSelect;
 
 	var font = getComputedStyle(ta[0]);
-	font = {
+	this.font = {
 			"font-family": font.fontFamily
 		,	"font-size"  : font.fontSize
+		,	"font-weight": font.fontWeight
 		,	"line-height": font.lineHeight
 	};
-	$("body").append(this.view = $("<ol class='act-select'>").css(font).hide());
+	$("body").append(this.view = $("<ol class='act-select'>").css(this.font).hide());
 	
-	this.LH = Number(font["line-height"].split("px")[0]);
+	this.LH = Number(this.font["line-height"].split("px")[0]);
 	this.SB = 16; // 스크롤바 폭 계산하는 걸 만드는 게?
 
 	this.pos = 0;	// 입력 시작 위치
@@ -92,7 +93,7 @@ AutoCompleteTextarea.prototype.setPos = function() {
 	
 	// 마지막 줄 width 계산해서 left로 활용
 	tmp = tmp[tmp.length - 1];
-	this.ta.parent().append(tmp = $("<span>").text(tmp));
+	this.ta.parent().append(tmp = $("<span>").css(this.font).text(tmp));
 	css.left = tmp.width() - (this.ta.scrollLeft() - offset.left);
 	tmp.remove();
 	
