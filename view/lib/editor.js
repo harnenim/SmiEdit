@@ -13,8 +13,13 @@ function refreshTime(now, fr) {
 	time = now;
 	if (fr) {
 		FL = 1000000 / (FR = fr);
+		if (showFps == null) {
+			showFps = $("#showFps");
+		}
+		showFps.text(Math.floor(fr/1000) + "." + (fr%1000) + " fps");
 	}
 }
+var showFps = null;
 
 SmiEditor.prototype.onChangeSaved = function(saved) {
 	// 수정될 수 있는 건 열려있는 탭이므로

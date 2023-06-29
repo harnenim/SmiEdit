@@ -24,7 +24,7 @@ html, body {
 	height: 100%;
 	background: #f0f0f0;
 }
-label {
+label, #showFps {
 	margin-left: 6px;
 }
 button {
@@ -48,6 +48,7 @@ button {
 	--><label>싱크 조절<input type="text" id="inputUnit" value="0" /></label><!--
 	--><button type="button" id="btnMoveToBack"  title="싱크 당기기(Ctrl+Shift+↓)">－</button><!--
 	--><button type="button" id="btnMoveToForward" title="싱크 밀기(Ctrl+Shift+↑)">＋</button><!--
+	--><span id="showFps"></span><!--
 --></div>
 	<div id="tabSelector"><div class="th" id="btnNewTab">＋</div></div>
 	<div id="editor"></div>
