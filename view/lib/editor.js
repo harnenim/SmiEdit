@@ -12,11 +12,14 @@ var closingTab = null;
 function refreshTime(now, fr) {
 	time = now;
 	if (fr) {
+		if (fr == 23975) {
+			fr = 23975.7; // 일부 영상 버그
+		}
 		FL = 1000000 / (FR = fr);
 		if (showFps == null) {
 			showFps = $("#showFps");
 		}
-		showFps.text(Math.floor(fr/1000) + "." + (fr%1000) + " fps");
+		showFps.text((Math.floor(fr*10+0.5)/10000) + " fps");
 	}
 }
 var showFps = null;

@@ -447,6 +447,42 @@ SmiEditor.activateKeyEvent = function() {
 					}
 					break;
 				}
+				case 8: { // Backspace
+					if (hasFocus) {
+						if (e.ctrlKey) { // Ctrl+Backspace → 공백문자 그룹 삭제
+							var text = editor.input.val();
+							var cursor = editor.getCursor();
+							if (cursor[0] == cursor[1]) {
+								var delLen = 0;
+								if (cursor[0] >= 12) {
+									if (text.substring(cursor[0]-12, cursor[0]) == "<br><b>　</b>") {
+										delLen = 12;
+									}
+								}
+								if (!delLen && cursor[0] >= 8) {
+									if (text.substring(cursor[0]- 8, cursor[0]) == "<b>　</b>") {
+										delLen = 8;
+									}
+								}
+								if (!delLen && cursor[0] >= 4) {
+									if (text.substring(cursor[0]- 4, cursor[0]) == "<br>") {
+										delLen = 4;
+									}
+								}
+								if (delLen) {
+									e.preventDefault();
+									editor.input.val(text.substring(0, cursor[0] - delLen) + text.substring(cursor[0]));
+									
+									cursor = cursor[0]-delLen;
+									editor.setCursor(cursor, cursor);
+									editor.updateSync();
+									editor.scrollToCursor();
+								}
+							}
+						}
+					}
+					break;
+				}
 			}
 			
 			{	// 단축키 설정
