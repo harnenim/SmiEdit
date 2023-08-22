@@ -533,6 +533,85 @@ $(function() {
 		};
 	}
 	
+	{	// 자동치환
+		saved.replace = { status: true, name: "자동치환 설정" };
+	
+		var replaceList = $("#replaceList");
+	
+		function appendReplace(item) {
+			if (!item) {
+				item = { from: "", to: "", use: true };
+			}
+			replaceList.append(
+				$("<li>")
+					.append($("<input type='text' name='from'>").val(item.from))
+					.append("→")
+					.append($("<input type='text' name='to'>"  ).val(item.to))
+					.append($("<input type='checkbox' name='use'>").prop("checked", item.use))
+					.append($("<button type='button' class='prev'>").text("∧"))
+					.append($("<button type='button' class='next'>").text("∨"))
+					.append($("<button type='button' class='remove'>").text("✕"))
+			);
+		}
+		(refreshFuncs["replace"] = function(setting) {
+			replaceList.empty();
+			for (var i = 0; i < setting.replace.length; i++) {
+				appendReplace(setting.replace[i]);
+			}
+			setSaved("replace", setting == opener.setting);
+		})(setting);
+		
+		$("#replace > .add-replace").on("click", function() {
+			appendReplace();
+			setSaved("replace", false);
+		});
+
+		replaceList.on("click", "li > button.prev", function() {
+			var li = $(this).parent();
+			var prev = li.prev();
+			if (prev.length) {
+				prev.before(li);
+				setSaved("replace", false);
+			}
+		});
+		replaceList.on("click", "li > button.next", function() {
+			var li = $(this).parent();
+			var next = li.next();
+			if (next.length) {
+				next.after(li);
+				setSaved("replace", false);
+			}
+		});
+		replaceList.on("click", "li > button.remove", function() {
+			var li = $(this).parent();
+			confirm("삭제하시겠습니까?", function() {
+				li.remove();
+				setSaved("replace", false);
+			});
+		});
+		
+		submitFuncs["replace"] = function() {
+			var replaces = [];
+			
+			replaceList.find("li").each(function() {
+				var li = $(this);
+				var item = {
+						from: li.find("input[name=from]").val()
+					,	to  : li.find("input[name=to]").val()
+					,	use : li.find("input[name=use]").prop("checked")
+				};
+				if (item.from && item.to) {
+					replaces.push(item);
+				}
+			});
+			
+			setting.replace = replaces;
+			setSaved("replace", true);
+			opener.setSetting(setting);
+			opener.saveSetting();
+		};
+	}
+	
 	{	// 스타일
 		saved.style = { status: true, name: "스타일 설정" };
 	
@@ -795,6 +874,8 @@ fieldset {
 	margin: 8px 0;
 }
 
+fieldset li { margin-bottom: 2px; }
+
 /* 기본 틀 */
 #settingNav {
 	position: fixed;
@@ -937,12 +1018,25 @@ fieldset {
 	margin-bottom: 4px;
 }
 
-/* 메뉴 */
+/* 자동치환, 메뉴 */
+#replaceList { margin: 8px 0 2px; }
+#replaceList input[type=text] { width: calc(50% - 40px); }
+#replaceList input[type=checkbox] { width: 17px; }
+#replace > button.add-replace { width: 100%; margin-top: 8px; }
+
+#replaceList button,
 #menu button { width: 16px; }
 #menu input,
 #menu button.add-menu { width: 200px; }
-#menu input.menu-func { width: calc(100% - 248px); }
+#menu input.menu-func { width: calc(100% - 250px); margin-left: 2px; }
 #menu > button.add-menu { width: 216px; margin-top: 8px; }
+
+#replaceList button,
+fieldset legend button,
+fieldset ol button,
+#btnPlayerPath { border-left-width: 0; }
+#replace input + button { border-left-width: 1px; }
+
 </style>
 </head>
 <body>
@@ -952,9 +1046,10 @@ fieldset {
 	<a href="javascript:show(1)">싱크</a>
 	<a href="javascript:show(2)">단축키</a>
 	<a href="javascript:show(3)">자동완성</a>
-	<a href="javascript:show(4)">스타일</a>
-	<a href="javascript:show(5)">플레이어</a>
-	<a href="javascript:show(6)">메뉴</a>
+	<a href="javascript:show(4)">자동치환</a>
+	<a href="javascript:show(5)">스타일</a>
+	<a href="javascript:show(6)">플레이어</a>
+	<a href="javascript:show(7)">메뉴</a>
 </nav>
 <div id="settingArea">
 	<form id="window" style="height: 100%;">
@@ -1177,6 +1272,14 @@ fieldset {
 		<label>&gt;
 			<textarea name="autoComplete_190_1" spellcheck="false"></textarea>
 		</label>
+	</form>
+	
+	<form id="replace">
+		<p>
+			자막 파일 저장 시 자동치환 동작 설정입니다. 
+		</p>
+		<ol id="replaceList"></ol>
+		<button type="button" class="add-replace">추가</button>
 	</form>
 	
 	<form id="style">

@@ -399,6 +399,68 @@ function saveFile(asNew) {
 		asNew = true;
 	}
 	var text = currentTab.input.val(); // currentTab.text 동기화 실패 가능성 고려, 현재 값 다시 불러옴
+	
+	// 저장 전 일괄치환
+	var cnt = setting.replace.length;
+	if (cnt > 0) { // ON/OFF 기능이 필요한가...?
+		var changed = false;
+		
+		// 커서 기준 3개로 나눠서 치환
+		var cursor = currentTab.getCursor();
+		text = [text.substring(0, cursor[0]), text.substring(cursor[0], cursor[1]), text.substring(cursor[1])];
+		for (var i = 0; i < cnt; i++) {
+			var item = setting.replace[i];
+			if (item.use) {
+				if (text[0].indexOf(item.from) >= 0) { text[0] = text[0].split(item.from).join(item.to); changed = true; }
+				if (text[1].indexOf(item.from) >= 0) { text[1] = text[1].split(item.from).join(item.to); changed = true; }
+				if (text[2].indexOf(item.from) >= 0) { text[2] = text[2].split(item.from).join(item.to); changed = true; }
+			}
+		}
+		cursor = [text[0].length, text[0].length + text[1].length];
+		
+		if (text[0].length > 0 && text[1].length > 0) {
+			// 시작 커서 전후 치환
+			text = [text[0] + text[1], text[2]];
+			for (var i = 0; i < cnt; i++) {
+				var item = setting.replace[i];
+				if (item.use) {
+					var index = text[0].indexOf(item.from);
+					if (index >= 0) {
+						text[0] = text[0].split(item.from).join(item.to);
+						cursor[0] = index + item.to.length;
+						cursor[1] += item.to.length - item.from.length;
+						changed = true;
+					}
+				}
+			}
+		} else {
+			text = [text[0] + text[1], text[2]];
+		}
+		
+		// 종료 커서 전후 치환
+		if (text[1].length > 0) {
+			text = text[0] + text[1];
+			for (var i = 0; i < cnt; i++) {
+				var item = setting.replace[i];
+				if (item.use) {
+					var index = text.indexOf(item.from);
+					if (index >= 0) {
+						text = text.split(item.from).join(item.to);
+						cursor[1] = index;
+						changed = true;
+					}
+				}
+			}
+		} else {
+			text = text[0];
+		}
+		
+		// 바뀐 게 있으면 적용
+		if (changed) {
+			currentTab.setText(text, cursor);
+		}
+	}
+	
 	if (asNew) {
 		path = "";
 	}

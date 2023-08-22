@@ -14,6 +14,7 @@
 	<link rel="stylesheet" type="text/css" href="../lib/AutoCompleteTextarea.css" />
 	<script>
 windowName = "addon";
+var LOG = false;
 
 if (opener) {
 	setting = opener.setting;
@@ -254,6 +255,8 @@ $(function() {
 			group.lines = [];
 			var last = null;
 
+			if (LOG) console.log("group width: " + group.maxWidth);
+
 			// 팟플레이어 왼쪽 정렬에서 좌우로 흔들리지 않도록 잡아줌
 			// ... 사실 폰트에 따라 흔들리긴 함...
 			var lists = [group.upper, group.lower];
@@ -284,16 +287,24 @@ $(function() {
 						var width = getWidth(line);
 						var lastPad;
 						var lastWidth;
+						if (LOG) console.log(line.split("&nbsp;").join(" ") + ": " + width);
 						do {
 							lastPad = pad;
 							lastWidth = width;
 							pad = lastPad + "&nbsp;";
-							width = getWidth("​" + pad + line + pad + "​");
+							var curr = "​" + pad + line + pad + "​";
+							width = getWidth(curr);
+							if (LOG) console.log(curr.split("&nbsp;").join(" ") + ": " + width);
 							
 						} while (width < group.maxWidth);
 						
-						if ((width - group.maxWidth) < (group.maxWidth - lastWidth)) {
+						if ((width - group.maxWidth) > (group.maxWidth - lastWidth)) {
 							pad = lastPad;
+							if (LOG) {
+								var curr = "​" + pad + line + pad + "​";
+								width = getWidth(curr);
+								console.log(curr.split("&nbsp;").join(" ") + ": " + width);
+							}
 						}
 						pad = pad.split("&nbsp;").join(" ");
 						for (var k = 0; k < lines.length; k++) {

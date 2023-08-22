@@ -35,7 +35,7 @@ var checkVersion;
 }
 
 var DEFAULT_SETTING =
-{	version: "2023.08.19.v1"
+{	version: "2023.08.22.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -214,6 +214,36 @@ var DEFAULT_SETTING =
 		]]
 	,	"190": ['>', ['>>>|…']]
 	}
+,	replace:
+	[ { from: "...", to: "…", use: false }
+	
+	, { from: "됬"        , to: "됐"      , use: true }
+	, { from: "왠걸"      , to: "웬걸"    , use: true }
+	, { from: "않돼"      , to: "안 돼"   , use: true }
+	, { from: "우겨넣"    , to: "욱여넣"  , use: true }
+	, { from: "오랫만"    , to: "오랜만"  , use: true }
+	, { from: "는 커녕"   , to: "는커녕"  , use: true }
+	, { from: "수 밖에"   , to: "수밖에"  , use: true }
+	, { from: "절대절명"  , to: "절체절명", use: true }
+	, { from: "부재 중"   , to: "부재중"  , use: true }
+	
+	, { from: "신 난다"   , to: "신난다"  , use: true } // 2014년 맞춤법 변경사항
+	, { from: "신 났"     , to: "신났"    , use: true }
+	, { from: "신 났"     , to: "신났"    , use: true }
+	
+	, { from: "지구 상"   , to: "지구상"  , use: true } // 2017년 맞춤법 변경사항
+	, { from: "지도 상"   , to: "지도상"  , use: true }
+	, { from: "직선 상"   , to: "직선상"  , use: true }
+	, { from: "궤도 상"   , to: "궤도상"  , use: true }
+	, { from: "인터넷 상" , to: "인터넷상", use: true }
+	
+	, { from: "불어"      , to: "프랑스어", use: false }
+	, { from: "더프랑스어", to: "더불어"  , use: false }
+	, { from: "비어"      , to: "맥주"    , use: false }
+	, { from: "맥주있"    , to: "비어있"  , use: false }
+	, { from: "터키"      , to: "튀르키예", use: false }
+	, { from: "켄튀르키예", to: "켄터키"  , use: false }
+	]
 ,	useTab: false // 탭 사용 기본값은 꺼두는 걸로
 ,	css	:	".sync     { border-color: #000; }\n"
 		+	".sync.error { background: #f88; }\n"
