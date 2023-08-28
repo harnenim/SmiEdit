@@ -32,6 +32,36 @@ var SmiEditor = function(text, path) {
 	this.colSync.html('<span class="sync"><br /></span>');
 	if (text) {
 		text = text.split("\r\n").join("\n");
+		
+		// 싱크 라인 분리되도록 양식 변환
+		var lines = text.split("\n");
+		var newLines = [];
+		var cnt = 0;
+		for (var i = 0; i < lines.length; i++) {
+			var line = lines[i];
+			if (line.substring(0, 6).toUpperCase() == "<SYNC ") {
+				var blocks = line.split(">");
+				for (var j = 1; j < blocks.length; j++) {
+					if (blocks[j].substring(0, 6).toUpperCase() == "<SYNC ") continue;
+					if (blocks[j].substring(0, 3).toUpperCase() == "<P ") continue;
+					
+					var syncLine = blocks.splice(0, j).join(">") + ">";
+					line = blocks.join(">");
+					if (line.length) {
+						newLines.push(syncLine);
+						cnt++;
+					} else {
+						line = syncLine;
+					}
+					break;
+				}
+			}
+			newLines.push(line);
+		}
+		if (cnt) {
+			text = newLines.join("\n");
+		}
+		
 		this.input.val(text);
 		this.setCursor(0)
 		this.saved = text;

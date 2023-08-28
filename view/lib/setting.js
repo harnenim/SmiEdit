@@ -31,11 +31,11 @@ var checkVersion;
 	var lastNotifyForCommand = "2023.04.07.v2";
 	var lastNotifyForAutoComplete = "";
 	var lastNotifyForStyle = "2023.04.06.v1";
-	var lastNotifyForMenu = "2023.04.05.v1";
+	var lastNotifyForMenu = "2023.08.28.v1";
 }
 
 var DEFAULT_SETTING =
-{	version: "2023.08.22.v1"
+{	version: "2023.08.28.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -62,6 +62,7 @@ var DEFAULT_SETTING =
 		,	"흔들기 효과(&S)|openAddon('Shake');"
 		,	"니코동 효과(&N)|openAddon('Nico');"
 		,	"ASS 자막으로 변환(&A)|openAddon('ToAss');"
+		,	"재생 속도 조절|openAddon('Speed');"
 		,	"맞춤법 검사기|extSubmit(\"post\", \"http://speller.cs.pusan.ac.kr/results\", \"text1\");"
 		,	"국어사전|extSubmit(\"get\", \"https://ko.dict.naver.com/%23/search\", \"query\");"
 		]

@@ -52,10 +52,11 @@ opener.afterGetOutput = function(output) {
 			if (type[0] == "［") {
 				line[9] = "{}" + line[9];
 			}
+			line = line.join(",");
 			if (type[1] == "］") {
-				line[9] = line[9] + "{}";
+				line = line + "{}";
 			}
-			lines[i] = line.join(",");
+			lines[i] = line;
 		}
 	}
 	$("#output").val(lines.join("\n"));

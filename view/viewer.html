@@ -81,7 +81,9 @@ function refreshTime(receiveTime, withoutTitle) {
 					hasLine = true;
 				}
 				*/
-				showLines.push(line[k]);
+				if (k < line.length - 1 || line[k].length) {
+					showLines.push(line[k]);
+				}
 			}
 		}
 	}
