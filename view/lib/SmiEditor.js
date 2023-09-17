@@ -970,9 +970,12 @@ SmiEditor.prototype.insertBR = function() {
 	this.history.log();
 	this.updateSync();
 }
-SmiEditor.prototype.moveToSync = function() {
+SmiEditor.prototype.moveToSync = function(add) {
 	var cursor = this.input[0].selectionEnd;
 	var lineNo = this.input.val().substring(0, cursor).split("\n").length - 1;
+	if (typeof add != "number") {
+		add = 0;
+	}
 	
 	var sync = 0;
 	for (var i = lineNo; i >= 0; i--) {
@@ -983,7 +986,7 @@ SmiEditor.prototype.moveToSync = function() {
 	}
 	
 	SmiEditor.PlayerAPI.play();
-	SmiEditor.PlayerAPI.moveTo(sync);
+	SmiEditor.PlayerAPI.moveTo(sync + add);
 }
 SmiEditor.prototype.findSync = function(target) {
 	if (!target) {
