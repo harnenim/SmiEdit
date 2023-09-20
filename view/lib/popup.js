@@ -7,6 +7,12 @@ $(document).on("keydown", function(e) {
 	}
 });
 
+window._close = window.close;
+window.close = function() {
+	opener.binder.focus("editor");
+	window._close();
+};
+
 // 종료 전 확인 필요한 경우 override
 function requestClose() {
 	window.close();
