@@ -290,6 +290,12 @@ namespace Jamaker
             }
             int hwnd = GetHwnd(target);
             WinAPI.SetForegroundWindow(hwnd);
+
+            // 에디터 활성화할 땐 커서까지 포커싱
+            if (target.Equals("editor"))
+            {
+                mainView.Focus();
+            }
         }
         public void SetFollowWindow(bool follow)
         {

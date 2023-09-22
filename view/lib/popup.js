@@ -10,7 +10,9 @@ $(document).on("keydown", function(e) {
 window._close = window.close;
 window.close = function() {
 	if (windowName != "finder") {
-		opener.binder.focus("editor");
+		setTimeout(function() {
+			opener.binder.focus("editor");
+		}, 100);
 	}
 	window._close();
 };
