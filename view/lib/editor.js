@@ -7,6 +7,7 @@ var FL = 1000000 / FR;
 var tabs = [];
 var tab = 0;
 var closingTab = null;
+var tabToCloseAfterRun = null;
 
 var autoSaveTemp = null;
 
@@ -350,17 +351,15 @@ function runIfCanOpenNewTab(func) {
 		// 탭 미사용 -> 현재 파일 닫기
 		if (tabs.length) {
 			if (tabs[0].input.val() != tabs[0].saved) {
-				confirm("현재 파일을 닫을까요?", function() {
-					$("#tabSelector > .th:not(#btnNewTab)").each(function() {
-						closeTab($(this));
-					});
+				confirm("현재 파일을 닫을까요?", function () {
+					tabToCloseAfterRun = $("#tabSelector > .th:not(#btnNewTab)");
 					func();
 				});
 				return;
 			}
-			$("#tabSelector > .th:not(#btnNewTab)").each(function() {
-				closeTab($(this));
-			});
+			tabToCloseAfterRun = $("#tabSelector > .th:not(#btnNewTab)");
+		} else {
+			tabToCloseAfterRun = null;
 		}
 	}
 	if (func) func();
@@ -522,6 +521,9 @@ function saveTemp() {
 
 var _for_video_ = false;
 function openNewTab(text, path, forVideo) {
+	if (tabToCloseAfterRun) {
+		closeTab(tabToCloseAfterRun);
+	}
 	if (tabs.length >= 4) {
 		alert("탭은 4개까지 열 수 있습니다.");
 		return;
@@ -532,6 +534,7 @@ function openNewTab(text, path, forVideo) {
 	var tab = new SmiEditor(text ? text : setting.newFile, path);
 	tabs.push(tab);
 	$("#editor").append(tab.area);
+	tab.tempSavedText = text;
 
 	var th = $("<div class='th'>").append($("<span>").text(title));
 	th.append($("<button type='button' class='btn-close-tab'>").text("×"));
