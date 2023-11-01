@@ -870,7 +870,7 @@ namespace Jamaker
             base.WndProc(ref m);
         }
 
-        private const string FileDialogFilter = "SAMI 자막 파일|*.smi";
+        private const string FileDialogFilter = "지원되는 자막 파일|*.smi;*.srt";
 
         private void DropListFile(DragEventArgs e)
         {
@@ -879,7 +879,7 @@ namespace Jamaker
                 string[] strFiles = (string[])e.Data.GetData(DataFormats.FileDrop);
                 foreach (string strFile in strFiles)
                 {
-                    if (strFile.ToUpper().EndsWith(".SMI"))
+                    if (strFile.ToUpper().EndsWith(".SMI") || strFile.ToUpper().EndsWith(".SRT"))
                     {
                         LoadFile(strFile);
                         break;
