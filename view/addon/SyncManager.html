@@ -545,12 +545,14 @@ $(function() {
 		
 		$("#btnApply").on("click", apply);
 		
+		var originFrameAss = $("#originFrameAss").focus();
+		originFrameAss[0].select();
+		originFrameAss.scrollTop(0).scrollLeft(0);
+		var text = originFrameAss.val();
 		setTimeout(function() {
-			var originFrameAss = $("#originFrameAss").focus();
-			originFrameAss[0].select();
-			originFrameAss.scrollTop(0).scrollLeft(0);
 			confirm("작업할 내역을 복사하시겠습니까?\nAegisub에서 작업이 필요합니다.", function() {
-				navigator.clipboard.writeText(originFrameAss.val());
+                //navigator.clipboard.writeText(text);
+                document.execCommand("copy");
 			});
 		}, 100);
 	}
