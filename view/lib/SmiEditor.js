@@ -1849,7 +1849,6 @@ SmiEditor.prototype.normalize = function() {
 SmiEditor.prototype.fillSync = function() {
 	var text = this.getTransformText();
 	if (text) {
-		/*
 		// 기존 중간싱크 제거 후 진행
 		var lines = text.split("\n");
 		text = [];
@@ -1863,117 +1862,12 @@ SmiEditor.prototype.fillSync = function() {
 		}
 		
 		SmiEditor.afterTransform(SmiEditor.fillSync(text.join("\n")));
-		*/
-		var smi = new Subtitle.SmiFile();
-		var input = smi.fromTxt(text).body;
-		Subtitle.Smi.fillEmptySync(input);
-		smi.body = input;
-		SmiEditor.afterTransform(smi.toTxt().trim());
 	}
 };
-/*
-SmiEditor.fillSync = function(text) {
-	if (typeof(text) != "string") return null;
-	
-	// 기존 중간싱크 제거 후 진행
-	var textLines = text.split("\n");
-	text = [];
-	for (var i = 0; i < textLines.length; i++) {
-		var line = textLines[i];
-		if (line.substring(0, 6).toUpperCase() == "<SYNC " && line.indexOf("\t>") > 0) {
-			// 해당 줄 무시
-		} else if (line == "<~>") {
-			// 해당 줄 무시
-		} else {
-			text.push(line);
-		}
-	}
-	
-	var lines = [];
-	var group = { start: -1, type: TYPE.TEXT, lines: [] };
-	for (var i = 0; i < text.length; i++) {
-		var sync = -1;
-		var line = text[i];
-		if (line.substring(0, 6).toUpperCase() == "<SYNC ") {
-			var j = 6;
-			var closeIndex = line.indexOf(">", j);
-			while (j < closeIndex) {
-				// 속성 찾기
-				for (; j < closeIndex; j++) {
-					var c = line[j];
-					if (('0'<=c&&c<='9') || ('a'<=c&&c<='z') || ('A'<=c&&c<='Z')) {
-						break;
-					}
-				}
-				for (k = j; k < closeIndex; k++) {
-					var c = line[k];
-					if ((c<'0'||'9'<c) && (c<'a'||'z'<c) && (c<'A'||'Z'<c)) {
-						break;
-					}
-				}
-				var attrName = line.substring(j, k);
-				j = k;
-				
-				// 속성 값 찾기
-				if (line[j] == "=") {
-					j++;
-					
-					var q = line[j];
-					if (q == "'" || q == '"') { // 따옴표로 묶인 경우
-						k = line.indexOf(q, j + 1);
-						k = (0 <= k && k < closeIndex) ? k : closeIndex;
-					} else {
-						q = "";
-						k = line.indexOf(" ");
-						k = (0 <= k && k < closeIndex) ? k : closeIndex;
-						k = line.indexOf("\t");
-						k = (0 <= k && k < closeIndex) ? k : closeIndex;
-					}
-					var value = line.substring(j + q.length, k);
-					
-					if (q.length && k < closeIndex) { // 닫는 따옴표가 있을 경우
-						j += q.length + value.length + q.length;
-					} else {
-						j += q.length + value.length;
-					}
-					
-					if (attrName.toUpperCase() == "START" && isFinite(value)) {
-						sync = Number(value);
-					}
-				}
-			}
-		}
-		
-		if (sync < 0) {
-			group.lines.push(line);
-			
-		} else {
-			var cnt = group.lines.length;
-			if (group.start >= 0) {
-				group.end = sync;
-				lines.push(SmiEditor.makeSyncLine(group.start, group.type));
-				lines.push(group.lines[0]);
-				for (var j = 1; j < cnt; j++) {
-					var time = Math.floor((((group.start * (cnt - j)) + (group.end * j)) / cnt) + 0.5);
-					lines.push(SmiEditor.makeSyncLine(time, TYPE.RANGE));
-					lines.push(group.lines[j]);
-				}
-			} else {
-				for (var j = 0; j < cnt; j++) {
-					lines.push(group.lines[j]);
-				}
-			}
-			group = { start: sync, type: ((line.indexOf(" >") > 0) ? TYPE.FRAME : TYPE.BASIC), lines: [] };
-		}
-	}
-	
-	if (group.start >= 0) {
-		lines.push(SmiEditor.makeSyncLine(group.start, group.type));
-		for (var i = 0; i < group.lines.length; i++) {
-			lines.push(group.lines[i]);
-		}
-	}
-	
-	return lines.join("\n");
+SmiEditor.fillSync = function (text) {
+	var smi = new Subtitle.SmiFile();
+	var input = smi.fromTxt(text).body;
+	Subtitle.Smi.fillEmptySync(input);
+	smi.body = input;
+	return smi.toTxt().trim();
 };
-*/
