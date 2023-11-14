@@ -1849,22 +1849,25 @@ SmiEditor.prototype.normalize = function() {
 SmiEditor.prototype.fillSync = function() {
 	var text = this.getTransformText();
 	if (text) {
-		// 기존 중간싱크 제거 후 진행
-		var lines = text.split("\n");
-		text = [];
-		for (var i = 0; i < lines.length; i++) {
-			var line = lines[i];
-			if (line.substring(0, 6).toUpperCase() == "<SYNC " && line.indexOf("\t>") > 0) {
-				// 해당 줄 무시
-			} else {
-				text.push(line);
-			}
-		}
-		
-		SmiEditor.afterTransform(SmiEditor.fillSync(text.join("\n")));
+		SmiEditor.afterTransform(SmiEditor.fillSync(text));
 	}
 };
 SmiEditor.fillSync = function (text) {
+	// 기존 중간싱크 제거 후 진행
+	var textLines = text.split("\n");
+	text = [];
+	for (var i = 0; i < textLines.length; i++) {
+		var line = textLines[i];
+		if (line.substring(0, 6).toUpperCase() == "<SYNC " && line.indexOf("\t>") > 0) {
+			// 해당 줄 무시
+		} else if (line == "<~>") {
+			// 해당 줄 무시
+		} else {
+			text.push(line);
+		}
+	}
+	text = text.join("\n");
+
 	var smi = new Subtitle.SmiFile();
 	var input = smi.fromTxt(text).body;
 	Subtitle.Smi.fillEmptySync(input);

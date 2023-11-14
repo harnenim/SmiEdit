@@ -1782,10 +1782,12 @@ Subtitle.Smi.normalize = function(smis)  {
 Subtitle.Smi.fillEmptySync = function(smis) {
 	for (var i = 0; i < smis.length - 1; i++) {
 		var smi = smis[i];
+		/*
 		if (smi.syncType != smis[i + 1].syncType) {
 			// 전후 싱크 타입이 맞을 때만 안전함
 			continue;
 		}
+		*/
 		
 		var lines = smi.text.split("\r\n").join("\n").split('\n');
 		if (lines.length < 2) {
