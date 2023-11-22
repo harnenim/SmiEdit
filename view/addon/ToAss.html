@@ -30,39 +30,6 @@ $(function() {
 	}
 	$("#input").val(linesToText(editor.lines.slice(start, end)));
 	
-	/*
-	$("#btnExport").on("click", function() {
-		var input = $("#input").val();
-		
-		// C#에 요청
-		if (opener && opener.binder && opener.binder.toAss) {
-			opener.binder.toAss(input, "afterGetOutput");
-		} else {
-			// 테스트 코드
-			opener.afterGetOutput(input);
-		}
-	});
-	
-	opener.afterGetOutput = function(output) {
-		// 완성 후에도 화면 싱크 체크용으로 {} 표시
-		var lines = output.split("\n");
-		for (var i = 0; i < lines.length; i++) {
-			var line = lines[i].split("\r")[0].split(",");
-			if (line.length > 9) {
-				var type = line[3];
-				if (type[0] == "［") {
-					line[9] = "{}" + line[9];
-				}
-				line = line.join(",");
-				if (type[1] == "］") {
-					line = line + "{}";
-				}
-				lines[i] = line;
-			}
-		}
-		$("#output").val(lines.join("\n"));
-	}
-	*/
 	$("#btnExport").on("click", function() {
 		var input  = new Subtitle.SmiFile().fromTxt($("#input").val());
 		var output = new Subtitle.AssFile().fromSync(input.toSync()).toTxt();

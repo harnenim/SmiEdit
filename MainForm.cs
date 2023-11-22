@@ -869,8 +869,6 @@ namespace Jamaker
             base.WndProc(ref m);
         }
 
-        private const string FileDialogFilter = "지원되는 자막 파일|*.smi;*.srt";
-
         private void DropListFile(DragEventArgs e)
         {
             try
@@ -898,7 +896,7 @@ namespace Jamaker
             }
             else
             {
-                OpenFileDialog dialog = new OpenFileDialog{ Filter = FileDialogFilter };
+                OpenFileDialog dialog = new OpenFileDialog{ Filter = "지원되는 자막 파일|*.smi;*.srt" };
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
                     LoadFile(dialog.FileName);
@@ -1052,7 +1050,7 @@ namespace Jamaker
                 }
 
                 SaveFileDialog dialog = new SaveFileDialog {
-                    Filter = FileDialogFilter
+                    Filter = "SAMI 자막 파일|*.smi"
                 ,   InitialDirectory = directory
                 ,   FileName = filename
                 };
