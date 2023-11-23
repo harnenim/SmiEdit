@@ -132,7 +132,7 @@ function init(jsonSetting) {
 			SmiEditor.sync.weight = Number(weight);
 		} else {
 			alert("숫자를 입력하세요.");
-			var cursor = inputWeight.prop("selectionEnd") - 1;
+			var cursor = inputWeight[0].selectionEnd - 1;
 			inputWeight.val(SmiEditor.sync.weight);
 			inputWeight[0].setSelectionRange(cursor, cursor);
 		}
@@ -143,7 +143,7 @@ function init(jsonSetting) {
 			SmiEditor.sync.unit = Number(unit);
 		} else {
 			alert("숫자를 입력하세요.");
-			var cursor = inputUnit.prop("selectionEnd") - 1;
+			var cursor = inputUnit[0].selectionEnd - 1;
 			inputUnit.val(SmiEditor.sync.unit);
 			inputUnit[0].setSelectionRange(cursor, cursor);
 		}

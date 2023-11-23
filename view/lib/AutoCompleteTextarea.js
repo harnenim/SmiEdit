@@ -177,7 +177,7 @@ AutoCompleteTextarea.prototype.onKeyup = function(e) {
 			break;
 		}
 		default: {
-			var end = this.ta.prop("selectionEnd");
+			var end = this.ta[0].selectionEnd;
 			
 			// 백스페이스든 방향키든 뒤로 간 경우: 선택 취소
 			var length = end - this.pos;
@@ -212,7 +212,7 @@ AutoCompleteTextarea.prototype.onKeyup = function(e) {
 AutoCompleteTextarea.prototype.onCheck = function(e) {
 	var c = e.keyCode;
 	var text = this.ta.val();
-	var pos = this.ta.prop("selectionEnd") - 1;
+	var pos = this.ta[0].selectionEnd - 1;
 	
 	var sets = this.sets[""+e.keyCode];
 	if (sets && sets[0] == text[pos]) {

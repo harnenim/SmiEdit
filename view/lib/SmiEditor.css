@@ -77,11 +77,10 @@
 .tab > .input {
 	left: 100px;
 	right: 0;
-	border: 0;
 	overflow: scroll;
 	resize: none;
 	border: 1px solid #aaa;
-	border-right: 0;
+	border-width: 1px 0 0 1px;
 }
 .sync { border: 0 solid #000; }
 .sync.frame { border-top-width: 1px; line-height: 19px; }

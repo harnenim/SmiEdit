@@ -135,10 +135,10 @@ History.prototype.forward = function() {
 	}
 };
 History.prototype.updateCursor = function() {
-	return this.lastCursor = this.input.prop("selectionEnd");
+	return this.lastCursor = this.input[0].selectionEnd;
 };
 History.prototype.logIfCursorMoved = function() {
-	var cursor = this.input.prop("selectionEnd");
+	var cursor = this.input[0].selectionEnd;
 	if (cursor != this.lastCursor) {
 		this.log();
 	}
