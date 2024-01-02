@@ -1827,7 +1827,7 @@ Subtitle.SmiFile.prototype.fromTxt = function(txt) {
 	while ((pos = txt.indexOf('<', index)) >= 0) {
 		if (txt.length > pos + 6 && txt.substring(pos, pos + 6).toUpperCase() == ("<SYNC ")) {
 			if (last == null) {
-				header = txt.substring(0, pos);
+				this.header = txt.substring(0, pos);
 			} else {
 				last.text += txt.substring(index, pos);
 			}
