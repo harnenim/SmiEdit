@@ -1863,7 +1863,7 @@ Subtitle.SmiFile.prototype.fromTxt = function(txt) {
 					last.syncType = Subtitle.SyncType.inner;
 					break;
 			}
-		} else if (txt.length > pos + 6 && txt.substring(pos, 7).toUpperCase() == ("</BODY>")) {
+		} else if (txt.length > pos + 6 && txt.substring(pos, pos + 7).toUpperCase() == ("</BODY>")) {
 			if (last == null) {
 				this.header = txt.substring(0, pos);
 			} else {
