@@ -580,6 +580,13 @@ namespace Jamaker
 
             try
             {
+                // 설정 폴더 없으면 생성
+                DirectoryInfo di = new DirectoryInfo("setting");
+                if (!di.Exists)
+                {
+                    di.Create();
+                }
+
                 StreamWriter sw = new StreamWriter("setting/jamaker.json", false, Encoding.UTF8);
                 sw.Write(strSettingJson);
                 sw.Close();
@@ -705,6 +712,13 @@ namespace Jamaker
         {
             try
             {
+                // 설정 폴더 없으면 생성
+                DirectoryInfo di = new DirectoryInfo("setting");
+                if (!di.Exists)
+                {
+                    di.Create();
+                }
+
                 StreamWriter sw = new StreamWriter($"setting/addon_{path}", false, Encoding.UTF8);
                 sw.Write(text);
                 sw.Close();
