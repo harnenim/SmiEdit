@@ -873,10 +873,16 @@ namespace Jamaker
             }
         }
 
+        private void ClickLayerForDrag(object sender, MouseEventArgs e)
+        {
+            // 레이어가 클릭됨 -> 드래그 끝났는데 안 사라진 상태
+            HideDragging();
+        }
+
         #endregion
 
         #region 파일
-        
+
         private delegate void AfterGetString(string str);
         private AfterGetString afterGetFileName = null;
         protected override void WndProc(ref Message m)
@@ -1121,6 +1127,7 @@ namespace Jamaker
                 new ColorPicker(this).ShowDialog(this);
             }
         }
+
         public void InputText(string text)
         {
             Script("SmiEditor.inputText", text);

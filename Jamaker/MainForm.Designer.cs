@@ -64,6 +64,7 @@ namespace Jamaker
             this.layerForDrag.DragDrop += new System.Windows.Forms.DragEventHandler(this.DragDropMain);
             this.layerForDrag.DragOver += new System.Windows.Forms.DragEventHandler(this.DragOverMain);
             this.layerForDrag.DragLeave += new System.EventHandler(this.DragLeaveMain);
+            this.layerForDrag.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ClickLayerForDrag);
             // 
             // mainView
             // 
