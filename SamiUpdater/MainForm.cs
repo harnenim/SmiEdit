@@ -27,9 +27,31 @@ namespace Jamaker
 
             InitializeComponent();
 
+            int[] rect = { 0, 0, 1280, 800 };
+            StreamReader sr = null;
+            try
+            {   // 설정 파일 경로
+                sr = new StreamReader("setting/updater.txt", Encoding.UTF8);
+                string[] strRect = sr.ReadToEnd().Split(',');
+                if (strRect.Length >= 4)
+                {
+                    rect[0] = Convert.ToInt32(strRect[0]);
+                    rect[1] = Convert.ToInt32(strRect[1]);
+                    rect[2] = Convert.ToInt32(strRect[2]);
+                    rect[3] = Convert.ToInt32(strRect[3]);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                rect[0] = (System.Windows.Forms.SystemInformation.VirtualScreen.Width - 1280) / 2;
+                rect[1] = (System.Windows.Forms.SystemInformation.VirtualScreen.Height - 800) / 2;
+            }
+            finally { if (sr != null) sr.Close(); }
+
             StartPosition = FormStartPosition.Manual;
-            Location = new Point(1000, 1000); // 처음에 안 보이게
-            Size = new Size(1200, 800);
+            Location = new Point(rect[0], rect[1]);
+            Size = new Size(rect[2], rect[3]);
 
             SetStyle(ControlStyles.SupportsTransparentBackColor, true);
             BackColor = Color.Transparent;
@@ -74,6 +96,27 @@ namespace Jamaker
 
         private void WebFormClosed(object sender, FormClosedEventArgs e)
         {
+            try
+            {
+                RECT offset = new RECT();
+                WinAPI.GetWindowRect(Handle.ToInt32(), ref offset);
+
+                // 설정 폴더 없으면 생성
+                DirectoryInfo di = new DirectoryInfo("setting");
+                if (!di.Exists)
+                {
+                    di.Create();
+                }
+
+                StreamWriter sw = new StreamWriter("setting/updater.txt", false, Encoding.UTF8);
+                sw.Write(offset.left + "," + offset.top + "," + (offset.right - offset.left) + "," + (offset.bottom - offset.top));
+                sw.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+
             Process.GetCurrentProcess().Kill();
         }
 
