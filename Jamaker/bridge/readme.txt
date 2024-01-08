@@ -2,7 +2,7 @@
 abstract class PlayerBridge를 상속받는 형태로 되어있습니다.
 
 다음을 참조해서 개발하시면 됩니다.
-https://github.com/harnenim/PlayerBridge
+https://github.com/harnenim/Jamaker/tree/master/PlayerBridge
 
 
 DLL 파일을 빌드한 후에는 bridge 폴더에 넣은 후
