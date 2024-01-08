@@ -537,14 +537,26 @@ namespace Jamaker
         {
         	StreamReader sr = null;
             try
-            {
-                sr = new StreamReader("view/setting.json", Encoding.UTF8);
+            {   // 설정 파일 경로
+                sr = new StreamReader("setting/jamaker.json", Encoding.UTF8);
                 strSettingJson = sr.ReadToEnd();
-                sr.Close();
-                
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                try
+                {   // 구버전 설정 파일 경로
+                    sr = new StreamReader("view/setting.json", Encoding.UTF8);
+                    strSettingJson = sr.ReadToEnd();
+                }
+                catch (Exception e2) { Console.WriteLine(e2); }
+            }
+            finally { if (sr != null) sr.Close(); }
+
+            try
+            {
                 sr = new StreamReader("bridge/list.txt", Encoding.UTF8);
                 strBridgeList = sr.ReadToEnd();
-                sr.Close();
             }
             catch (Exception e) { Console.WriteLine(e); }
             finally { if (sr != null) sr.Close(); }
@@ -568,7 +580,7 @@ namespace Jamaker
 
             try
             {
-                StreamWriter sw = new StreamWriter("view/setting.json", false, Encoding.UTF8);
+                StreamWriter sw = new StreamWriter("setting/jamaker.json", false, Encoding.UTF8);
                 sw.Write(strSettingJson);
                 sw.Close();
             }
@@ -668,14 +680,24 @@ namespace Jamaker
         {
             string setting = "";
             try
-            {
-                StreamReader sr = new StreamReader($"view/addon/{path}", Encoding.UTF8);
+            {   // addon 설정 파일 경로
+                StreamReader sr = new StreamReader($"setting/addon_{path}", Encoding.UTF8);
                 setting = sr.ReadToEnd();
                 sr.Close();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                try
+                {   // 구버전 addon 설정 파일 경로
+                    StreamReader sr = new StreamReader($"view/addon/{path}", Encoding.UTF8);
+                    setting = sr.ReadToEnd();
+                    sr.Close();
+                }
+                catch (Exception e2)
+                {
+                    Console.WriteLine(e2);
+                }
             }
             Script("afterLoadAddonSetting", setting.Replace("\r\n", "\n"));
         }
@@ -683,7 +705,7 @@ namespace Jamaker
         {
             try
             {
-                StreamWriter sw = new StreamWriter($"view/addon/{path}", false, Encoding.UTF8);
+                StreamWriter sw = new StreamWriter($"setting/addon_{path}", false, Encoding.UTF8);
                 sw.Write(text);
                 sw.Close();
             }
