@@ -1,0 +1,431 @@
+﻿<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>텍스트 일괄 치환</title>
+	<script src="lib/jquery-3.2.1.min.js"></script>
+	<script src="lib/webview.js"></script>
+	<script src="lib/ListView.js"></script>
+	<link rel="stylesheet" type="text/css" href="lib/common.css" />
+	<link rel="stylesheet" type="text/css" href="lib/ListView.css" />
+	<script>
+var testBinder = {
+		focus: function() {}
+	,	alert: function(windowName, msg) {
+			return sm._alert(msg);
+		}
+	,	confirm: function(windowName, msg) {
+			if (sm._confirm(msg)) {
+				afterConfirmYes();
+			} else {
+				afterConfirmNo();
+			}
+		}
+	,	init: function() {
+			init('{"filters":"*.txt, *.smi, *.ass","replacers":[{"use":true,"from":"다시 한번","to":"다시 한 번"},{"use":true,"from":"그리고 보니","to":"그러고 보니"},{"use":true,"from":"뒤쳐","to":"뒤처"},{"use":true,"from":"제 정신","to":"제정신"},{"use":true,"from":"스탠드 얼론","to":"스탠드얼론"},{"use":true,"from":"멘테넌스","to":"메인터넌스"},{"use":true,"from":"뒷처리","to":"뒤처리"},{"use":true,"from":"스탭도","to":"스태프도"},{"use":true,"from":"등 져선","to":"등져선"},{"use":true,"from":"타코이즈","to":"터쿼이즈"},{"use":true,"from":"쓰레드","to":"스레드"},{"use":true,"from":"져버리지","to":"저버리지"},{"use":true,"from":"글러먹","to":"글러 먹"}]}');
+		}
+	,	submit: function(files, froms, tos) {
+			console.log(files);
+			console.log(froms);
+			console.log(tos);
+		}
+	,	importSetting: async function() {
+			var fileBuffer = await window.showOpenFilePicker({ types: [ { description: "JSON 파일", accept:{ "text/json": [".json"] } } ] });
+			if (fileBuffer && fileBuffer[0]) {
+				var file = await fileBuffer[0].getFile();
+				var text = await file.text();
+				init(text);
+			}
+		}
+	,	exportSetting: async function(setting) {
+			var fileBuffer = await window.showSaveFilePicker({
+				types: [
+					{ description: "JSON 파일", accept:{ "text/json": [".json"] } }
+				]
+			});
+			if (fileBuffer) {
+				var stream = await fileBuffer.createWritable();
+				await stream.write("\ufeff" + setting); // BOM 넣어줌
+				await stream.close();
+			}
+		}
+	,	compare: function(file) {
+			console.log(file);
+		}
+	,	showDragging: function() {
+			showDragging();
+		}
+	,	hideDragging: function() {
+			hideDragging();
+		}
+	,	addFiles: function (file) {
+			addFile(file.name);
+		}
+    ,	loadSetting: async function (file) {
+			init(await file.text());
+		}
+};
+
+async function drop(x, y, file) {
+	binder.hideDragging();
+	
+	var area = $("#listFiles");
+	if (x >= area.offset().left && y >= area.offset().top && x <= area.offset().left + area.outerWidth() && y <= area.offset().top + area.outerHeight()) {
+        if (binder == testBinder) {
+            binder.addFiles(file);
+        } else {
+            binder.addFiles();
+        }
+		return;
+	}
+	area = $("#areaRight");
+	if (x >= area.offset().left && y >= area.offset().top && x <= area.offset().left + area.outerWidth() && y <= area.offset().top + area.outerHeight()) {
+		if (binder == testBinder) {
+			await binder.loadSetting(file);
+		} else {
+            binder.loadSetting();
+		}
+	}
+}
+
+var listFiles;
+var inputFilters;
+var listReplacer;
+
+//C# 쪽에서 호출
+function init(jsonSetting) {
+	var setting = {};
+	try {
+		setting = JSON.parse(jsonSetting);
+	} catch (e) {
+		alert("설정 파일이 잘못됐습니다.");
+	}
+	if (!setting.filters) setting.filters = "*.txt, *.smi, *.ass";
+	if (!setting.replacers) setting.replacers = [];
+	
+	inputFilters.val(setting.filters ? setting.filters : "*.txt, *.smi, *.ass");
+	if (setting.replacers && setting.replacers.length) {
+		listReplacer.empty();
+		for (var i = 0; i < setting.replacers.length; i++) {
+			var item = setting.replacers[i];
+			var li = listReplacer.data("preset").clone();
+			li.find("[name=use]").prop("checked", item.use);
+			setTextareaHeight(li.find("[name=from]").val(item.from));
+			setTextareaHeight(li.find("[name=to]"  ).val(item.to));
+			listReplacer.append(li);
+		}
+	}
+}
+
+function selectView(index) {
+	$(".view").hide();
+	$(".view:eq("+index+")").show();
+}
+
+var listFiles;
+function addFile(file) {
+	var filters = inputFilters.val().split(",").join(";").split(";");
+	for (var i = 0; i < filters.length; i++) {
+		if (new RegExp(filters[i].trim().split(".").join("\\.").split("*").join(".*")).test(file)) {
+			listFiles.add(file, true);
+			return;
+		}
+	}
+}
+function getFiles() {
+	var files = [];
+	for (var i = 0; i < listFiles.list.length; i++) {
+		files.push(listFiles.list[i].value);
+	}
+	return files;
+}
+
+function setTextareaHeight(obj) {
+	var lineCount = obj.val().split("\n").length;
+	obj.css("height", 4 + 14 * lineCount);
+}
+
+function getFilters() {
+	return inputFilters.val();
+}
+function addReplacer(replacer) {
+    var li = listReplacer.data("preset").clone();
+    li.find("[name=use]").prop("checked", replacer.use);
+    setTextareaHeight(li.find("[name=from]").val(replacer.from));
+    setTextareaHeight(li.find("[name=to]"  ).val(replacer.to  ));
+    listReplacer.append(li);
+}
+function getSetting() {
+	var replacers = [];
+	listReplacer.find("li").each(function() {
+		var li = $(this);
+		var from = li.find("[name=from]").val();
+		if (from == "") return;
+		var to = li.find("[name=to]").val();
+	    var use = li.find("[name=use]").prop("checked");
+		replacers.push({ use: use, from: from, to: to });
+	});
+	return JSON.stringify({ filters: inputFilters.val(), replacers: replacers });
+}
+
+$(function() {
+	$("#view1left, #view1right").on("click", function() {
+		selectView(0);
+	});
+});
+function showPreview(source, replaced) {
+	selectView(1);
+	$("#view1left").html(source.split("\n").join("<br />"));
+	$("#view1right").html(replaced.split("\n").join("<br />"));
+}
+
+function showDragging() {
+	$("body").addClass("drag-file");
+}
+function hideDragging() {
+	$("body").removeClass("drag-file");
+}
+function beforeExit() {
+	binder.exitAfterSaveSetting(getSetting());
+}
+
+$(function() {
+	if (!window.binder) {
+		binder = testBinder;
+	}
+	
+	listFiles = new ListView($("#listFiles"));
+	listFiles.run = function(item) {
+		binder.compare(item.value);
+	}
+	
+	inputFilters = $("#inputFilters");
+	listReplacer = $("#listReplacer");
+	var preset = listReplacer.find("li.preset");
+	listReplacer.data("preset", preset.clone(true));
+	preset.remove();
+
+	listReplacer.on("keyup", "textarea", function () {
+		setTextareaHeight($(this));
+	});
+
+	listReplacer.on("click", ".btnDeleteReplacer", function() {
+		$(this).parents("li").remove();
+	});
+	$("#btnAddReplacer").on("click", function() {
+		addReplacer({ use: true, from: "", to: "" });
+	});
+	
+	$("#btnSubmit").on("click", function() {
+		var files = getFiles();
+		if (files.length == 0) {
+			alert("변환할 파일이 없습니다.");
+		}
+		var froms = [];
+		var tos = [];
+		listReplacer.find("li").each(function() {
+			var li = $(this);
+		    if (!li.find("[name=use]").prop("checked")) return;
+			var from = li.find("[name=from]").val();
+			if (from == "") return;
+			var to = li.find("[name=to]").val();
+			froms.push(from);
+			tos.push(to);
+        });
+        if (froms.length == 0) {
+            alert("변환할 문자열이 없습니다.");
+        }
+		binder.submit(files, froms, tos);
+	});
+	$("#btnImportSetting").on("click", function() {
+		binder.importSetting();
+	});
+	$("#btnExportSetting").on("click", function() {
+        binder.exportSetting(getSetting());
+	});
+	
+	document.addEventListener("dragenter", function(e) {
+		e.preventDefault();
+		binder.showDragging();
+	});
+	$("#cover").on("click", function(e) {
+		binder.hideDragging();
+	}).on("dragover", function(e) {
+		e.preventDefault();
+	}).on("drop", async function(e) {
+		e.preventDefault();
+		if (e.originalEvent.dataTransfer && e.originalEvent.dataTransfer.files && e.originalEvent.dataTransfer.files[0]) {
+            var file = e.originalEvent.dataTransfer.files[0];
+            await drop(e.offsetX, e.offsetY, file);
+		}
+	});
+
+	selectView(0);
+});
+	</script>
+	<style>
+#view0left, #view0right,
+#view1left, #view1right {
+	float: left;
+	width: 50%;
+	padding: 1px;
+}
+#view0left, #view0right {
+	height: calc(100% - 32px);
+}
+
+#listFiles {
+	width: 100%;
+	height: calc(100% - 20px);
+}
+
+#areaFilters {
+	margin-top: 2px;
+}
+
+#areaFilters {
+	width: 100%;
+}
+
+label[for=inputFilters] {
+	display: inline-block;
+	width: 66px;
+}
+
+#inputFilters {
+	width: calc(100% - 72px);
+}
+
+#areaRight {
+	width: 100%;
+	height: 100%;
+	border: 1px solid #000;
+}
+#areaReplacer {
+	width: 100%;
+	height: calc(100% - 32px);
+	overflow-y: scroll;
+	padding: 2px;
+}
+#areaSetting {
+	width: 100%;
+	height: 32px;
+	padding: 1px;
+}
+#areaSetting > button {
+	width: calc(50% - 2px);
+	height: 28px;
+	margin: 1px;
+}
+
+#listReplacer > li {
+	width: 100%;
+	margin-bottom: 2px;
+}
+
+#listReplacer > li > * {
+	vertical-align: top;
+}
+
+#listReplacer > li > input[type=checkbox] {
+	width: 14px;
+	height: 14px;
+	margin: 2px;
+}
+#listReplacer > li > textarea {
+	width: calc(50% - 34px);
+	height: 16px;
+	overflow: hidden;
+	line-height: 14px;
+	white-space: pre-line;
+	resize: none;
+}
+
+#listReplacer > li > span {
+	display: inline-block;
+	width: 16px;
+	height: 14px;
+	margin-top: 2px;
+	text-align: center;
+}
+
+#listReplacer > li > button {
+	width: 32px;
+	height: 18px;
+	margin-left: 2px;
+}
+
+#btnAddReplacer {
+	width: 100%;
+	height: 26px;
+}
+
+#areaSubmit {
+	clear: both;
+	width: 100%;
+	height: 32px;
+	padding: 1px;
+}
+
+#btnSubmit {
+	width: 100%;
+	height: 100%;
+}
+
+#view1left,
+#view1right {
+	overflow-x: scroll;
+	overflow-y: visible;
+	background: #fff;
+	min-height: 100%;
+}
+
+#view1left .highlight,
+#view1right .highlight {
+	font-weight: bold;
+	color: #f00;
+}
+
+body.drag-file #listFiles,
+body.drag-file #areaRight {
+	border: 2px solid #c66;
+}
+	</style>
+</head>
+<body>
+	<div class="view">
+		<div id="view0left">
+			<div id="listFiles"></div>
+			<div id="areaFilters">
+				<label for="inputFilters">파일명 필터</label>
+				<input type="text" id="inputFilters" value="*.txt, *.smi, *.ass" />
+			</div>
+		</div>
+		<div id="view0right">
+			<div id="areaRight">
+				<div id="areaReplacer">
+					<ol id="listReplacer">
+						<li class="preset">
+							<input type="checkbox" name="use" checked
+							/><textarea name="from" wrap="off"></textarea><span>→</span><textarea name="to" wrap="off"></textarea><button type="button" class="btnDeleteReplacer">삭제</button>
+						</li>
+					</ol>
+					<button type="button" id="btnAddReplacer">추가</button>
+				</div>
+				<div id="areaSetting"><button type="button" id="btnImportSetting">설정 가져오기</button><button type="button" id="btnExportSetting">설정 내보내기</button></div>
+			</div>
+		</div>
+		<div id="areaSubmit">
+			<button id="btnSubmit">치환</button>
+		</div>
+	</div>
+	<div class="view">
+		<div id="view1left">
+		</div>
+		<div id="view1right">
+		</div>
+	</div>
+	<div id="cover"></div>
+</body>
+</html>
