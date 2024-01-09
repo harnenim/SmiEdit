@@ -245,7 +245,7 @@ namespace Jamaker
             else
             {
                 layerForDrag.Visible = true;
-                Script("tmpBinder.showDragging");
+                Script("showDragging");
             }
         }
         public void HideDragging()
@@ -257,7 +257,7 @@ namespace Jamaker
             else
             {
                 layerForDrag.Visible = false;
-                Script("tmpBinder.hideDragging");
+                Script("hideDragging");
             }
         }
 
