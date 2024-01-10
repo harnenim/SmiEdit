@@ -12,7 +12,87 @@ namespace Jamaker
 {
     public partial class MainForm : Form
     {
-        private readonly Dictionary<string, int> windows = new Dictionary<string, int>();
+        #region 공통 기능... class 따로 만들어야?
+        private string Script(string name) { return mainView.Script(name); }
+        private string Script(string name, object arg) { return mainView.Script(name, arg); }
+
+        public void Alert(string target, string msg)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => { Alert(target, msg); }));
+            }
+            else
+            {
+                MessageBoxEx.Show(GetHwnd(target), msg, msgTitle);
+            }
+        }
+        public void Confirm(string target, string msg)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => { Confirm(target, msg); }));
+            }
+            else
+            {
+                if (MessageBoxEx.Show(GetHwnd(target), msg, msgTitle, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    Script("afterConfirmYes");
+                }
+                else
+                {
+                    Script("afterConfirmNo");
+                }
+            }
+        }
+
+        public void ShowDragging()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => { ShowDragging(); }));
+            }
+            else
+            {
+                layerForDrag.Visible = true;
+                Script("showDragging");
+            }
+        }
+        public void HideDragging()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => { HideDragging(); }));
+            }
+            else
+            {
+                layerForDrag.Visible = false;
+                Script("hideDragging");
+            }
+        }
+        string[] droppedFiles = null;
+        protected void DragLeaveMain(object sender, EventArgs e) { HideDragging(); }
+        protected void DragOverMain(object sender, DragEventArgs e)
+        {
+            try { e.Effect = DragDropEffects.All; } catch { }
+            Script("dragover", new object[] { e.X - Location.X, e.Y - Location.Y });
+        }
+        protected void DragDropMain(object sender, DragEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => { DragDropMain(sender, e); }));
+            }
+            else
+            {
+                droppedFiles = (string[])e.Data.GetData(DataFormats.FileDrop);
+                HideDragging();
+                Script("drop", new object[] { e.X - Location.X, e.Y - Location.Y });
+            }
+        }
+        #endregion
+
+        readonly string msgTitle = "MergeUpdates";
 
         public MainForm()
         {
@@ -67,27 +147,6 @@ namespace Jamaker
 
             windows.Add("editor", Handle.ToInt32());
         }
-        public void SetWindow(string name, int hwnd)
-        {
-            RemoveWindow(name); // 남아있을 수 있음
-            windows.Add(name, hwnd);
-        }
-        public void RemoveWindow(string name)
-        {
-            windows.Remove(name);
-        }
-        // window.open 시에 브라우저에 커서 가도록
-        public void SetFocus(int hwnd)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => { SetFocus(hwnd); }));
-            }
-            else
-            {
-                mainView.Focus();
-            }
-        }
 
         private void WebFormClosed(object sender, FormClosedEventArgs e)
         {
@@ -116,6 +175,28 @@ namespace Jamaker
         }
 
         #region 창 조작
+        private readonly Dictionary<string, int> windows = new Dictionary<string, int>();
+        public void SetWindow(string name, int hwnd)
+        {
+            RemoveWindow(name); // 남아있을 수 있음
+            windows.Add(name, hwnd);
+        }
+        public void RemoveWindow(string name)
+        {
+            windows.Remove(name);
+        }
+        // window.open 시에 브라우저에 커서 가도록
+        public void SetFocus(int hwnd)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => { SetFocus(hwnd); }));
+            }
+            else
+            {
+                mainView.Focus();
+            }
+        }
         private int GetHwnd(string target)
         {
             try
@@ -124,23 +205,6 @@ namespace Jamaker
             }
             catch { }
             return 0;
-        }
-        public void MoveWindow(string target, int x, int y, int width, int height, bool resizable)
-        {
-            try
-            {
-                int hwnd = GetHwnd(target);
-                if (!resizable)
-                {
-                    // TODO: 안 됨.............
-                    WinAPI.DisableResize(hwnd);
-                }
-                if (hwnd > 0)
-                {   // 윈도우 그림자 여백 보정
-                    WinAPI.MoveWindow(hwnd, x - 7, y, width + 14, height + 9, true);
-                }
-            }
-            catch { }
         }
 
         public void FocusWindow(string target)
@@ -168,152 +232,23 @@ namespace Jamaker
                 timer.Tick -= FocusEditor;
             }
         }
-        public void GetWindows(string[] targets)
-        {
-            foreach (string target in targets)
-            {
-                int hwnd = GetHwnd(target);
-                if (hwnd > 0)
-                {
-                    RECT targetOffset = new RECT();
-                    WinAPI.GetWindowRect(hwnd, ref targetOffset);
-                    if (target.Equals("player"))
-                    {
-                        Script("afterGetWindow", new object[] { target
-                            , targetOffset.left
-                            , targetOffset.top
-                            , targetOffset.right - targetOffset.left
-                            , targetOffset.bottom - targetOffset.top
-                        });
-                    }
-                    else
-                    {
-                        Script("afterGetWindow", new object[] { target
-                            , targetOffset.left + 7
-                            , targetOffset.top
-                            , targetOffset.right - targetOffset.left - 14
-                            , targetOffset.bottom - targetOffset.top - 9
-                        });
-                    }
-                }
-            }
-        }
-        #endregion
-
-        #region 브라우저 통신
-        private string Script(string name) { return mainView.Script(name); }
-        private string Script(string name, object arg) { return mainView.Script(name, arg); }
-
-        readonly string msgTitle = "SamiUpdater";
-        public void Alert(string target, string msg)
-        {if (InvokeRequired)
-            {
-                Invoke(new Action(() => { Alert(target, msg); }));
-            }
-            else
-            {
-                MessageBoxEx.Show(GetHwnd(target), msg, msgTitle);
-            }
-        }
-        public void Confirm(string target, string msg)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => { Confirm(target, msg); }));
-            }
-            else
-            {
-                if (MessageBoxEx.Show(GetHwnd(target), msg, msgTitle, MessageBoxButtons.YesNo) == DialogResult.Yes)
-                {
-                    Script("afterConfirmYes");
-                }
-                else
-                {
-                    Script("afterConfirmNo");
-                }
-            }
-        }
-        #endregion
-
-        #region 파일 드래그 관련
-        public void ShowDragging()
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => { ShowDragging(); }));
-            }
-            else
-            {
-                layerForDrag.Visible = true;
-                Script("showDragging");
-            }
-        }
-        public void HideDragging()
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => { HideDragging(); }));
-            }
-            else
-            {
-                layerForDrag.Visible = false;
-                Script("hideDragging");
-            }
-        }
-
-        protected void DragLeaveMain(object sender, EventArgs e) { HideDragging(); }
-        protected void DragOverMain(object sender, DragEventArgs e) { try { e.Effect = DragDropEffects.All; } catch { } }
-        protected void DragDropMain(object sender, DragEventArgs e)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => { DragDropMain(sender, e); }));
-            }
-            else
-            {
-                DropListFile(e);
-                HideDragging();
-            }
-        }
-
         #endregion
 
         #region 파일
-
-        string droppedFile = null;
-
-        private void DropListFile(DragEventArgs e)
-        {
-            droppedFile = null;
-            try
-            {
-                string[] strFiles = (string[])e.Data.GetData(DataFormats.FileDrop);
-                foreach (string strFile in strFiles)
-                {
-                    if (strFile.ToUpper().EndsWith(".SMI") || strFile.ToUpper().EndsWith(".SRT"))
-                    {
-                        droppedFile = strFile;
-                        Script("drop", new object[] { e.X - Location.X, e.Y - Location.Y });
-                        break;
-                    }
-                }
-            }
-            catch { }
-        }
         public void DropFileToArea(int dropArea)
         {
-            if (droppedFile == null)
+            if (droppedFiles == null)
             {
                 return;
             }
 
+            string path = droppedFiles[0];
             string text = "";
             StreamReader sr = null;
             try
             {
-                Encoding encoding = TextFile.BOM.DetectEncoding(droppedFile); // TODO: BOM 없으면 버그 있나...?
-                //Console.WriteLine("encoding: " + encoding);
-                sr = new StreamReader(droppedFile, encoding);
+                Encoding encoding = TextFile.BOM.DetectEncoding(path);
+                sr = new StreamReader(path, encoding);
                 text = sr.ReadToEnd();
             }
             catch
@@ -322,8 +257,7 @@ namespace Jamaker
             }
             finally { sr?.Close(); }
 
-            string name = droppedFile;
-            string path = droppedFile;
+            string name = path;
             switch (dropArea)
             {
                 case 1:
@@ -342,7 +276,6 @@ namespace Jamaker
 
         public void Save(string dir, string name, string text)
         {
-            Console.WriteLine("Save");
             StreamWriter sw = null;
             try
             {   // 무조건 UTF-8로 저장

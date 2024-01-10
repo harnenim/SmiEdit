@@ -85,10 +85,12 @@ var SmiEditor = function(text, path) {
 		editor.updateSync([0, editor.lines.length]); // 실행취소일 땐 전체 갱신하도록
 	});
 	setTimeout(function() {
-		editor.act = new AutoCompleteTextarea(editor.input, SmiEditor.autoComplete, function() {
-			editor.history.log();
-			editor.updateSync();
-		});
+		if (SmiEditor.autoComplete.length) {
+			editor.act = new AutoCompleteTextarea(editor.input, SmiEditor.autoComplete, function() {
+				editor.history.log();
+				editor.updateSync();
+			});
+		}
 	}, 1);
 };
 
@@ -260,7 +262,7 @@ SmiEditor.activateKeyEvent = function() {
 		var editor = SmiEditor.selected;
 		var hasFocus = editor && editor.input.is(":focus");
 		
-		if (!editor || editor.act.selected < 0) { // auto complete 작동 중엔 무시
+		if (!editor || !editor.act || editor.act.selected < 0) { // auto complete 작동 중엔 무시
 			switch (e.keyCode) {
 				case 33: { // PgUp
 					if (hasFocus) {

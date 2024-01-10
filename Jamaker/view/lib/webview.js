@@ -39,37 +39,38 @@ prompt = function(msg, after) {
 	binder.prompt(windowName, msg);
 }
 
-var ctrl  = false;
+function showDragging() {
+	$("body").addClass("drag-file");
+}
+function hideDragging() {
+	$("body").removeClass("drag-file");
+}
+
+// 각각에서 재정의 필요
+function dragover(x, y) {}
+function drop(x, y) {}
+function beforeExit() {}
 
 $(function () {
-	var doc = $(document);
-	var views = $(".view");
-	views.css({"height": window.innerHeight});
-	window.addEventListener("resize", function() {
-		views.css({"height": window.innerHeight});
+	// 우클릭 방지
+	$(document).on("contextmenu", function () {
+		return false;
 	});
-	window.onkeydown = function() {
-		switch(event.keyCode) {
-			case 17: ctrl = true; break;
+	window.onkeydown = function (e) {
+		switch (e.keyCode) {
 			case 116: return false; // F5 새로고침 방지
 		}
 	};
-	window.onkeyup = function() {
-		switch(event.keyCode) {
-			case 17: ctrl = false; break;
-		}
-	};
-	window.onmousewheel = function () {
+	window.addEventListener("mousewheel", function (e) {
 		// 확대/축소 방지
-		if (ctrl) {
-			return false;
+		if (e.ctrlKey) {
+			e.preventDefault();
 		}
-	};
+	}, { passive: false });
 
-	// 우클릭 방지
-	doc.on("contextmenu", function () {
-		return false;
-	});
-
-	if (window.binder) binder.initAfterLoad();
+	if (window.binder) {
+		setTimeout(function() {
+			binder.initAfterLoad();
+		}, 1);
+	}
 });

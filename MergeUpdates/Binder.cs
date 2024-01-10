@@ -11,14 +11,12 @@ namespace Jamaker
             _ = mainForm;
         }
 
-        public void MoveWindow(string target, int x, int y, int width, int height, bool resizable)
-        {
-            _.MoveWindow(target, x, y, width, height, resizable);
-        }
         public void Focus(string target)
         {
             _.FocusWindow(target);
         }
+
+        public void InitAfterLoad() { }
 
         public void ShowDragging()
         {
@@ -29,18 +27,16 @@ namespace Jamaker
             _.HideDragging();
         }
 
+        public void Alert(string target, string msg) { _.Alert(target, msg); }
+        public void Confirm(string target, string msg) { _.Confirm(target, msg); }
+
+        public void DropFileToArea(int dropArea)
+        {
+            _.DropFileToArea(dropArea);
+        }
         public void Save(string dir, string name, string text)
         {
             _.Save(dir, name, text);
         }
-        public void DropFileToArea(int dropArea, string junk)
-        {
-            _.DropFileToArea(dropArea);
-        }
-        
-        #region 팝업 통신
-        public void Alert  (string target, string msg) { _.Alert  (target, msg); }
-        public void Confirm(string target, string msg) { _.Confirm(target, msg); }
-        #endregion
     }
 }

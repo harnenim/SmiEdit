@@ -4,67 +4,40 @@
 	<meta charset="utf-8">
 	<title>수정사항 반영하기</title>
 	<script src="lib/jquery-3.2.1.min.js"></script>
-	<script src="lib/popup.js"></script>
-	<script src="lib/AutoCompleteTextarea.js"></script>
 	<script src="lib/History.js"></script>
 	<script src="lib/SmiEditor.js"></script>
 	<script src="lib/SubtitleObject.js"></script>
-	<script src="lib/editor.js"></script>
-	<link rel="stylesheet" type="text/css" href="lib/common.css" />
+	<script src="lib/webview.js"></script>
+	<link rel="stylesheet" type="text/css" href="lib/webview.css" />
 	<script>
 var FL = 1000000 / 23976;
 var DPI = 1;
-var testBinder = {
-		focus: function() {}
-	,	alert: function(windowName, msg) {
-			return sm._alert(msg);
-		}
-	,	confirm: function(windowName, msg) {
-			if (sm._confirm(msg)) {
-				afterConfirmYes();
-			} else {
-				afterConfirmNo();
-			}
-		}
-	,	save: async function(dir, suggestedName, text) {
-			var fileBuffer = await window.showSaveFilePicker({
-				suggestedName: suggestedName
-			,	types: [
-					{ description: "SAMI", accept: { "text/sami": [".smi"] } }
-				]
-			});
-			if (fileBuffer) {
-				var stream = await fileBuffer.createWritable();
-				await stream.write("\ufeff" + text); // BOM 넣어줌
-				await stream.close();
-			}
-		}
-	,	dropFileToArea: async function(dropArea, file) {
-			var text = await file.text();
-			setFile(dropArea, text, file.name);
-		}
 
-	,	showDragging: function() {
-			showDragging();
-		}
-	,	hideDragging: function() {
-			hideDragging();
-		}
-};
-
-async function drop(x, y, file) {
-	binder.hideDragging();
-	var dropArea = 1;
+function findDragArea(x, y) {
 	var area = $("body>div>div:eq(1)");
 	if (y <= area.height()) {
 		var left = area.offset().left;
 		if (x < left) {
-			dropArea = 0;
+			return 0;
 		} else if (x > left + area.width()) {
-			dropArea = 2;
+			return 2;
+		} else {
+			return 1;
 		}
 	}
-	await binder.dropFileToArea(dropArea, file);
+	return -1;
+}
+function dragover(x, y) {
+	var area = "body>div>div:eq(" + findDragArea(x, y) + ")";
+	$(".hover").removeClass("hover");
+	$(area).addClass("hover");
+}
+function drop(x, y) {
+	$(".hover").removeClass("hover");
+	var area = findDragArea(x, y);
+	if (area >= 0) {
+		binder.dropFileToArea(area);
+	}
 }
 function setFile(dropArea, text, name, path) {
 	// 싱크 라인 분리되도록 양식 변환
@@ -114,18 +87,8 @@ function setFile(dropArea, text, name, path) {
 	$("body>div:eq(1) textarea").val("");
 }
 
-function showDragging() {
-	$("body").addClass("drag-file");
-}
-function hideDragging() {
-	$("body").removeClass("drag-file");
-}
-
 var checklist = [0, 1, 2, 3, 4, -1, -2, 5, 6, -3, 7, 8, -4, 9, 10];
 $(function() {
-	if (!window.binder) {
-		binder = testBinder;
-	}
 	SmiEditor.setSetting({
 			command: { withCtrls: { 'M': 'openSyncManager();' }, fn: {} }
 		,	autoComplete: {}
@@ -150,15 +113,10 @@ $(function() {
 	});
 	$("#cover").on("click", function(e) {
 		binder.hideDragging();
-	}).on("dragover", function(e) {
-		e.preventDefault();
-	}).on("drop", async function(e) {
-		e.preventDefault();
-		await drop(e.offsetX, e.offsetY, (e.originalEvent.dataTransfer && e.originalEvent.dataTransfer.files && e.originalEvent.dataTransfer.files[0]) ? e.originalEvent.dataTransfer.files[0] : null);
 	});
 
 	$("h5").on("click", function() {
-		if ($originBfrUpdate.val()) return;
+		if ($targetBfrUpdate.val()) return;
 
 		$targetBfrUpdate.val([
 				"<SAMI>\n<HEAD><TITLE>B영상용 자막</TITLE></HEAD>\n<BODY>"
@@ -592,29 +550,15 @@ $(function() {
 
 var sm = null;
 function openSyncManager() {
-	sm = window.open("addon/SyncManager.html", "sm", "scrollbars=no,location=no"
+	sm = window.open("addon/SyncManager.html", "addon", "scrollbars=no,location=no"
 			+ ",top="    + (window.screenTop   + 20)
 			+ ",left="   + (window.screenLeft  + 20)
-			+ ",width="  + (window.outerWidth  - 40)
-			+ ",height=" + (window.outerHeight - 40));
-	binder.focus("sm");
-	setTimeout(function() {
-		sm.windowName = "sm";
-		sm.resizeTo(window.outerWidth - 40, window.outerHeight - 40);
-	}, 100);
+			+ ",width="  + (window.outerWidth  - 60)
+			+ ",height=" + (window.outerHeight - 80));
+	binder.focus("addon");
 }
 </script>
 <style>
-* {
-	margin: 0;
-	padding: 0;
-	box-sizing: border-box;
-	font-family: '맑은 고딕';
-}
-html, body {
-	width: 100%;
-	height: 100%;
-}
 textarea {
 	font-size: 14px;
 	line-height: 20px;
@@ -627,13 +571,14 @@ textarea::placeholder {
 }
 body > div {
 	width: 100%;
-	height: calc(50% - 10px);
+	height: calc(50% - 12px);
 	position: relative;
 }
 #btnUpdate {
 	display: block;
 	width: 100%;
 	height: 20px;
+	margin: 2px 0;
 }
 body > div > div {
 	position: absolute;
@@ -643,6 +588,7 @@ body > div > div {
 body > div > div > h5 {
 	width: 100%;
 	height: 20px;
+	line-height: 20px;
 }
 body > div > div > div {
 	width: 100%;
@@ -660,19 +606,17 @@ body > div > div > div > div {
 	display: none;
 	top: -20px;
 	height: calc(100% + 20px);
-	background: rgba(127,127,127,0.5);
 	border: 2px solid #c66;
 }
 #btnFinish {
 	position: absolute;
 	top: 0;
-	left: 66%;
+	left: calc(66% + 2px);
 	width: 20px;
 	height: 100%;
 }
-
-body.drag-file > div > div > div > div {
-	display: block;
+body > div > div.hover {
+	border: 2px solid #c66;
 }
 </style>
 </head>
@@ -684,7 +628,7 @@ body.drag-file > div > div > div > div {
 		</div>
 		<div style="left: 34%; width: 33%;">
 			<h5>완료 - 수정 전 <span></span></h5>
-			<div><textarea id="originBfrUpdate" readonly="readonly" placeholder="입력: A영상용 자막 / 위의 라벨 클릭 시 샘플 생성"></textarea><div></div></div>
+			<div><textarea id="originBfrUpdate" readonly="readonly" placeholder="입력: A영상용 자막"></textarea><div></div></div>
 		</div>
 		<div style="left: 67%; width: 33%;">
 			<h5>완료 - 수정 후 <span></span></h5>
@@ -702,8 +646,8 @@ body.drag-file > div > div > div > div {
 			<div><textarea id="targetAftFrames" readonly="readonly" placeholder="중간: B영상용 자막 추가 작업 대상"></textarea></div>
 		</div>
 		<button type="button" id="btnFinish">▶</button>
-		<div style="left: calc(66% + 20px); width: calc(34% - 20px);">
-			<h5>완료
+		<div style="left: calc(66% + 24px); width: calc(34% - 24px);">
+			<h5>출력
 				<input type="text" id="outputPath" style="width: calc(50% - 20px);"
 			 />/<input type="text" id="outputName" style="width: calc(50% - 20px);" />
 			</h5>

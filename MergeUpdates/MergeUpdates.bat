@@ -5,6 +5,6 @@ start /D"C:\Program Files\Google\Chrome\Application\" chrome.exe ^
 --user-data-dir=C:/ProgramData/ssh/temp ^
 --disable-popup-blocking ^
 --lang=kr ^
---app=file:///D:/workspace/VisualStudio/Jamaker/SamiUpdater/view/Updater.html ^
+--app=file:///D:/workspace/VisualStudio/Jamaker/MergeUpdates/MergeUpdates.html ^
 --new-window ^
---app-window-size=800,600
+--app-window-size=800,800

@@ -1,0 +1,241 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>MergeUpdater 샘플</title>
+<script src="view/lib/jquery-3.2.1.min.js"></script>
+<script src="bridge/WinAPI.js"></script>
+<script>
+function Binder(editor) {
+	var _ = this._ = editor;
+
+	this.focus = function(target) {
+		_.focusWindow(target);
+	}
+
+	var init = false;
+	this.initAfterLoad = function() {
+		if (this.init) return;
+		this.init = true;
+		_.initAfterLoad();
+	}
+	
+	this.showDragging = function() {
+		_.showDragging();
+	}
+	this.hideDragging = function() {
+		_.hideDragging();
+	}
+
+	this.alert   = function(target, msg) { _.alert  (target, msg); }
+	this.confirm = function(target, msg) { _.confirm(target, msg); }
+	this.prompt  = function(target, msg) { _.prompt (target, msg); }
+	
+	this.dropFileToArea = function(index) {
+		_.dropFileToArea(index);
+	}
+	this.save = function(dir, suggestedName, text) {
+		_.save(dir, suggestedName, text);
+	}
+}
+</script>
+<script>
+_alert = alert;
+_confirm = confirm;
+_prompt = prompt;
+
+var main = {};
+{
+	main.script = function(names, p) {
+		var func = eval("this.window.contentWindow." + names);
+		if (p) {
+			return func(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9]);
+		} else {
+			return func();
+		}
+	}
+	main.alert = function(target, msg) {
+		// C#에선 target 창 위치에 따라 alert 위치를 지정함
+		this.getHwnd(target)._alert(msg);
+	}
+	main.confirm = function(target, msg) {
+		// C#에선 target 창 위치에 따라 confirm 위치를 지정함
+		if (this.getHwnd(target)._confirm(msg)) {
+			main.window.contentWindow.afterConfirmYes();
+		} else {
+			main.window.contentWindow.afterConfirmNo();
+		}
+	}
+	main.prompt = function(target, msg) {
+		main.window.contentWindow.afterPrompt(prompt(msg));
+	}
+	
+	var dropLayer = $("<div>").css({
+			position: "fixed"
+		,	top: 0
+		,	left: 0
+		,	right: 0
+		,	bottom: 0
+		,	background: "rgba(127,127,127,0)"
+		,	padding: 80
+		,	textAlign: "center"
+		,	fontSize: 20
+	}).hide();
+	main.showDragging = function(id) {
+		dropLayer.show();
+		main.script("showDragging");
+	}
+	main.hideDragging = function() {
+		dropLayer.hide();
+		main.script("hideDragging");
+	}
+	main.droppedFiles = null;
+	$(function() {	
+		$("body").append(dropLayer);
+		
+		document.addEventListener("dragenter", function(e) {
+			e.preventDefault();
+			main.showDragging();
+		});
+		dropLayer[0].addEventListener("dragleave", function(e) {
+			e.preventDefault();
+			main.hideDragging();
+		});
+		dropLayer[0].addEventListener("dragover", function(e) {
+			e.preventDefault();
+			main.script("dragover", [ e.offsetX, e.offsetY ]);
+		});
+		dropLayer[0].addEventListener("drop", async function(e) {
+			e.preventDefault();
+			if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+				main.droppedFiles = e.dataTransfer.files;
+			}
+			main.hideDragging();
+			main.script("drop", [ e.offsetX, e.offsetY ]);
+		});
+	});
+}
+
+{	// main
+	main.run = function() {
+		this.window = document.getElementById("main");
+		
+		main.window.src = "view/MergeUpdates.html";
+		main.window.onload = function() {
+			// 브라우저 샘플에선 url 변형 필요
+			main.window.contentWindow._open_ = main.window.contentWindow.open;
+			main.window.contentWindow.open = function(url, name, options) {
+				if (url.substring(0, 4) != "http") {
+					url = location.href.substring(0, location.href.lastIndexOf("/")) + "/view/" + url;
+				}
+				return main.window.contentWindow._open_(url, name, options);
+			}
+			
+			main.window.contentWindow.binder = main.binder = new Binder(main);
+
+			var cd = main.window.contentDocument;
+			cd.addEventListener("dragenter", function(e) {
+				e.preventDefault();
+				main.showDragging();
+			});
+		};
+	}
+
+	main.initAfterLoad = function() {};
+	main.beforeExit = function(e) {}
+}
+
+{	// 창 조작
+	main.hwnd = window;
+	main.getHwnd = function(name) {
+		if (name == "main") {
+			return main.hwnd;
+		} else if (name == "addon") {
+			return main.window.contentWindow.sm;
+		}
+		return null;
+	}
+	main.focusWindow = function(target) {
+		var hwnd = this.getHwnd(target);
+		WinAPI.SetForegroundWindow(hwnd);
+	}
+}
+{
+	main.dropFileToArea = async function(index) {
+		if (!main.droppedFiles) return;
+		if (main.droppedFiles.length < 1) {
+			main.droppedFiles = null;
+			return;
+		}
+		var file = main.droppedFiles[0];
+		main.script("setFile", [ index, await file.text(), file.name ])
+		main.droppedFiles = null;
+	}
+	main.save = async function(dir, suggestedName, text) {
+		var fileBuffer = await window.showSaveFilePicker({
+			suggestedName: suggestedName
+		,	types: [
+				{ description: "SAMI", accept: { "text/sami": [".smi"] } }
+			]
+		});
+		if (fileBuffer) {
+			var stream = await fileBuffer.createWritable();
+			await stream.write("\ufeff" + text); // BOM 넣어줌
+			await stream.close();
+		}
+	}
+}
+{
+	main.importSetting = async function() {
+		var fileBuffer = await window.showOpenFilePicker({ types: [ { description: "JSON 파일", accept:{ "text/json": [".json"] } } ] });
+		if (fileBuffer && fileBuffer[0]) {
+			var file = await fileBuffer[0].getFile();
+			var text = await file.text();
+			main.script("init", [text]);
+		}
+	};
+	main.exportSetting = async function(setting) {
+		var fileBuffer = await window.showSaveFilePicker({
+			types: [
+				{ description: "JSON 파일", accept:{ "text/json": [".json"] } }
+			]
+		});
+		if (fileBuffer) {
+			var stream = await fileBuffer.createWritable();
+			await stream.write("\ufeff" + setting); // BOM 넣어줌
+			await stream.close();
+		}
+	};
+	main.exitAfterSaveSetting = function(setting) {
+		localStorage.setItem("setting.TextReplacer", setting);
+	}
+}
+$(function() {
+	main.run();
+	window.addEventListener("beforeunload", function(e) {
+		main.beforeExit(e);
+		return false;
+	});
+});
+</script>
+<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+html, body, #main{
+	width: 100%;
+	height: 100%;
+	border: 0;
+	overflow: hidden;
+}
+#main {
+	position: fixed;
+	top: 0;
+	left: 0;
+}
+</style>
+</head>
+<body><iframe id="main"></iframe></body>
+</html>
