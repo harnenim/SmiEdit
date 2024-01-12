@@ -856,7 +856,7 @@ namespace Jamaker
             else
             {
                 layerForDrag.Visible = true;
-                Script("setShowDrag", true);
+                Script("showDragging");
             }
         }
         public void HideDragging()
@@ -868,10 +868,11 @@ namespace Jamaker
             else
             {
                 layerForDrag.Visible = false;
-                Script("setShowDrag", false);
+                Script("hideDragging");
             }
         }
 
+        string[] droppedFiles = null;
         protected void DragLeaveMain(object sender, EventArgs e) { HideDragging(); }
         protected void DragOverMain(object sender, DragEventArgs e) { try { e.Effect = DragDropEffects.All; } catch { } }
         protected void DragDropMain(object sender, DragEventArgs e)
@@ -882,17 +883,31 @@ namespace Jamaker
             }
             else
             {
-                DropListFile(e);
+                droppedFiles = (string[])e.Data.GetData(DataFormats.FileDrop);
                 HideDragging();
+                Drop(e.X - Location.X, e.Y - Location.Y);
             }
         }
-
+        private void Drop(int x, int y)
+        {
+            try
+            {
+                foreach (string strFile in droppedFiles)
+                {
+                    if (strFile.ToUpper().EndsWith(".SMI") || strFile.ToUpper().EndsWith(".SRT"))
+                    {
+                        LoadFile(strFile);
+                        break;
+                    }
+                }
+            }
+            catch { }
+        }
         private void ClickLayerForDrag(object sender, MouseEventArgs e)
         {
             // 레이어가 클릭됨 -> 드래그 끝났는데 안 사라진 상태
             HideDragging();
         }
-
         #endregion
 
         #region 파일
@@ -909,23 +924,6 @@ namespace Jamaker
             }
 
             base.WndProc(ref m);
-        }
-
-        private void DropListFile(DragEventArgs e)
-        {
-            try
-            {
-                string[] strFiles = (string[])e.Data.GetData(DataFormats.FileDrop);
-                foreach (string strFile in strFiles)
-                {
-                    if (strFile.ToUpper().EndsWith(".SMI") || strFile.ToUpper().EndsWith(".SRT"))
-                    {
-                        LoadFile(strFile);
-                        break;
-                    }
-                }
-            }
-            catch { }
         }
 
         public void OpenFile()

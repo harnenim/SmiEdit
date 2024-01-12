@@ -87,8 +87,17 @@ namespace Jamaker
             {
                 droppedFiles = (string[])e.Data.GetData(DataFormats.FileDrop);
                 HideDragging();
-                Script("drop", new object[] { e.X - Location.X, e.Y - Location.Y });
+                Drop(e.X - Location.X, e.Y - Location.Y);
             }
+        }
+        private void Drop(int x, int y)
+        {
+            Script("drop", new object[] { x, y });
+        }
+        private void ClickLayerForDrag(object sender, MouseEventArgs e)
+        {
+            // 레이어가 클릭됨 -> 드래그 끝났는데 안 사라진 상태
+            HideDragging();
         }
         #endregion
 

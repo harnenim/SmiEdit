@@ -1,0 +1,730 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Jamaker 샘플</title>
+<!--
+
+C# 껍데기를 거치지 않고 웹브라우저에서 돌아가도록 만든 샘플 페이지입니다.
+개발 도중에는 이 페이지를 주로 이용합니다.
+
+몇몇 단축키는 일반 웹브라우저에선 동작하지 않을 수 있습니다.
+
+-->
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css" />
+<script src="view/lib/jquery-3.2.1.min.js"></script>
+<script src="bridge/WinAPI.js"></script>
+<script src="bridge/Binder.js"></script>
+<script src="bridge/Bridge.js"></script>
+<script>
+Binder.prototype.moveWindow = function(name, x, y, w, h, resize) {
+	this._.moveWindow(name, x, y, w, h, resize);
+}
+Binder.prototype.setFollowWindow = function(follow) {
+	this._.setFollowWindow(follow);
+}
+Binder.prototype.setMenus = function(menus) {
+	this._.setMenus(menus);
+}
+
+Binder.prototype.focusToMenu = function(keyCode) {
+	//this._.focusToMenu(keyCode);
+}
+
+Binder.prototype.saveSetting = function(setting) {
+	this._.saveSetting(setting);
+}
+Binder.prototype.setVideoExts = function(exts) {
+	this._.setVideoExts(exts);
+}
+Binder.prototype.setPlayer = function(dll, exe, withRun) {
+	this._.setPlayer(dll, exe, withRun);
+}
+Binder.prototype.runPlayer = function(path) {
+	this._.runPlayer(path);
+}
+
+Binder.prototype.save = function(text, path) {
+	this._.save(text, path);
+}
+Binder.prototype.saveTemp = function(text, path) {
+	this._.saveTemp(text, path);
+}
+Binder.prototype.openFile = function() {
+	this._.openFile();
+}
+Binder.prototype.openFileForVideo = function() {
+	this._.openFileForVideo();
+}
+Binder.prototype.checkLoadVideoFile = function(smiPath) {
+	this._.checkLoadVideoFile(smiPath);
+}
+Binder.prototype.loadVideoFile = function(path) {
+	this._.loadVideoFile(path);
+}
+Binder.prototype.openTempDir = function() {
+	this._.openTempDir();
+}
+Binder.prototype.doExit = function(resetPlayer, exitPlayer) {
+	this._.doExit(resetPlayer, exitPlayer);
+}
+
+// 팝업 통신
+Binder.prototype.sendMsg = function(target, msg) {
+	this._.sendMsg(target, msg);
+}
+
+// setting.html
+Binder.prototype.getWindows = function(targets) { this._.getWindows(targets); }
+Binder.prototype.selectPlayerPath = function() { alert("C#에서 동작합니다."); }
+
+// addon 설정 용
+Binder.prototype.loadAddonSetting = function(path) { this._.loadAddonSetting(path); }
+Binder.prototype.saveAddonSetting = function(path, text) { this._.saveAddonSetting(path, text); }
+
+// viewer/finder opener 못 쓰게 될 경우 고려
+Binder.prototype.updateViewerSetting  = function() { this._.updateViewerSetting(); };
+Binder.prototype.updateViewerLines = function(lines) { this._.updateViewerLines(lines); };
+
+Binder.prototype.onloadFinder  = function(last  ) { this._.onloadFinder (last  ); };
+Binder.prototype.runFind	   = function(params) { this._.runFind      (params); };
+Binder.prototype.runReplace    = function(params) { this._.runReplace   (params); };
+Binder.prototype.runReplaceAll = function(params) { this._.runReplaceAll(params); };
+
+// 플레이어
+Binder.prototype.playOrPause = function() { this._.player.playOrPause(); }
+Binder.prototype.play        = function() { this._.player.play(); }
+Binder.prototype.stop        = function() { this._.player.stop(); }
+Binder.prototype.moveTo  = function(time) { this._.player.moveTo(time); }
+
+// 부가기능
+Binder.prototype.runColorPicker = function() { alert("C#에서 동작합니다."); }
+</script>
+<script src="bridge/WebForm.js"></script>
+<script>
+// bridge/list.txt
+//var playerDlls = "NoPlayer: (없음)\n PotPlayer: 팟플레이어";
+var playerDlls = "NoPlayer: (없음)\n Sample: 샘플";
+
+var editor = new WebForm(); // 에디터
+
+var window_open = function(url, name, options, opener) {
+	return opener._open_(url, name, options);
+}
+
+{	// editor
+	editor.player = null;
+	editor.strSettingJson = "불러오기 실패 예제";
+	editor.strBridgeList = "NoPlayer: (없음)";
+
+	// override
+	editor.drop = async function(x, y) {
+		var file = this.droppedFiles[0];
+		var ext = file.name.substring(file.name.length - 4);
+		switch (ext.toLowerCase()) {
+			case ".smi":
+			case ".srt":
+			case ".txt": {
+				await editor.loadFile(file);
+			}
+		}
+	}
+	
+	editor.run = function() {
+		this.initializeComponent();
+		
+		this.loadSetting(function() {
+			editor.mainView.src = "view/editor.html";
+			editor.mainView.onload = function() {
+				// 브라우저 샘플에선 url 변형 필요
+				editor.mainView.contentWindow._open_ = editor.mainView.contentWindow.open;
+				editor.mainView.contentWindow.open = function(url, name, options) {
+					if (url.substring(0, 4) != "http") {
+						url = location.href.substring(0, location.href.lastIndexOf("/")) + "/view/" + url;
+					}
+					return editor.windows[name] = window_open(url, name, options, editor.mainView.contentWindow);
+				}
+				
+				editor.mainView.contentWindow.binder = editor.binder = new Binder(editor);
+				/*
+				// 브라우저 샘플에선 이게 안 도는 경우가 있나?
+				setTimeout(function() {
+					editor.mainView.contentWindow.binder.initAfterLoad();
+				}, 1000);
+				*/
+
+				var cd = editor.mainView.contentDocument;
+				cd.addEventListener("dragenter", function(e) {
+					e.preventDefault();
+					editor.showDragging();
+				});
+				$(cd).on("click", "*", function() {
+					$(".submenu.open").removeClass("open");
+				}).on("keydown", editor.keyDownForMenu);
+			};
+			
+			setTimeout(function() {
+				// 로딩 전에 돌아가면 문제 생김
+				editor.timer = setInterval(function() {
+					for (var i = 0; i < editor.timerFuncs.length; i++) {
+						editor.timerFuncs[i]();
+					}
+				}, 50);
+			}, 1000);
+			editor.timerFuncs = [
+					function() { editor.followWindow(); }
+				,	function() { editor.refreshPlayer(); }
+			];
+			
+			// 브라우저 초기화 후 다시 돌림... 왜지?
+			setTimeout(function() {
+				editor.mainView.contentWindow.moveWindowsToSetting();
+			}, 1000);
+		});
+		
+		//FormClosing += new FormClosingEventHandler(BeforeExit);
+		//FormClosed += new FormClosedEventHandler(WebFormClosed);
+	}
+
+	this.loaded = false;
+	editor.initAfterLoad = function() {
+		if (this.loaded) return;
+		this.loaded = true;
+		
+		this.windows[this.mainView.contentWindow.windowName] = window;
+		
+		this.script("init", [this.strSettingJson]); // C#에서 객체 그대로 못 보내주므로 json string 만드는 걸로
+		this.script("setPlayerDlls", [this.strBridgeList]);
+
+		// 세팅 확인
+		WinAPI.GetWindowRect(this.getHwnd("editor"), this.lastOffset);
+		editor.useFollowWindow = true;
+	};
+
+	editor.refreshPlayer = function() {
+		if (this.player) {
+			// 플레이어 살아있음
+			/*
+			 * C#에선 초기화 여부 체크하는 등의 코드가 들어감
+			 */
+			var fps  = this.player.getFps();
+			var time = this.player.getTime();
+			editor.script("refreshTime", [time, fps]);
+			editor.updateViewerTime(time);
+		}
+	}
+	
+	editor.beforeExit = function(e) {
+		/*
+		e.Cancel = true;
+		Script("beforeExit");
+		*/
+		var viewer = editor.mainView.contentWindow.SmiEditor.Viewer;
+		if (viewer && viewer.window) viewer.window.close();
+		
+		var addon = editor.mainView.contentWindow.SmiEditor.Addon;
+		if (addon && addon.window) addon.window.close();
+		
+		if (this.player && this.player.hwnd) this.player.hwnd.window.close();
+		
+		var settingWindow = editor.mainView.contentWindow.SmiEditor.settingWindow;
+		if (settingWindow) settingWindow.close();
+	}
+	/*
+	public void DoExit(bool resetPlayer, bool exitPlayer)
+
+	public void WebFormClosed(object sender, FormClosedEventArgs e)
+	*/
+}
+	
+// 윈도우 그림자 여백 보정
+var MT = 0, ML = 7, MR = 7, MB = 9;
+
+{	// 창 조작
+	editor.hwnd = window;
+	// override
+	editor.getHwnd = function(name) {
+		if (name == "player") {
+			return this.player.hwnd && this.player.hwnd.window;
+		}
+		return this.super_getHwnd(name);
+	}
+	editor.moveWindow = function(target, x, y, width, height, resizable) {
+		var hwnd = this.getHwnd(target);
+		if (!target == "editor") {
+			// follow window 동작 일시정지
+			WinAPI.GetWindowRect(this.getHwnd("editor"), this.lastOffset);
+		}
+		if (!resizable) {
+			// TODO: 안 됨.............
+			//WinAPI.DisableResize(hwnd);
+		}
+		if (target == "player") {
+			this.player.currentOffset.top    = y - MT;
+			this.player.currentOffset.left   = x - ML;
+			this.player.currentOffset.right  = x + width  + MR;
+			this.player.currentOffset.bottom = y + height + MB;
+			if (hwnd) {
+				this.player.moveWindow();
+			}
+		} else {
+			if (hwnd) {
+				WinAPI.MoveWindow(hwnd, x - ML, y - MT, width + ML + MR, height + MB);
+				if (target == "editor") {
+					//this.script("setDpiBy", [width]);
+				}
+				
+				// TODO C#: OnBeforePopup
+				//hwnd.binder = editor.binder;
+				hwnd.onload = function() {
+					//hwnd.binder = editor.binder;
+					setTimeout(function() {
+						if (target == "finder") {
+							editor.mainView.contentWindow.SmiEditor.Finder.onload();
+						} else if (target == "viewer") {
+							if (hwnd.iframe && hwnd.iframe.contentWindow) {
+								hwnd = hwnd.iframe.contentWindow;
+							}
+							if (hwnd.setSetting) {
+								hwnd.setSetting(editor.strSettingJson);
+								hwnd.setLines(editor.viewerLines);
+							}
+						}
+					}, 1);
+				};
+			}
+		}
+	}
+	editor.focusWindow = function(target) {
+		if (target == "player") {
+			return;
+		}
+		var hwnd = this.getHwnd(target);
+		WinAPI.SetForegroundWindow(hwnd);
+	}
+	editor.setFollowWindow = function(follow) {
+		if (follow) {
+			WinAPI.GetWindowRect(this.getHwnd("editor"), this.lastOffset);
+		}
+		useFollowWindow = follow;
+	}
+	editor.getWindows = function(targets) {
+		for (var i = 0; i < targets.length; i++) {
+			var target = targets[i];
+			var hwnd = this.getHwnd(target);
+			if (hwnd) {
+				var targetOffset = new RECT();
+				WinAPI.GetWindowRect(hwnd, targetOffset);
+				this.script("afterGetWindow", [ target
+					, targetOffset.left + ML
+					, targetOffset.top  + MT
+					, targetOffset.right - targetOffset.left - ML - MR
+					, targetOffset.bottom - targetOffset.top - MB
+				]);
+			}
+		}
+	}
+	
+	editor.userFollowWindow = false;
+	editor.lastOffset = new RECT();
+	editor.offset = new RECT();
+	editor.viewerOffset = new RECT();
+	editor.saveSettingAfter = 0;
+	editor.followWindow = function() {
+		if (!this.useFollowWindow) {
+			return;
+		}
+		
+		WinAPI.GetWindowRect(this.getHwnd("editor"), this.offset);
+		if (editor.lastOffset.top    != editor.offset.top
+		 || editor.lastOffset.left   != editor.offset.left
+		 || editor.lastOffset.right  != editor.offset.right
+		 || editor.lastOffset.bottom != editor.offset.bottom) {
+			var moveX = this.offset.left - this.lastOffset.left;
+			var moveY = this.offset.top - this.lastOffset.top;
+			
+			var viewer = this.getHwnd("viewer");
+			if (viewer) {
+				var vMoveX = moveX;
+				var vMoveY = moveY;
+				
+				WinAPI.GetWindowRect(this.getHwnd("viewer"), this.viewerOffset);
+				if (this.viewerOffset.left - this.lastOffset.left > this.lastOffset.right - this.viewerOffset.left) {
+					// 오른쪽 경계에 더 가까울 땐 오른쪽을 따라감
+					vMoveX = this.offset.right - this.lastOffset.right;
+				}
+				if (this.viewerOffset.top - this.lastOffset.top > this.lastOffset.top - this.viewerOffset.top) {
+					// 아래쪽 경계에 더 가까울 땐 아래쪽을 따라감
+					vMoveY = this.offset.bottom - this.lastOffset.bottom;
+				}
+				WinAPI.MoveWindow(viewer, vMoveX, vMoveY, this.viewerOffset);
+			}
+
+			if (this.player.hwnd && this.player.hwnd.window && this.player.hwnd.window.name) {
+				var pMoveX = moveX;
+				var pMoveY = moveY;
+				
+				var playerOffset = this.player.getWindowPosition();
+				if (playerOffset.left - this.lastOffset.left > this.lastOffset.right - playerOffset.left) {
+					// 오른쪽 경계에 더 가까울 땐 오른쪽을 따라감
+					pMoveX = this.offset.right - this.lastOffset.right;
+				}
+				if (playerOffset.top - this.lastOffset.top > this.lastOffset.top - playerOffset.top) {
+					// 아래쪽 경계에 더 가까울 땐 아래쪽을 따라감
+					pMoveY = this.offset.bottom - this.lastOffset.bottom;
+				}
+				this.player.moveWindow(pMoveX, pMoveY);
+			}
+			
+			this.lastOffset.top    = this.offset.top   ;
+			this.lastOffset.left   = this.offset.left  ;
+			this.lastOffset.right  = this.offset.right ;
+			this.lastOffset.bottom = this.offset.bottom;
+			//this.saveSettingAfter = 300; // 창 이동 후 3초간 변화 없으면 설정 저장
+			this.saveSettingAfter = 60; // 리프레시 주기가 C#에선 10ms였는데 여기선 50ms임
+			
+		} else if (this.saveSettingAfter > 0) {
+			if (--this.saveSettingAfter == 0) {
+				WinAPI.GetWindowRect(this.getHwnd("editor"), this.offset);
+				this.script("eval", [
+					"setting.window.x = " + (this.offset.left + ML) + ";"
+				+	"setting.window.y = " + (this.offset.top  + MT) + ";"
+				+	"setting.window.width = "  + (this.offset.right  - this.offset.left - ML - MR) + ";"
+				+	"setting.window.height = " + (this.offset.bottom - this.offset.top  - MB) + ";"
+				]);
+
+				var viewer = this.getHwnd("viewer");
+				if (viewer) {
+					WinAPI.GetWindowRect(viewer, this.viewerOffset);
+					this.script("eval", [
+						"setting.viewer.window.x = " + (this.viewerOffset.left + ML) + ";"
+					+	"setting.viewer.window.y = " + (this.viewerOffset.top  + MT) + ";"
+					+	"setting.viewer.window.width = "  + (this.viewerOffset.right  - this.viewerOffset.left - ML - MR) + ";"
+					+	"setting.viewer.window.height = " + (this.viewerOffset.bottom - this.viewerOffset.top  - MB) + ";"
+					]);
+				}
+
+				var player = this.getHwnd("player");
+				if (player > 0) {
+					var playerOffset = this.player.currentOffset;
+					this.script("eval", [
+						"setting.player.window.x = " + (playerOffset.left + ML) + ";"
+					+	"setting.player.window.y = " + (playerOffset.top  + MT) + ";"
+					+	"setting.player.window.width = "  + (playerOffset.right  - playerOffset.left - ML - MR) + ";"
+					+	"setting.player.window.height = " + (playerOffset.bottom - playerOffset.top  - MB) + ";"
+					]);
+				}
+				this.script("saveSetting");
+			}
+		}
+	};
+}
+{
+	// TODO C#
+	editor.sendMsg = function(target, msg) {
+		this.getHwnd(target).sendMsg(msg);
+	}
+	editor.onloadFinder = function(last) {
+		var finder = this.getHwnd("finder");
+		if (finder.iframe && finder.iframe.contentWindow) {
+			finder = finder.iframe.contentWindow;
+		}
+		if (finder.init) {
+			finder.init(last);
+			finder.binder = editor.binder;
+		}
+	}
+	editor.runFind       = function(params) { editor.mainView.contentWindow.SmiEditor.Finder.runFind      (params); };	
+	editor.runReplace    = function(params) { editor.mainView.contentWindow.SmiEditor.Finder.runReplace   (params); };	
+	editor.runReplaceAll = function(params) { editor.mainView.contentWindow.SmiEditor.Finder.runReplaceAll(params); };
+
+	editor.updateViewerSetting = function() {
+		var viewer = this.getHwnd("viewer");
+		if (viewer) {
+			if (viewer.iframe && viewer.iframe.contentWindow) {
+				viewer = viewer.iframe.contentWindow;
+			}
+			if (viewer.setSetting) {
+				viewer.setSetting(editor.strSettingJson);
+				viewer.setLines(editor.viewerLines);
+			}
+		}
+	};
+	editor.updateViewerTime = function(time) {
+		var viewer = this.getHwnd("viewer");
+		if (viewer) {
+			if (viewer.iframe && viewer.iframe.contentWindow) {
+				viewer = viewer.iframe.contentWindow;
+			}
+			if (viewer.refreshTime) {
+				viewer.refreshTime(time);
+			}
+		}
+	}
+	editor.viewerLines = "[]";
+	editor.updateViewerLines = function(lines) {
+		this.viewerLines = lines;
+		var viewer = this.getHwnd("viewer");
+		if (viewer) {
+			if (viewer.iframe && viewer.iframe.contentWindow) {
+				viewer = viewer.iframe.contentWindow;
+			}
+			if (viewer.setLines) {
+				viewer.setLines(lines);
+			}
+		}
+	};
+}
+
+var accessHandle;
+{	// 설정
+	editor.loadSetting = function(afterSuccess) {
+		editor.strSettingJson = localStorage.getItem("setting");
+		editor.strBridgeList = playerDlls;
+		
+		if (afterSuccess) {
+			afterSuccess();
+		}
+	}
+	editor.saveSetting = function(setting) {
+		localStorage.setItem("setting", (this.strSettingJson = setting));
+		this.updateViewerSetting();
+	}
+	editor.setVideoExts = function(exts) {
+		this.videoExts = exts.split(','); // C#에서만 필요
+	}
+
+	editor.setPlayer = function(dll, exe, withRun) {
+		this.player = new WebPlayerBridge(exe);
+		var offset = JSON.parse(editor.strSettingJson).player.window;
+		this.player.currentOffset.top    = offset.y - MT;
+		this.player.currentOffset.left   = offset.x - ML;
+		this.player.currentOffset.right  = offset.x + offset.width  + MR;
+		this.player.currentOffset.bottom = offset.y + offset.height + MB;
+		if (withRun) {
+			this.runPlayer(exe);
+		}
+	}
+	editor.runPlayer = function(path) {
+		if (this.player && this.player.hwnd) this.player.hwnd.run();
+		// C#에선 플레이어 실행되면 브리지의 타이머에서 잡아서 크기 조절함
+		if (JSON.parse(editor.strSettingJson).player.window.use) {
+			this.player.moveWindow();
+		}
+	}
+
+	editor.loadAddonSetting = function(path) {
+		$.ajax({"url" : "view/addon/" + path
+			,	"dataType": "text"
+			,	"success": function(setting) {
+					editor.mainView.contentWindow.afterLoadAddonSetting(setting.split("\r\n").join("\n"));
+				}
+			,	"error": function() {
+					editor.mainView.contentWindow.afterLoadAddonSetting("");
+				}
+		});
+	}
+	editor.saveAddonSetting = function(path, text) {
+		editor.mainView.contentWindow.afterSaveAddonSetting();
+	}
+}
+{	// 메뉴
+	editor.menuKeys = {};
+	
+	editor.setMenus = function(menus) {
+		var body = $("body");
+		body.find(".submenu").remove();
+		this.menustrip.view.empty();
+		editor.menuKeys = {};
+		
+		menus = menus.concat([["샘플용"
+			, "플레이어 실행|binder.runPlayer()"
+			, "임시 저장 파일 확인하기|hwnd.openTempDir()"
+			, "설정 export|hwnd.exportSetting()"
+			, "설정 import|hwnd.importSetting()"
+			]]);
+		
+		for (var i = 0; i < menus.length; i++) {
+			var list = menus[i];
+			var li = $("<li>").text(list[0]);
+			var menuKey = null;
+			if (list[0][list[0].length-4]=="(" && list[0][list[0].length-3]=="&" && list[0][list[0].length-1]==")") {
+				menuKey = list[0][list[0].length-2];
+				li.html(list[0].substring(0, list[0].length - 3) + "<u>"+menuKey+"</u>)");
+				editor.menuKeys[menuKey] = li;
+			}
+			var ol = $("<ol>").addClass("submenu").data("menu", li);
+			for (var j = 1; j < list.length; j++) {
+				var menu = list[j].split("|");
+				
+				ol.append($("<li tabindex='1'>").html(menu[0]).data("func", menu[1]).on("click", function() {
+					$(".submenu.open").removeClass("open");
+					var func = $(this).data("func");
+					editor.mainView.contentWindow.eval(func);
+				}));
+			}
+			body.append(ol);
+			li.data("submenu", ol);
+			this.menustrip.view.append(li);
+		}
+	}
+	editor.exportSetting = async function() {
+		var fb = await window.showSaveFilePicker({types:[{description:'JSON',accept:{'text/json':['.json']}}]});
+		if (fb) {
+			var file = await fb.getFile();
+			var stream = await fb.createWritable();
+			await stream.write('\ufeff' + this.strSettingJson);
+			await stream.close();
+		}
+	};
+	editor.importSetting = async function() {
+		var fb = await window.showOpenFilePicker({types:[{description:'JSON',accept:{'text/json':['.json']}}]});
+		if (fb && fb[0]) {
+			var file = await fb[0].getFile();
+			var text = await file.text();
+			this.saveSetting(text);
+			this.script("init", [this.strSettingJson]);
+		}
+	};
+	$(function() {
+		$(document).on("keydown", ".submenu.open li", function(e) {
+			var li = $(this);
+			switch (e.keyCode) {
+				case 38: { // ↑
+					li.prev().focus();
+					break;
+				}
+				case 40: { // ↓
+					li.next().focus();
+					break;
+				}
+				case 37: { // ←
+					li.parent().data("menu").prev().click();
+					break;
+				}
+				case 39: { // →
+					li.parent().data("menu").next().click();
+					break;
+				}
+				case 13: { // Enter
+					li.click();
+					break;
+				}
+			}
+		});
+
+		$(document).on("keydown", editor.keyDownForMenu);
+	});
+	editor.keyDownForMenu = function(e) {
+		var menu = null;
+		var key = String.fromCharCode(e.keyCode);
+		if (!e.shiftKey && !e.ctrlKey && e.altKey) {
+			menu = editor.menuKeys[key];
+		}
+		
+		if (menu) {
+			e.preventDefault();
+			editor.menustrip.openMenu(menu);
+		}
+	}
+}
+{	// 파일
+	var fileBuffers = [];
+	var afterGetString = function() {};
+	
+	editor.openFile = async function() {
+		var fileBuffer = await window.showOpenFilePicker({ types: [ { description: "지원되는 자막 파일", accept:{ "text/sami": [".smi"], "text/srt" : [".srt"] } } ] });
+		if (fileBuffer && fileBuffer[0]) {
+			editor.loadFile(fileBuffer[0]);
+		}
+	}
+	editor.openFileForVideo = function() {
+		// 파일명 수신 시 동작 설정
+		editor.afterGetFileName = editor.openFileAfterGetVideoFileName;
+		// player에 현재 재생 중인 파일명 요청
+		editor.player.getFileName();
+	}
+	editor.openFileAfterGetVideoFileName = function(path) { /* Native */ }
+	editor.loadFile = async function(fb) {
+		if (fb.createWritable) {
+			var index = fileBuffers.length;
+			fileBuffers.push(fb);
+			var file = await fb.getFile();
+			var text = await file.text();
+			editor.script("openFile", [index + ":" + file.name, text, false]);
+		} else {
+			var file = fb;
+			var text = await file.text();
+			editor.script("openFile", [file.name, text, false]);
+		}
+	}
+	editor.checkLoadVideoFile = function() { /* native */ }
+	editor.loadVideoFile = function() { /* native */ }
+	editor.save = async function(text, path) {
+		var stream = null;
+		var paths = path.split(":");
+		if (paths[1]) {
+			var fileBuffer = fileBuffers[paths[0]];
+			var stream = await fileBuffer.createWritable();
+			await stream.write("\ufeff" + text); // BOM 넣어줌
+			await stream.close();
+			editor.script("afterSaveFile", [path]);
+		} else {
+			editor.saveWithDialog(text);
+		}
+	}
+	editor.saveWithDialog = async function(text) {
+		var fileBuffer = await window.showSaveFilePicker({
+			types: [
+				{ description: "SAMI", accept:{ "text/sami": [".smi"] } }
+			]
+		});
+		if (fileBuffer) {
+			var index = fileBuffers.length;
+			fileBuffers.push(fileBuffer);
+			var file = await fileBuffer.getFile();
+			editor.save(text, index + ":" + file.name);
+		}
+	}
+	editor.saveTemp = function(text, path) {
+		path = path.split(":");
+		var filename = path[1] ? path[1] : path[0];
+		var key = "tmp_" + new Date().getTime() + "_" + filename;
+		
+		var keys = localStorage.getItem("tmpKeys");
+		keys = keys ? keys.split(":") : [];
+		keys.push(key);
+		localStorage.setItem("tmpKeys", keys.join(":"));
+		localStorage.setItem(key, text);
+	}
+	editor.openTempDir = function() {
+		var hwnd = window.open("bridge/tempDir.html", "tempDir", "location=no,width=1,height=1");
+		var rect = editor.mainView.contentWindow.setting.player.window;
+		WinAPI.MoveWindow(hwnd, rect.x + 40, rect.y + 40, rect.width - 80, rect.height - 80);
+	}
+}
+{	// Designer
+	editor.initializeComponent = function() {
+		this.super_initializeComponent();
+		
+		this.layerForDrag.css({
+				padding: 80
+			,	textAlign: "center"
+			,	fontSize: 20
+		}).html("웹 간이 버전에서 드래그로 열 경우<br />저장 파일을 재지정해줘야 합니다.");
+		
+		$("body").append((this.menustrip = new MenuStrip()).view);
+		this.mainView.style.top = "20px";
+		this.mainView.style.height = "calc(100% - 20px)";
+	}
+}
+$(function() {
+	editor.run();
+	window.addEventListener("beforeunload", function(e) {
+		editor.beforeExit(e);
+	});
+});
+</script>
+</head>
+<body></body>
+</html>

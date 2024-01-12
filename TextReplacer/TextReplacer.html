@@ -3,164 +3,67 @@
 <head>
 <meta charset="utf-8">
 <title>TextReplacer 샘플</title>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css" />
 <script src="view/lib/jquery-3.2.1.min.js"></script>
 <script src="bridge/WinAPI.js"></script>
+<script src="bridge/Binder.js"></script>
 <script>
-function Binder(editor) {
-	var _ = this._ = editor;
-
-	var init = false;
-	this.initAfterLoad = function() {
-		if (this.init) return;
-		this.init = true;
-		_.initAfterLoad();
-	}
-	
-	this.showDragging = function() {
-		_.showDragging();
-	}
-	this.hideDragging = function() {
-		_.hideDragging();
-	}
-
-	this.alert   = function(target, msg) { _.alert  (target, msg); }
-	this.confirm = function(target, msg) { _.confirm(target, msg); }
-	this.prompt  = function(target, msg) { _.prompt (target, msg); }
-	
-	this.addFilesByDrag = function() {
-		_.addFilesByDrag();
-	}
-	this.loadSettingByDrag = function() {
-		_.loadSettingByDrag();
-	}
-	this.compare = function(file, froms, tos) {
-		_.compare(file, froms, tos);
-	}
-	this.replace = function(files, froms, tos) {
-		_.replace(files, froms, tos);
-	}
-	this.importSetting = function() {
-		_.importSetting();
-	}
-	this.exportSetting = function(setting) {
-		_.exportSetting(setting);
-	}
-	this.exitAfterSaveSetting = function(setting) {
-		_.exitAfterSaveSetting(setting);
-	}
+Binder.prototype.addFilesByDrag = function() {
+	this._.addFilesByDrag();
+}
+Binder.prototype.loadSettingByDrag = function() {
+	this._.loadSettingByDrag();
+}
+Binder.prototype.compare = function(file, froms, tos) {
+	this._.compare(file, froms, tos);
+}
+Binder.prototype.replace = function(files, froms, tos) {
+	this._.replace(files, froms, tos);
+}
+Binder.prototype.importSetting = function() {
+	this._.importSetting();
+}
+Binder.prototype.exportSetting = function(setting) {
+	this._.exportSetting(setting);
+}
+Binder.prototype.exitAfterSaveSetting = function(setting) {
+	this._.exitAfterSaveSetting(setting);
 }
 </script>
+<script src="bridge/WebForm.js"></script>
 <script>
-_alert = alert;
-_confirm = confirm;
-_prompt = prompt;
-
-var main = {}; // 에디터
-{
-	main.script = function(names, p) {
-		var func = eval("this.window.contentWindow." + names);
-		if (p) {
-			return func(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9]);
-		} else {
-			return func();
-		}
-	}
-	main.alert = function(target, msg) {
-		// C#에선 target 창 위치에 따라 alert 위치를 지정함
-		alert(msg);
-	}
-	main.confirm = function(target, msg) {
-		// C#에선 target 창 위치에 따라 confirm 위치를 지정함
-		/*
-		var hwnd = this.getHwnd(target);
-		*/
-		if (confirm(msg)) {
-			main.window.contentWindow.afterConfirmYes();
-		} else {
-			main.window.contentWindow.afterConfirmNo();
-		}
-	}
-	main.prompt = function(target, msg) {
-		main.window.contentWindow.afterPrompt(prompt(msg));
-	}
-	
-	var dropLayer = $("<div>").css({
-			position: "fixed"
-		,	top: 0
-		,	left: 0
-		,	right: 0
-		,	bottom: 0
-		,	background: "rgba(127,127,127,0)"
-		,	padding: 80
-		,	textAlign: "center"
-		,	fontSize: 20
-	}).hide();
-	main.showDragging = function(id) {
-		dropLayer.show();
-		main.script("showDragging");
-	}
-	main.hideDragging = function() {
-		dropLayer.hide();
-		main.script("hideDragging");
-	}
-	main.droppedFiles = null;
-	$(function() {	
-		$("body").append(dropLayer);
-		
-		document.addEventListener("dragenter", function(e) {
-			e.preventDefault();
-			main.showDragging();
-		});
-		dropLayer[0].addEventListener("dragleave", function(e) {
-			e.preventDefault();
-			main.hideDragging();
-		});
-		dropLayer[0].addEventListener("dragover", function(e) {
-			e.preventDefault();
-			main.script("dragover", [ e.offsetX, e.offsetY ]);
-		});
-		dropLayer[0].addEventListener("drop", async function(e) {
-			e.preventDefault();
-			if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-				main.droppedFiles = e.dataTransfer.files;
-			}
-			main.hideDragging();
-			main.script("drop", [ e.offsetX, e.offsetY ]);
-		});
-	});
-}
-
+var main = new WebForm();
 {	// main
 	main.settingJson = '{"filters":"*.txt, *.smi, *.ass","replacers":[{"use":true,"from":"다시 한번","to":"다시 한 번"},{"use":true,"from":"그리고 보니","to":"그러고 보니"},{"use":true,"from":"뒤쳐","to":"뒤처"},{"use":true,"from":"제 정신","to":"제정신"},{"use":true,"from":"스탠드 얼론","to":"스탠드얼론"},{"use":true,"from":"멘테넌스","to":"메인터넌스"},{"use":true,"from":"뒷처리","to":"뒤처리"},{"use":true,"from":"스탭도","to":"스태프도"},{"use":true,"from":"등 져선","to":"등져선"},{"use":true,"from":"타코이즈","to":"터쿼이즈"},{"use":true,"from":"쓰레드","to":"스레드"},{"use":true,"from":"져버리지","to":"저버리지"},{"use":true,"from":"글러먹","to":"글러 먹"}]}';
 	
 	main.run = function() {
-		this.window = document.getElementById("main");
+		this.initializeComponent();
 		
 		var settingJson = localStorage.getItem("setting.TextReplacer");
 		if (settingJson) {
 			main.settingJson = settingJson;
 		}
 		
-		main.window.src = "view/TextReplacer.html";
-		main.window.onload = function() {
+		main.mainView.src = "view/TextReplacer.html";
+		main.mainView.onload = function() {
 			// 브라우저 샘플에선 url 변형 필요
-			main.window.contentWindow._open_ = main.window.contentWindow.open;
-			main.window.contentWindow.open = function(url, name, options) {
+			main.mainView.contentWindow._open_ = main.mainView.contentWindow.open;
+			main.mainView.contentWindow.open = function(url, name, options) {
 				if (url.substring(0, 4) != "http") {
 					url = location.href.substring(0, location.href.lastIndexOf("/")) + "/view/" + url;
 				}
-				return window_open(url, name, options, main.window.contentWindow);
+				return main.windows[name] = window_open(url, name, options, main.mainView.contentWindow);
 			}
 			
-			main.window.contentWindow.binder = main.binder = new Binder(main);
+			main.mainView.contentWindow.binder = main.binder = new Binder(main);
 			// 브라우저 샘플에선 이게 안 도는 경우가 있나?
 			/*
 			setTimeout(function() {
-				main.window.contentWindow.binder.initAfterLoad();
+				main.mainView.contentWindow.binder.initAfterLoad();
 			}, 1000);
 			*/
 
-			var cd = main.window.contentDocument;
+			var cd = main.mainView.contentDocument;
 			cd.addEventListener("dragenter", function(e) {
 				e.preventDefault();
 				main.showDragging();
@@ -172,11 +75,12 @@ var main = {}; // 에디터
 	}
 
 	main.initAfterLoad = function() {
-		main.script("init", [main.settingJson]);
+		this.super_initAfterLoad();
+		this.script("init", [main.settingJson]);
 	};
 	
 	main.beforeExit = function(e) {
-		script("beforeExit");
+		this.script("beforeExit");
 	}
 	/*
 	public void DoExit(bool resetPlayer, bool exitPlayer)
@@ -185,101 +89,250 @@ var main = {}; // 에디터
 	*/
 }
 {
+	main.files = {};
 	main.addFilesByDrag = function() {
-		if (!main.droppedFiles) return;
-		if (main.droppedFiles.length < 1) {
-			main.droppedFiles = null;
+		if (!this.droppedFiles) return;
+		if (this.droppedFiles.length < 1) {
+			this.droppedFiles = null;
 			return;
 		}
-		for (var i = 0; i < main.droppedFiles.length; i++) {
-			main.script("addFile", [ main.droppedFiles[i].name ]);
+		for (var i = 0; i < this.droppedFiles.length; i++) {
+			try {
+				var file = this.droppedFiles[i];
+				main.script("addFile", [ file.name ]);
+				main.files[file.name] = file;
+			} catch (e) {}
 		}
-		main.droppedFiles = null;
+		this.droppedFiles = null;
 	}
 	main.loadSettingByDrag = async function() {
-		if (!main.droppedFiles) return;
-		if (main.droppedFiles.length < 1) {
-			main.droppedFiles = null;
+		if (!this.droppedFiles) return;
+		if (this.droppedFiles.length < 1) {
+			this.droppedFiles = null;
 			return;
 		}
-		main.script("init", [ await main.droppedFiles[0].text() ]);
-		main.droppedFiles = null;
+		main.script("init", [ await this.droppedFiles[0].text() ]);
+		this.droppedFiles = null;
 	}
-	main.compare = function(file, froms, tos) {
-		console.log(file);
-		console.log(froms);
-		console.log(tos);
+	main.compare = async function(file, froms, tos) {
+		var replaced = new Replaced(await main.files[file].text(), froms, tos);
+		main.script("showPreview", [ replaced.previewOrigin(), replaced.previewResult() ]);
+		if (replaced.count == 0) {
+			setTimeout(function() {
+				alert("치환한 문자열이 없습니다.");
+			}, 1);
+		}
 	}
 	main.replace = function(files, froms, tos) {
 		console.log(files);
 		console.log(froms);
 		console.log(tos);
 	}
-	main.getReplaced = function(text, froms, tos) {
-		var origin = text;
-		var originReplaced = [];
-		var result = text;
-		var resultReplaced = [];
-		var count = 0;
-		
-		for (var i = 0; i < froms.length; i++) {
-			var checked = 0, rPos;
+}
+function Replaced(text, froms, tos) {
+	var origin         = text;
+	var originReplaced = [];
+	var result         = text;
+	var resultReplaced = [];
+	var count          = 0;
+	
+	for (var i = 0; i < froms.length; i++) {
+		var checked = 0, rPos;
+		while ((rPos = result.indexOf(froms[i], checked)) >= 0) {
+			var rIndex = 0;
+			for (; rIndex < resultReplaced.length; rIndex++) {
+				if (rPos <= resultReplaced[rIndex][0]) {
+					break;
+				}
+			}
+			var before = rIndex - 1;
+			if (before >= 0 && rPos <= resultReplaced[before][1]) { // 앞이랑 겹칠 때
+				var oEnd = rPos - resultReplaced[before][1] + originReplaced[before][1] + froms[i].length;
+				if (oEnd < originReplaced[before][1]) {
+					resultReplaced[before][1] += tos[i].length - froms[i].length;
+				} else {
+					resultReplaced[before][1] = rPos + tos[i].length;
+					originReplaced[before][1] = oEnd;
+				}
+				rIndex--;
+			} else {
+				var addLength = (before >= 0) ? originReplaced[before][1] - resultReplaced[before][1] : 0;
+				originReplaced.splice(rIndex, 0, [rPos + addLength, rPos + froms[i].length + addLength]);
+				resultReplaced.splice(rIndex, 0, [rPos, rPos + tos[i].length]);
+			}
+			var addLength = tos[i].length - froms[i].length;
+			for (var j = rIndex + 1; j < resultReplaced.length; j++) {
+				resultReplaced[j][0] += addLength;
+				resultReplaced[j][1] += addLength;
+			}
+			if (rIndex + 1 < resultReplaced.length && originReplaced[rIndex][1] >= originReplaced[rIndex + 1][0]) { // 뒤랑 겹칠 때
+				originReplaced[rIndex + 1][0] = originReplaced[rIndex][0];
+				resultReplaced[rIndex + 1][0] = resultReplaced[rIndex][0];
+				originReplaced.splice(rIndex, 1);
+				resultReplaced.splice(rIndex, 1);
+			}
+			result = result.substring(0, rPos) + tos[i] + result.substring(rPos + froms[i].length);
+			checked = rPos + tos[i].length;
+			count++;
+		}
+	}
+
+	this.origin         = origin        ;
+	this.originReplaced = originReplaced;
+	this.result         = result        ;
+	this.resultReplaced = resultReplaced;
+	this.count          = count         ;
+}
+Replaced.prototype.previewOrigin = function() {
+	return this.preview(this.origin, this.originReplaced);
+}
+Replaced.prototype.previewResult = function() {
+	return this.preview(this.result, this.resultReplaced);
+}
+Replaced.prototype.preview = function(text, replacedList) {
+	var preview = [];
+	var last = 0;
+	for (var i = 0; i < replacedList.length; i++) {
+		var replaced = replacedList[i];
+		if (last < replaced[0]) {
+			preview.push(text.substring(last, replaced[0]).split("<").join("&lt;").split(">").join("&gt;"));
+		}
+		preview.push("<span class='highlight'>" + text.substring(replaced[0], replaced[1]).split("<").join("&lt;").split(">").join("&gt;") + "</span>");
+		last = replaced[1];
+	}
+	if (last < text.length) {
+		preview.push(text.substring(last).split("<").join("&lt;").split(">").join("&gt;"));
+	}
+	return preview.join("");
+}
+/*
+public class Replaced {
+	private String origin;
+	private List<int[]> originReplaced = new ArrayList<>();
+	private String result;
+	private List<int[]> resultReplaced = new ArrayList<>();
+	private int count = 0;
+	
+	public Replaced(String text, String[] froms, String[] tos) {
+		origin = result = text;
+
+		for (int i = 0; i < froms.length; i++) {
+			int checked = 0, rPos;
 			while ((rPos = result.indexOf(froms[i], checked)) >= 0) {
-				var rIndex = 1;
-				for (; rIndex < resultReplaced.length; rIndex++) {
-					if (rPos <= resultReplaced[rIndex][0]) {
+				int rIndex = 0;
+				for (; rIndex < resultReplaced.size(); rIndex++) {
+					if (rPos <= resultReplaced.get(rIndex)[0]) {
 						break;
 					}
 				}
-				if (rIndex < resultReplaced.length) {
-					if (rIndex > 0 && rPos <= resultReplaced[rIndex - 1][1]) { // 앞이랑 겹칠 때
-						var before = rIndex - 1;
-						var oEnd = rPos - resultReplaced[before][0] + originReplaced[before][0] + froms[i].length;
-						if (oEnd < originReplaced[before][1]) {
-							resultReplaced[before][1] += tos[i].length - froms[i].length;
-						} else {
-							resultReplaced[before][1] = rPos + tos[i].length;
-							originReplaced[before][1] = oEnd;
-						}
+				int before = rIndex - 1;
+				if (before >= 0 && rPos <= resultReplaced.get(before)[1]) { // 앞이랑 겹칠 때
+					int oEnd = rPos - resultReplaced.get(before)[1] + originReplaced.get(before)[1] + froms[i].length();
+					if (oEnd < originReplaced.get(before)[1]) {
+						resultReplaced.get(before)[1] += tos[i].length() - froms[i].length();
 					} else {
-						originReplaced.splice(rIndex, 0, [rPos + origin.length - result.length, rPos + froms[i].length + origin.length - result.length]);
-						resultReplaced.splice(rIndex, 0, [rPos, rPos + tos[i].length]);
-						rIndex++;
+						resultReplaced.get(before)[1] = rPos + tos[i].length();
+						originReplaced.get(before)[1] = oEnd;
 					}
-					var addLength = tos[i].length - froms[i].length;
-					for (var j = rIndex + 1; j < resultReplaced.length; j++) {
-						resultReplaced[j][0] += addLength;
-						resultReplaced[j][1] += addLength;
-					}
-					if (rIndex + 1 < resultReplaced.length) {
-						if (originReplaced[rIndex][1] <= originReplaced[rIndex + 1][0]) { // 뒤랑 겹칠 때
-							originReplaced[rIndex + 1][0] = originReplaced[rIndex][0];
-							resultReplaced[rIndex + 1][0] = resultReplaced[rIndex][0] + addLength;
-							originReplaced.splice(rIndex, 1);
-							resultReplaced.splice(rIndex, 1);
-						}
-					}
-					
+					rIndex--;
 				} else {
-					// 맨 끝
-					originReplaced.push([rPos + origin.length - result.length, rPos + froms[i].length + origin.length - result.length]);
-					resultReplaced.push([rPos, rPos + tos[i].length]);
+					int addLength = (before >= 0) ? originReplaced.get(before)[1] - resultReplaced.get(before)[1] : 0;
+					originReplaced.add(rIndex, new int[] { rPos + addLength, rPos + froms[i].length() + addLength });
+					resultReplaced.add(rIndex, new int[] { rPos, rPos + tos[i].length() });
 				}
-				result = result.substring(0, rPos) + tos[i] + result.substring(rPos + froms[i].length);
-				checked = rPos + tos[i].length;
+				int addLength = tos[i].length() - froms[i].length();
+				for (int j = rIndex + 1; j < resultReplaced.size(); j++) {
+					resultReplaced.get(j)[0] += addLength;
+					resultReplaced.get(j)[1] += addLength;
+				}
+				if (rIndex + 1 < resultReplaced.size()) {
+					if (originReplaced.get(rIndex)[1] >= originReplaced.get(rIndex + 1)[0]) { // 뒤랑 겹칠 때
+						originReplaced.get(rIndex + 1)[0] = originReplaced.get(rIndex)[0];
+						resultReplaced.get(rIndex + 1)[0] = resultReplaced.get(rIndex)[0];
+						originReplaced.remove(rIndex);
+						resultReplaced.remove(rIndex);
+					}
+				}
+				result = result.substring(0, rPos) + tos[i] + result.substring(rPos + froms[i].length());
+				checked = rPos + tos[i].length();
 				count++;
 			}
 		}
+	}
+
+	public String getOrigin() {
+		return origin;
+	}
+	public String getResult() {
+		return result;
+	}
+	public int getCount() {
+		return count;
+	}
+	public String previewOrigin() {
+		return preview(origin, originReplaced);
+	}
+	public String previewResult() {
+		return preview(result, resultReplaced);
+	}
+	private String preview(String text, List<int[]> replacedList) {
+		StringBuilder preview = new StringBuilder();
+		int last = 0;
+		for (int i = 0; i < replacedList.size(); i++) {
+			int[] replaced = replacedList.get(i);
+			if (last < replaced[0]) {
+				preview.append(text.substring(last, replaced[0]).replaceAll("<", "&lt;").replaceAll(">", "&gt;"));
+			}
+			preview.append("<span class='highlight'>" + text.substring(replaced[0], replaced[1]).replaceAll("<", "&lt;").replaceAll(">", "&gt;") + "</span>");
+			last = replaced[1];
+		}
+		if (last < text.length()) {
+			preview.append(text.substring(last).replaceAll("<", "&lt;").replaceAll(">", "&gt;"));
+		}
+		return preview.toString();
+	}
+	
+	public static void main(String[] args) {
+		String text = "test_text<test>asdf</test>";
 		
-		return {
-				origin: origin
-			,	originReplaced: originReplaced
-			,	result: result
-			,	resultReplaced: resultReplaced
-			,	count: count
-		};
+		String[] froms = { "es"   };
+		String[] tos   = { "asdf" };
+		Replaced replaced = new Replaced(text, froms, tos);
+		System.out.println(replaced.count);
+		System.out.println(replaced.previewOrigin());
+		System.out.println(replaced.previewResult());
+		
+		froms = new String[] { "es"  , "ex" };
+		tos   = new String[] { "asdf", "es" };
+		replaced = new Replaced(text, froms, tos);
+		System.out.println(replaced.count);
+		System.out.println(replaced.previewOrigin());
+		System.out.println(replaced.previewResult());
+		
+		froms = new String[] { "es"  , "ex", "_" };
+		tos   = new String[] { "asdf", "es", "/" };
+		replaced = new Replaced(text, froms, tos);
+		System.out.println(replaced.count);
+		System.out.println(replaced.previewOrigin());
+		System.out.println(replaced.previewResult());
+		
+		froms = new String[] { "es"  , "ex", "_", "ft" };
+		tos   = new String[] { "asdf", "es", "/", "!"  };
+		replaced = new Replaced(text, froms, tos);
+		System.out.println(replaced.count);
+		System.out.println(replaced.previewOrigin());
+		System.out.println(replaced.previewResult());
+		
+		text = "내일 정오<br>극장 뒤편에서 기다리겠다삐";
+		froms = new String[] { "<br>"  , "오<"  };
+		tos   = new String[] { "<BR />", "오!<" };
+		replaced = new Replaced(text, froms, tos);
+		System.out.println(replaced.count);
+		System.out.println(replaced.previewOrigin());
+		System.out.println(replaced.previewResult());
 	}
 }
+*/
 {
 	main.importSetting = async function() {
 		var fileBuffer = await window.showOpenFilePicker({ types: [ { description: "JSON 파일", accept:{ "text/json": [".json"] } } ] });
@@ -319,18 +372,13 @@ $(function() {
 	padding: 0;
 	box-sizing: border-box;
 }
-html, body, #main{
+html, body {
 	width: 100%;
 	height: 100%;
 	border: 0;
 	overflow: hidden;
 }
-#main {
-	position: fixed;
-	top: 0;
-	left: 0;
-}
 </style>
 </head>
-<body><iframe id="main"></iframe></body>
+<body></body>
 </html>

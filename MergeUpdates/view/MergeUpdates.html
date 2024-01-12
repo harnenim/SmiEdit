@@ -4,9 +4,12 @@
 	<meta charset="utf-8">
 	<title>수정사항 반영하기</title>
 	<script src="lib/jquery-3.2.1.min.js"></script>
+<!-- 	<script src="lib/popup.js"></script> -->
+<!-- 	<script src="lib/AutoCompleteTextarea.js"></script> -->
 	<script src="lib/History.js"></script>
 	<script src="lib/SmiEditor.js"></script>
 	<script src="lib/SubtitleObject.js"></script>
+<!-- 	<script src="lib/editor.js"></script> -->
 	<script src="lib/webview.js"></script>
 	<link rel="stylesheet" type="text/css" href="lib/webview.css" />
 	<script>
@@ -548,9 +551,9 @@ $(function() {
 	});
 });
 
-var sm = null;
+var addon = null;
 function openSyncManager() {
-	sm = window.open("addon/SyncManager.html", "addon", "scrollbars=no,location=no"
+	addon = window.open("addon/SyncManager.html", "addon", "scrollbars=no,location=no"
 			+ ",top="    + (window.screenTop   + 20)
 			+ ",left="   + (window.screenLeft  + 20)
 			+ ",width="  + (window.outerWidth  - 60)
@@ -584,6 +587,7 @@ body > div > div {
 	position: absolute;
 	height: 100%;
 	top: 0;
+	overflow: hidden;
 }
 body > div > div > h5 {
 	width: 100%;
@@ -654,6 +658,5 @@ body > div > div.hover {
 			<div><textarea id="targetAftFinish" readonly="readonly" placeholder="출력: B영상용 자막 수정본"></textarea></div>
 		</div>
 	</div>
-	<div id="cover"></div>
 </body>
 </html>

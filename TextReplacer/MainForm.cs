@@ -14,6 +14,8 @@ using static System.Net.WebRequestMethods;
 namespace Jamaker
 {
     public partial class MainForm : Form
+    { }
+    public partial class MainForm : Form
     {
         #region 공통 기능... class 따로 만들어야?
         private string Script(string name) { return mainView.Script(name); }
@@ -90,8 +92,17 @@ namespace Jamaker
             {
                 droppedFiles = (string[])e.Data.GetData(DataFormats.FileDrop);
                 HideDragging();
-                Script("drop", new object[] { e.X - Location.X, e.Y - Location.Y });
+                Drop(e.X - Location.X, e.Y - Location.Y);
             }
+        }
+        private void Drop(int x, int y)
+        {
+            Script("drop", new object[] { x, y });
+        }
+        private void ClickLayerForDrag(object sender, MouseEventArgs e)
+        {
+            // 레이어가 클릭됨 -> 드래그 끝났는데 안 사라진 상태
+            HideDragging();
         }
         #endregion
 
@@ -274,9 +285,29 @@ namespace Jamaker
                 return;
             }
 
-            Replaced result = GetReplacedWithPreview(file, froms, tos);
+            string text = null;
+            StreamReader sr = null;
+            try
+            {
+                Encoding encoding = TextFile.BOM.DetectEncoding(file); // TODO: BOM 없으면 버그 있나...?
+                sr = new StreamReader(file, encoding);
+                text = sr.ReadToEnd();
+            }
+            catch
+            {
+                Script("alert", "파일을 열지 못했습니다.");
+                return;
+            }
+            finally { sr?.Close(); }
+
+            Replaced result = new Replaced(text, froms, tos);
             if (result == null) return;
 
+            Script("showPreview", new object[] { result.PreviewOrigin(), result.PreviewResult() });
+            if (result.count == 0)
+            {
+                Script("alert", new object[] { "치환한 문자열이 없습니다." });
+            }
 
         }
         public void Replace(string[] files, string[] froms, string[] tos)
@@ -287,17 +318,38 @@ namespace Jamaker
                 return;
             }
 
+            string text = null;
+            StreamReader sr = null;
             StreamWriter sw = null;
+            int fileCount = 0, count = 0;
             foreach (string file in files)
             {
-                string result = GetReplaced(file, froms, tos);
+                try
+                {
+                    Encoding encoding = TextFile.BOM.DetectEncoding(file); // TODO: BOM 없으면 버그 있나...?
+                    sr = new StreamReader(file, encoding);
+                    text = sr.ReadToEnd();
+                }
+                catch
+                {
+                    continue;
+                }
+                finally { sr?.Close(); }
+
+                Replaced result = new Replaced(text, froms, tos);
                 if (result == null) continue;
+
+                if (result.count == 0) continue;
 
                 try
                 {
                     // 원본 파일의 인코딩대로 저장
                     sw = new StreamWriter(file, false, BOM.DetectEncoding(file));
-                    sw.Write(result);
+                    sw.Write(result.result);
+
+                    // 성공 후 카운트
+                    count += result.count;
+                    fileCount++;
                 }
                 catch (Exception e)
                 {
@@ -309,75 +361,12 @@ namespace Jamaker
                 }
             }
 
-            Script("alert", new object[] { "작업이 완료됐습니다." });
-        }
-        private string GetReplaced(string file, string[] froms, string[] tos)
-        {
-            StreamReader sr = null;
-            string text = null;
-            try
+            string msg = "변환된 파일이 없습니다.";
+            if (count > 0)
             {
-                sr = new StreamReader(file, BOM.DetectEncoding(file));
-                text = sr.ReadToEnd();
+                msg = $"{files.Length}개 파일 중 {fileCount}개 파일에 대해\n{count}곳을 치환했습니다.";
             }
-            catch { }
-            finally { sr?.Close(); }
-
-            if (text == null) return null;
-
-            for (int i = 0; i < froms.Length; i++)
-            {
-                text = text.Replace(froms[i], tos[i]);
-            }
-            return text;
-        }
-        private Replaced GetReplacedWithPreview(string file, string[] froms, string[] tos)
-        {
-            Replaced result = null;
-
-            StreamReader sr = null;
-            try
-            {
-                sr = new StreamReader(file, BOM.DetectEncoding(file));
-
-                // 모두 불러온 대로 초기화
-                result = new Replaced(sr.ReadToEnd());
-            }
-            catch { }
-            finally { sr?.Close(); }
-
-            if (result == null) return null;
-
-            // 미리보기 html escape
-            result.originPreview = System.Security.SecurityElement.Escape(result.originPreview);
-            result.resultPreview = System.Security.SecurityElement.Escape(result.resultPreview);
-
-            // 각각의 변환 대상 문자열 쌍에 대해 변환
-            for (int i = 0; i < froms.Length; i++)
-            {
-                // 원본 미리보기(하이라이트 태그만 씌움) / 결과 / 결과 미리보기 각각 변환
-                result.originPreview = result.originPreview.Replace(froms[i], "<span class='highlight'>" + froms[i] + "</span>");
-                result.result = result.result.Replace(froms[i], tos[i]);
-                result.resultPreview = result.resultPreview.Replace(froms[i], "<span class='highlight'>" + tos[i] + "</span>");
-                //result.count++;
-                // 태그가 붙은 replacedPreview는 2번째 이후 변환값에 대해 문제가 생길 가능성이 있어 보임
-                // 뜯어고쳐야 함... 이런 식으로 하지 말고 모든 변환 위치를 기억해둬야 할 것 같음...
-                // 아니 근데 솔직히 변환 기능이랑 별개로 그냥 미리보기 하나 만들자고 구조 뜯어고치는 것도 뻘짓 같은데
-            }
-
-            return result;
-        }
-        private class Replaced
-        {
-            public string origin = null;
-            public string originPreview = null;
-            public string result = null;
-            public string resultPreview = null;
-            public int count = 0;
-            public Replaced(string text)
-            {
-                origin = originPreview = result = resultPreview = text;
-            }
+            Script("alert", new object[] { msg });
         }
 
         public void ImportSetting()
@@ -481,5 +470,107 @@ namespace Jamaker
             }
         }
         #endregion
+    }
+    public class Replaced
+    {
+        public readonly string origin;
+        private readonly List<int[]> originReplaced = new List<int[]>();
+        public readonly string result;
+        private readonly List<int[]> resultReplaced = new List<int[]>();
+        public readonly int count = 0;
+
+        public Replaced(string text, string[] froms, string[] tos)
+        {
+            origin = result = text;
+
+            for (int i = 0; i < froms.Length; i++)
+            {
+                int pos = 0, rPos;
+                while ((rPos = result.IndexOf(froms[i], pos)) >= 0)
+                {
+                    int rIndex = 0;
+                    for (; rIndex < resultReplaced.Count; rIndex++)
+                    {
+                        if (rPos <= resultReplaced[rIndex][0])
+                        {
+                            break;
+                        }
+                    }
+                    int before = rIndex - 1;
+                    int addLength;
+                    if (before >= 0 && rPos <= resultReplaced[before][1])
+                    { // 앞이랑 겹칠 때
+                        int oEnd = rPos - resultReplaced[before][1] + originReplaced[before][1] + froms[i].Length;
+                        if (oEnd < originReplaced[before][1])
+                        {
+                            resultReplaced[before][1] += tos[i].Length - froms[i].Length;
+                        }
+                        else
+                        {
+                            resultReplaced[before][1] = rPos + tos[i].Length;
+                            originReplaced[before][1] = oEnd;
+                        }
+                        rIndex--;
+                    }
+                    else
+                    {
+                        addLength = (before >= 0) ? originReplaced[before][1] - resultReplaced[before][1] : 0;
+                        originReplaced.Insert(rIndex, new int[] { rPos + addLength, rPos + froms[i].Length + addLength });
+                        resultReplaced.Insert(rIndex, new int[] { rPos, rPos + tos[i].Length });
+                    }
+                    addLength = tos[i].Length - froms[i].Length;
+                    for (int j = rIndex + 1; j < resultReplaced.Count; j++)
+                    {
+                        resultReplaced[j][0] += addLength;
+                        resultReplaced[j][1] += addLength;
+                    }
+                    if (rIndex + 1 < resultReplaced.Count)
+                    {
+                        if (originReplaced[rIndex][1] >= originReplaced[rIndex + 1][0])
+                        { // 뒤랑 겹칠 때
+                            originReplaced[rIndex + 1][0] = originReplaced[rIndex][0];
+                            resultReplaced[rIndex + 1][0] = resultReplaced[rIndex][0];
+                            originReplaced.RemoveAt(rIndex);
+                            resultReplaced.RemoveAt(rIndex);
+                        }
+                    }
+                    result = result.Substring(0, rPos) + tos[i] + result.Substring(rPos + froms[i].Length);
+                    pos = rPos + tos[i].Length;
+                    count++;
+                }
+            }
+        }
+        public string PreviewOrigin()
+        {
+            return Preview(origin, originReplaced);
+        }
+        public string PreviewResult()
+        {
+            return Preview(result, resultReplaced);
+        }
+        private string Preview(string text, List<int[]> replacedList)
+        {
+            string preview = "";
+            int last = 0;
+            for (int i = 0; i < replacedList.Count; i++)
+            {
+                int[] replaced = replacedList[i];
+                if (last < replaced[0])
+                {
+                    preview += (EscapeHtml(text.Substring(last, replaced[0] - last)));
+                }
+                preview += ("<span class='highlight'>" + EscapeHtml(text.Substring(replaced[0], replaced[1] - replaced[0])) + "</span>");
+                last = replaced[1];
+            }
+            if (last < text.Length)
+            {
+                preview += (EscapeHtml(text.Substring(last)));
+            }
+            return preview;
+        }
+        private static string EscapeHtml(string text)
+        {
+            return text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
+        }
     }
 }

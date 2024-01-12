@@ -118,10 +118,30 @@ function beforeExit() {
 	binder.exitAfterSaveSetting(getSetting());
 }
 
+function getReplacers() {
+	var froms = [];
+	var tos = [];
+	listReplacer.find("li").each(function() {
+		var li = $(this);
+		if (!li.find("[name=use]").prop("checked")) return;
+		var from = li.find("[name=from]").val();
+		if (from == "") return;
+		var to = li.find("[name=to]").val();
+		froms.push(from);
+		tos.push(to);
+	});
+	return { froms: froms, tos: tos };
+}
+
 $(function() {
 	listFiles = new ListView($("#listFiles"));
 	listFiles.run = function(item) {
-		binder.compare(item.value);
+		var replacers = getReplacers();
+		if (replacers.froms.length == 0) {
+			alert("변환할 문자열이 없습니다.");
+			return;
+		}
+		binder.compare(item.value, replacers.froms, replacers.tos);
 	}
 	
 	inputFilters = $("#inputFilters");
@@ -150,22 +170,12 @@ $(function() {
 			alert("변환할 파일이 없습니다.");
 			return;
 		}
-		var froms = [];
-		var tos = [];
-		listReplacer.find("li").each(function() {
-			var li = $(this);
-			if (!li.find("[name=use]").prop("checked")) return;
-			var from = li.find("[name=from]").val();
-			if (from == "") return;
-			var to = li.find("[name=to]").val();
-			froms.push(from);
-			tos.push(to);
-		});
-		if (froms.length == 0) {
+		var replacers = getReplacers();
+		if (replacers.froms.length == 0) {
 			alert("변환할 문자열이 없습니다.");
 			return;
 		}
-		binder.replace(files, froms, tos);
+		binder.replace(files, replacers.froms, replacers.tos);
 	});
 	$("#btnImportSetting").on("click", function() {
 		binder.importSetting();
@@ -311,8 +321,8 @@ label[for=inputFilters] {
 	color: #f00;
 }
 
-#listFiles.hover,
-#areaRight.hover {
+body.drag-file #listFiles.hover,
+body.drag-file #areaRight.hover {
 	border: 2px solid #c66;
 }
 	</style>
@@ -344,12 +354,11 @@ label[for=inputFilters] {
 			<button id="btnReplace">치환</button>
 		</div>
 	</div>
-	<div class="view">
+	<div class="view" style="overflow-y: scroll">
 		<div id="view1left">
 		</div>
 		<div id="view1right">
 		</div>
 	</div>
-	<div id="cover"></div>
 </body>
 </html>

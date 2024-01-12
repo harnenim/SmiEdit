@@ -3,173 +3,57 @@
 <head>
 <meta charset="utf-8">
 <title>MergeUpdater 샘플</title>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css" />
 <script src="view/lib/jquery-3.2.1.min.js"></script>
 <script src="bridge/WinAPI.js"></script>
+<script src="bridge/Binder.js"></script>
 <script>
-function Binder(editor) {
-	var _ = this._ = editor;
-
-	this.focus = function(target) {
-		_.focusWindow(target);
-	}
-
-	var init = false;
-	this.initAfterLoad = function() {
-		if (this.init) return;
-		this.init = true;
-		_.initAfterLoad();
-	}
-	
-	this.showDragging = function() {
-		_.showDragging();
-	}
-	this.hideDragging = function() {
-		_.hideDragging();
-	}
-
-	this.alert   = function(target, msg) { _.alert  (target, msg); }
-	this.confirm = function(target, msg) { _.confirm(target, msg); }
-	this.prompt  = function(target, msg) { _.prompt (target, msg); }
-	
-	this.dropFileToArea = function(index) {
-		_.dropFileToArea(index);
-	}
-	this.save = function(dir, suggestedName, text) {
-		_.save(dir, suggestedName, text);
-	}
+Binder.prototype.dropFileToArea = function(index) {
+	this._.dropFileToArea(index);
+}
+Binder.prototype.save = function(dir, suggestedName, text) {
+	this._.save(dir, suggestedName, text);
 }
 </script>
+<script src="bridge/WebForm.js"></script>
 <script>
-_alert = alert;
-_confirm = confirm;
-_prompt = prompt;
-
-var main = {};
-{
-	main.script = function(names, p) {
-		var func = eval("this.window.contentWindow." + names);
-		if (p) {
-			return func(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9]);
-		} else {
-			return func();
-		}
-	}
-	main.alert = function(target, msg) {
-		// C#에선 target 창 위치에 따라 alert 위치를 지정함
-		this.getHwnd(target)._alert(msg);
-	}
-	main.confirm = function(target, msg) {
-		// C#에선 target 창 위치에 따라 confirm 위치를 지정함
-		if (this.getHwnd(target)._confirm(msg)) {
-			main.window.contentWindow.afterConfirmYes();
-		} else {
-			main.window.contentWindow.afterConfirmNo();
-		}
-	}
-	main.prompt = function(target, msg) {
-		main.window.contentWindow.afterPrompt(prompt(msg));
-	}
-	
-	var dropLayer = $("<div>").css({
-			position: "fixed"
-		,	top: 0
-		,	left: 0
-		,	right: 0
-		,	bottom: 0
-		,	background: "rgba(127,127,127,0)"
-		,	padding: 80
-		,	textAlign: "center"
-		,	fontSize: 20
-	}).hide();
-	main.showDragging = function(id) {
-		dropLayer.show();
-		main.script("showDragging");
-	}
-	main.hideDragging = function() {
-		dropLayer.hide();
-		main.script("hideDragging");
-	}
-	main.droppedFiles = null;
-	$(function() {	
-		$("body").append(dropLayer);
-		
-		document.addEventListener("dragenter", function(e) {
-			e.preventDefault();
-			main.showDragging();
-		});
-		dropLayer[0].addEventListener("dragleave", function(e) {
-			e.preventDefault();
-			main.hideDragging();
-		});
-		dropLayer[0].addEventListener("dragover", function(e) {
-			e.preventDefault();
-			main.script("dragover", [ e.offsetX, e.offsetY ]);
-		});
-		dropLayer[0].addEventListener("drop", async function(e) {
-			e.preventDefault();
-			if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-				main.droppedFiles = e.dataTransfer.files;
-			}
-			main.hideDragging();
-			main.script("drop", [ e.offsetX, e.offsetY ]);
-		});
-	});
-}
-
+var main = new WebForm();
 {	// main
 	main.run = function() {
-		this.window = document.getElementById("main");
+		this.initializeComponent();
 		
-		main.window.src = "view/MergeUpdates.html";
-		main.window.onload = function() {
+		main.mainView.src = "view/MergeUpdates.html";
+		main.mainView.onload = function() {
 			// 브라우저 샘플에선 url 변형 필요
-			main.window.contentWindow._open_ = main.window.contentWindow.open;
-			main.window.contentWindow.open = function(url, name, options) {
+			main.mainView.contentWindow._open_ = main.mainView.contentWindow.open;
+			main.mainView.contentWindow.open = function(url, name, options) {
 				if (url.substring(0, 4) != "http") {
 					url = location.href.substring(0, location.href.lastIndexOf("/")) + "/view/" + url;
 				}
-				return main.window.contentWindow._open_(url, name, options);
+				return main.windows[name] = main.mainView.contentWindow._open_(url, name, options);
 			}
 			
-			main.window.contentWindow.binder = main.binder = new Binder(main);
+			main.mainView.contentWindow.binder = main.binder = new Binder(main);
 
-			var cd = main.window.contentDocument;
+			var cd = main.mainView.contentDocument;
 			cd.addEventListener("dragenter", function(e) {
 				e.preventDefault();
 				main.showDragging();
 			});
 		};
 	}
-
-	main.initAfterLoad = function() {};
-	main.beforeExit = function(e) {}
 }
 
-{	// 창 조작
-	main.hwnd = window;
-	main.getHwnd = function(name) {
-		if (name == "main") {
-			return main.hwnd;
-		} else if (name == "addon") {
-			return main.window.contentWindow.sm;
-		}
-		return null;
-	}
-	main.focusWindow = function(target) {
-		var hwnd = this.getHwnd(target);
-		WinAPI.SetForegroundWindow(hwnd);
-	}
-}
 {
 	main.dropFileToArea = async function(index) {
-		if (!main.droppedFiles) return;
-		if (main.droppedFiles.length < 1) {
-			main.droppedFiles = null;
+		if (!this.droppedFiles) return;
+		if (this.droppedFiles.length < 1) {
+			this.droppedFiles = null;
 			return;
 		}
-		var file = main.droppedFiles[0];
+		var file = this.droppedFiles[0];
 		main.script("setFile", [ index, await file.text(), file.name ])
-		main.droppedFiles = null;
+		this.droppedFiles = null;
 	}
 	main.save = async function(dir, suggestedName, text) {
 		var fileBuffer = await window.showSaveFilePicker({
@@ -224,18 +108,13 @@ $(function() {
 	padding: 0;
 	box-sizing: border-box;
 }
-html, body, #main{
+html, body {
 	width: 100%;
 	height: 100%;
 	border: 0;
 	overflow: hidden;
 }
-#main {
-	position: fixed;
-	top: 0;
-	left: 0;
-}
 </style>
 </head>
-<body><iframe id="main"></iframe></body>
+<body></body>
 </html>

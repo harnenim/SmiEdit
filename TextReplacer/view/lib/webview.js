@@ -52,20 +52,34 @@ function drop(x, y) {}
 function beforeExit() {}
 
 $(function () {
-	window.onkeydown = function() {
-		switch(event.keyCode) {
+	// 우클릭 방지
+	$(document).on("contextmenu", function() {
+		return false;
+	});
+	window.onkeydown = function(e) {
+		switch(e.keyCode) {
 			case 116: return false; // F5 새로고침 방지
 		}
 	};
-	
-	// 우클릭 방지
-	$(document).on("contextmenu", function () {
-		return false;
-	});
+	window.addEventListener("mousewheel", function(e) {
+		// 확대/축소 방지
+		if (e.ctrlKey) {
+			e.preventDefault();
+		}
+	}, { passive: false });
 	
 	if (window.binder) {
 		setTimeout(function() {
 			binder.initAfterLoad();
 		}, 1);
 	}
+	$("body").append($("<div>").attr({ id: "cover" }).css({
+			position: "fixed"
+		,	top: "0"
+		,	left: "0"
+		,	width: "100%"
+		,	height: "100%"
+		,	background: "rgba(127,127,127,0.2)"
+		,	zIndex: "9999"
+	}));
 });
