@@ -72,8 +72,12 @@ namespace Jamaker
         }
         private void ResizeAfterRefreshMenuStrip()
         {
+            layerForDrag.Visible = true;
+            ResumeLayout(false);
+
             mainView.Location = new Point(0, menuStrip.Height);
-            mainView.Size = new Size(layerForDrag.Width, layerForDrag.Height - menuStrip.Height);
+            mainView.Size = new Size(layerForDrag.Width, layerForDrag.Height);
+            layerForDrag.Visible = false;
             ResumeLayout(false);
         }
 
