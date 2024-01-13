@@ -50,6 +50,7 @@ namespace Jamaker
             this.layerForDrag.DragDrop += new System.Windows.Forms.DragEventHandler(this.DragDropMain);
             this.layerForDrag.DragOver += new System.Windows.Forms.DragEventHandler(this.DragOverMain);
             this.layerForDrag.DragLeave += new System.EventHandler(this.DragLeaveMain);
+            this.layerForDrag.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ClickLayerForDrag);
             // 
             // mainView
             // 
@@ -75,7 +76,6 @@ namespace Jamaker
             this.Name = "MainForm";
             this.Text = "수정사항 반영하기";
             this.ResumeLayout(false);
-
         }
 
         #endregion
@@ -83,8 +83,6 @@ namespace Jamaker
         protected WebView mainView;
         protected TransparentPanel layerForDrag;
         protected Timer timer;
-
-        private MouseEventHandler clickMenuStrip;
     }
 }
 

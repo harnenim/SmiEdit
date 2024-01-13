@@ -216,6 +216,7 @@ namespace Jamaker
         public MainForm()
         {
             WebForm();
+            OverrideInitializeComponent();
 
             msgTitle = "Jamaker";
 
@@ -245,6 +246,25 @@ namespace Jamaker
 
             FormClosing += new FormClosingEventHandler(BeforeExit);
             FormClosed += new FormClosedEventHandler(WebFormClosed);
+        }
+        private MenuStrip menuStrip;
+        private MouseEventHandler clickMenuStrip;
+        private void OverrideInitializeComponent()
+        {
+            mainView.Location = new Point(0, 24);
+            mainView.Size = new Size(800, 426);
+            menuStrip = new MenuStrip();
+            menuStrip.Location = new Point(0, 0);
+            menuStrip.Name = "menuStrip";
+            menuStrip.Size = new Size(800, 24);
+            menuStrip.TabIndex = 1;
+            menuStrip.Text = "menuStrip";
+            menuStrip.MenuDeactivate += new EventHandler(EscapeMenuFocusAfterCheck);
+            menuStrip.KeyDown += new KeyEventHandler(KeyDownInMenuStrip);
+            menuStrip.LostFocus += new EventHandler(CloseMenuStrip);
+            Controls.Add(menuStrip);
+            MainMenuStrip = menuStrip;
+            ResumeLayout(false);
         }
 
         public void OverrideInitAfterLoad()

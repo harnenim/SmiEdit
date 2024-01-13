@@ -32,33 +32,19 @@ namespace Jamaker
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            this.menuStrip = new System.Windows.Forms.MenuStrip();
             this.layerForDrag = new Jamaker.TransparentPanel();
             this.timer = new System.Windows.Forms.Timer(this.components);
             this.mainView = new Jamaker.WebView();
             this.SuspendLayout();
             // 
-            // menuStrip
-            // 
-            this.menuStrip.Location = new System.Drawing.Point(0, 0);
-            this.menuStrip.Name = "menuStrip";
-            this.menuStrip.Size = new System.Drawing.Size(800, 24);
-            this.menuStrip.TabIndex = 1;
-            this.menuStrip.Text = "menuStrip";
-            this.menuStrip.MenuDeactivate += new System.EventHandler(this.EscapeMenuFocusAfterCheck);
-            this.menuStrip.KeyDown += new System.Windows.Forms.KeyEventHandler(this.KeyDownInMenuStrip);
-            this.menuStrip.LostFocus += new System.EventHandler(this.CloseMenuStrip);
-            // 
             // layerForDrag
             // 
             this.layerForDrag.AllowDrop = true;
-            this.layerForDrag.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.layerForDrag.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.layerForDrag.Location = new System.Drawing.Point(0, 24);
+            this.layerForDrag.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.layerForDrag.Location = new System.Drawing.Point(0, 0);
             this.layerForDrag.Name = "layerForDrag";
-            this.layerForDrag.Size = new System.Drawing.Size(800, 426);
+            this.layerForDrag.Size = new System.Drawing.Size(800, 450);
             this.layerForDrag.TabIndex = 7;
             this.layerForDrag.Visible = false;
             this.layerForDrag.DragDrop += new System.Windows.Forms.DragEventHandler(this.DragDropMain);
@@ -72,10 +58,10 @@ namespace Jamaker
             this.mainView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.mainView.Location = new System.Drawing.Point(0, 24);
+            this.mainView.Location = new System.Drawing.Point(0, 0);
             this.mainView.Margin = new System.Windows.Forms.Padding(0);
             this.mainView.Name = "mainView";
-            this.mainView.Size = new System.Drawing.Size(800, 426);
+            this.mainView.Size = new System.Drawing.Size(800, 450);
             this.mainView.TabIndex = 5;
             // 
             // MainForm
@@ -84,16 +70,12 @@ namespace Jamaker
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.layerForDrag);
-            this.Controls.Add(this.menuStrip);
             this.Controls.Add(this.mainView);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MainMenuStrip = this.menuStrip;
             this.MaximizeBox = false;
             this.Name = "MainForm";
             this.Text = "Jamaker";
             this.ResumeLayout(false);
-            this.PerformLayout();
-
         }
 
         #endregion
@@ -101,9 +83,6 @@ namespace Jamaker
         protected WebView mainView;
         protected TransparentPanel layerForDrag;
         protected Timer timer;
-        private MenuStrip menuStrip;
-
-        private MouseEventHandler clickMenuStrip;
     }
 }
 

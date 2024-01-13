@@ -334,7 +334,7 @@ namespace Jamaker
                 try
                 {
                     // 원본 파일의 인코딩대로 저장
-                    sw = new StreamWriter(file, false, BOM.DetectEncoding(file));
+                    sw = new StreamWriter(file, false, TextFile.BOM.DetectEncoding(file));
                     sw.Write(result.result);
 
                     // 성공 후 카운트
