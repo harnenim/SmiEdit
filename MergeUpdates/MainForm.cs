@@ -13,7 +13,6 @@ namespace Jamaker
         public MainForm()
         {
             WebForm();
-            Text = "수정사항 반영하기";
 
             int[] rect = { 0, 0, 1280, 800 };
             StreamReader sr = null;

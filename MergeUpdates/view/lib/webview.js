@@ -70,7 +70,7 @@ $(function () {
 	
 	if (window.binder) {
 		setTimeout(function() {
-			binder.initAfterLoad();
+			binder.initAfterLoad($("title").text());
 		}, 1);
 	}
 	$("body").append($("<div>").attr({ id: "cover" }).css({

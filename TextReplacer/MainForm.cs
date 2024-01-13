@@ -16,7 +16,6 @@ namespace Jamaker
         public MainForm()
         {
             WebForm();
-            Text = "수정사항 반영하기";
 
             int[] rect = { 0, 0, 1280, 800 };
             StreamReader sr = null;
@@ -228,8 +227,7 @@ namespace Jamaker
                 StreamReader sr = null;
                 try
                 {
-                    Encoding encoding = TextFile.BOM.DetectEncoding(path);
-                    sr = new StreamReader(path, encoding);
+                    sr = new StreamReader(path, Encoding.UTF8);
                     text = sr.ReadToEnd();
                 }
                 catch
@@ -287,8 +285,7 @@ namespace Jamaker
             StreamReader sr = null;
             try
             {
-                Encoding encoding = TextFile.BOM.DetectEncoding(droppedFiles[0]); // TODO: BOM 없으면 버그 있나...?
-                sr = new StreamReader(droppedFiles[0], encoding);
+                sr = new StreamReader(droppedFiles[0], Encoding.UTF8);
                 Script("init", sr.ReadToEnd());
             }
             catch

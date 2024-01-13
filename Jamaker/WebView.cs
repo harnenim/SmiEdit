@@ -174,14 +174,15 @@ namespace Jamaker
         }
         #endregion
 
-        public virtual void InitAfterLoad()
+        public virtual void InitAfterLoad(string title)
         {
             if (InvokeRequired)
             {
-                Invoke(new Action(() => { InitAfterLoad(); }));
+                Invoke(new Action(() => { InitAfterLoad(title); }));
                 return;
             }
             windows.Add("editor", Handle.ToInt32());
+            Text = title;
             OverrideInitAfterLoad();
         }
 

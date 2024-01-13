@@ -23,7 +23,6 @@ namespace Jamaker
         {
             WebForm();
             OverrideInitializeComponent();
-            Text = "Jamaker";
 
             menuStrip.MouseDown += (clickMenuStrip = new MouseEventHandler(MouseDownInMenuStrip)); // 디자이너에 넣으면 오류 발생
 

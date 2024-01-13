@@ -14,9 +14,9 @@
             _.FocusWindow(target);
         }
 
-        public void InitAfterLoad()
+        public void InitAfterLoad(string title)
         {
-            _.InitAfterLoad();
+            _.InitAfterLoad(title);
         }
 
         public void ShowDragging()
