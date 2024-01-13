@@ -7,8 +7,8 @@ namespace Jamaker
 {
     public partial class Popup : Form
     {
-        MainForm _;
-        string name;
+        readonly MainForm _;
+        readonly string name;
 
         public Popup(MainForm mainForm, string name, string url)
         {
@@ -49,7 +49,7 @@ namespace Jamaker
         public void RunReplace(string param) { _.RunReplace(param); }
         public void RunReplaceAll(string param) { _.RunReplaceAll(param); }
 
-        string msgTitle = "하늣 ;>ㅅ<;";
+        readonly string msgTitle = "하늣 ;>ㅅ<;";
         public void Alert(string msg)
         {
             if (InvokeRequired)

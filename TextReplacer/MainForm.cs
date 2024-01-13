@@ -62,8 +62,31 @@ namespace Jamaker
             OverrideInitAfterLoad();
         }
 
-        protected string Script(string name) { return mainView.Script(name); }
-        protected string Script(string name, object arg) { return mainView.Script(name, arg); }
+        protected string Script(string name) { return Script(name, new object[] { }); }
+        protected string Script(string name, object arg)
+        {
+            object result = null;
+
+            try
+            {
+                if (InvokeRequired)
+                {
+                    result = Invoke(new Action(() => { Script(name, arg); }));
+                }
+                else
+                {
+                    object[] args = arg.GetType().IsArray ? (object[])arg : new object[] { arg };
+                    mainView.ExecuteScriptAsync(name, args);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
+            if (result == null) return null;
+            return result.ToString();
+        }
 
         public void Alert(string target, string msg)
         {

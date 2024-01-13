@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using CefSharp.WinForms;
+using System.Windows.Forms;
 
 namespace Jamaker
 {
@@ -34,7 +35,7 @@ namespace Jamaker
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.layerForDrag = new Jamaker.TransparentPanel();
             this.timer = new System.Windows.Forms.Timer(this.components);
-            this.mainView = new Jamaker.WebView();
+            this.mainView = new ChromiumWebBrowser();
             this.SuspendLayout();
             // 
             // layerForDrag
@@ -79,7 +80,7 @@ namespace Jamaker
 
         #endregion
 
-        protected WebView mainView;
+        protected ChromiumWebBrowser mainView;
         protected TransparentPanel layerForDrag;
         protected Timer timer;
     }

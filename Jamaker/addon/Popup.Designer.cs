@@ -1,4 +1,6 @@
-﻿namespace Jamaker
+﻿using CefSharp.WinForms;
+
+namespace Jamaker
 {
     partial class Popup
     {
@@ -29,7 +31,7 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Popup));
-            this.mainView = new Jamaker.WebView();
+            this.mainView = new ChromiumWebBrowser();
             this.SuspendLayout();
             // 
             // mainView
@@ -64,6 +66,6 @@
         }
         #endregion
 
-        public WebView mainView;
+        public ChromiumWebBrowser mainView;
     }
 }

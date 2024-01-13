@@ -67,37 +67,8 @@ namespace Jamaker
         }
     }
 
-    public class WebView : ChromiumWebBrowser
+    partial class MainForm
     {
-        #region 스크립트 핸들러
 
-        delegate string ScriptHandler(string name, object[] args);
-        public string Script(string name) { return Script(name, new object[] { }); }
-        public string Script(string name, object arg)
-        {
-            object result = null;
-
-            try
-            {
-                if (InvokeRequired)
-                {
-                    result = Invoke(new Action(() => { Script(name, arg);  }));
-                }
-                else
-                {
-                    object[] args = arg.GetType().IsArray ? (object[])arg : new object[] { arg };
-                    this.ExecuteScriptAsync(name, args);
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-
-            if (result == null) return null;
-            return result.ToString();
-        }
-
-        #endregion
     }
 }
