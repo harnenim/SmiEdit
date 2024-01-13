@@ -1,5 +1,4 @@
 ﻿using CefSharp;
-using CefSharp.WinForms;
 using System;
 using System.Windows.Forms;
 
@@ -80,8 +79,31 @@ namespace Jamaker
             }
         }
 
-        public string Script(string name) { return mainView.Script(name, new object[] { }); }
-        public string Script(string name, object arg) { return mainView.Script(name, new object[] { arg }); }
+        public string Script(string name) { return Script(name, new object[] { }); }
+        public string Script(string name, object arg)
+        {
+            object result = null;
+
+            try
+            {
+                if (InvokeRequired)
+                {
+                    result = Invoke(new Action(() => { Script(name, arg); }));
+                }
+                else
+                {
+                    object[] args = arg.GetType().IsArray ? (object[])arg : new object[] { arg };
+                    mainView.ExecuteScriptAsync(name, args);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
+            if (result == null) return null;
+            return result.ToString();
+        }
 
         // window.open 시에 브라우저에 커서 가도록
         public void SetFocus()
