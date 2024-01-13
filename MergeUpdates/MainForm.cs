@@ -4,9 +4,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 using CefSharp;
-using CefSharp.WinForms;
 using System.Diagnostics;
-using System.Collections.Generic;
 
 namespace Jamaker
 {
@@ -15,7 +13,7 @@ namespace Jamaker
         public MainForm()
         {
             WebForm();
-            Text = "텍스트 일괄 치환";
+            Text = "수정사항 반영하기";
 
             int[] rect = { 0, 0, 1280, 800 };
             StreamReader sr = null;
@@ -110,20 +108,9 @@ namespace Jamaker
             }
             finally { sr?.Close(); }
 
-            string name = path;
-            switch (dropArea)
-            {
-                case 1:
-                    {
-                        path = path.Substring(0, path.Replace('/', '\\').LastIndexOf('\\'));
-                        break;
-                    }
-                case 2:
-                    {
-                        name = name.Substring(path.Replace('/', '\\').LastIndexOf('\\') + 1);
-                        break;
-                    }
-            }
+            int index = path.Replace('\\', '/').LastIndexOf('/');
+            string name = path.Substring(index + 1);
+            path = path.Substring(0, index);
             Script("setFile", new object[] { dropArea, text, name, path });
         }
 

@@ -4,7 +4,6 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 using CefSharp;
-using CefSharp.WinForms;
 using System.Diagnostics;
 using System.Collections.Generic;
 
