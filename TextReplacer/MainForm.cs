@@ -13,7 +13,6 @@ namespace Jamaker
     public partial class MainForm : Form
     {
         #region TODO: WebForm 분리 예정
-        protected string msgTitle = "WebForm";
 
         #region 창 조작
         protected readonly Dictionary<string, int> windows = new Dictionary<string, int>();
@@ -73,7 +72,7 @@ namespace Jamaker
                 Invoke(new Action(() => { Alert(target, msg); }));
                 return;
             }
-            MessageBoxEx.Show(GetHwnd(target), msg, msgTitle);
+            MessageBoxEx.Show(GetHwnd(target), msg, Text);
         }
         public void Confirm(string target, string msg)
         {
@@ -83,7 +82,7 @@ namespace Jamaker
                 return;
             }
 
-            if (MessageBoxEx.Show(GetHwnd(target), msg, msgTitle, MessageBoxButtons.YesNo) == DialogResult.Yes)
+            if (MessageBoxEx.Show(GetHwnd(target), msg, Text, MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
                 Script("afterConfirmYes");
             }
@@ -163,8 +162,7 @@ namespace Jamaker
         public MainForm()
         {
             WebForm();
-
-            msgTitle = "TextReplacer";
+            Text = "수정사항 반영하기";
 
             int[] rect = { 0, 0, 1280, 800 };
             StreamReader sr = null;

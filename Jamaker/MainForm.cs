@@ -15,7 +15,6 @@ namespace Jamaker
     public partial class MainForm : Form
     {
         #region TODO: WebForm 분리 예정
-        protected string msgTitle = "WebForm";
 
         #region 창 조작
         protected readonly Dictionary<string, int> windows = new Dictionary<string, int>();
@@ -103,7 +102,7 @@ namespace Jamaker
                 Invoke(new Action(() => { Alert(target, msg); }));
                 return;
             }
-            MessageBoxEx.Show(GetHwnd(target), msg, msgTitle);
+            MessageBoxEx.Show(GetHwnd(target), msg, Text);
         }
         public void Confirm(string target, string msg)
         {
@@ -113,7 +112,7 @@ namespace Jamaker
                 return;
             }
 
-            if (MessageBoxEx.Show(GetHwnd(target), msg, msgTitle, MessageBoxButtons.YesNo) == DialogResult.Yes)
+            if (MessageBoxEx.Show(GetHwnd(target), msg, Text, MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
                 Script("afterConfirmYes");
             }
@@ -131,7 +130,7 @@ namespace Jamaker
             }
             else
             {
-                Prompt prompt = new Prompt(GetHwnd(target), msg, msgTitle);
+                Prompt prompt = new Prompt(GetHwnd(target), msg, Text);
                 DialogResult result = prompt.ShowDialog();
                 if (result == DialogResult.OK)
                 {
@@ -217,8 +216,7 @@ namespace Jamaker
         {
             WebForm();
             OverrideInitializeComponent();
-
-            msgTitle = "Jamaker";
+            Text = "Jamaker";
 
             menuStrip.MouseDown += (clickMenuStrip = new MouseEventHandler(MouseDownInMenuStrip)); // 디자이너에 넣으면 오류 발생
 

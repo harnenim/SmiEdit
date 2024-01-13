@@ -73,8 +73,7 @@ namespace Jamaker
             this.Controls.Add(this.mainView);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
-            this.Name = "MainForm";
-            this.Text = "수정사항 반영하기";
+            this.Name = "WebForm";
             this.ResumeLayout(false);
         }
 
