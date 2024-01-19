@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using CefSharp;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Jamaker
 {
@@ -153,61 +154,66 @@ namespace Jamaker
         }
         public void Replace(string[] files, string[] froms, string[] tos)
         {
-            if (InvokeRequired)
+            new Thread(() =>
             {
-                Invoke(new Action(() => { Replace(files, froms, tos); }));
-                return;
-            }
+                Script("showDragging");
+                Script("progress.set", new object[] { 0, files.Length });
 
-            string text = null;
-            StreamReader sr = null;
-            StreamWriter sw = null;
-            int fileCount = 0, count = 0;
-            foreach (string file in files)
-            {
-                try
+                string text = null;
+                StreamReader sr = null;
+                StreamWriter sw = null;
+                int fileCount = 0, count = 0;
+                for (int i = 0; i < files.Length; i++)
                 {
-                    Encoding encoding = TextFile.BOM.DetectEncoding(file); // TODO: BOM 없으면 버그 있나...?
-                    sr = new StreamReader(file, encoding);
-                    text = sr.ReadToEnd();
+                    string file = files[i];
+                    try
+                    {
+                        Encoding encoding = TextFile.BOM.DetectEncoding(file); // TODO: BOM 없으면 버그 있나...?
+                        sr = new StreamReader(file, encoding);
+                        text = sr.ReadToEnd();
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                    finally { sr?.Close(); }
+
+                    Replaced result = new Replaced(text, froms, tos);
+                    if (result == null) continue;
+
+                    if (result.count == 0) continue;
+
+                    try
+                    {
+                        // 원본 파일의 인코딩대로 저장
+                        sw = new StreamWriter(file, false, TextFile.BOM.DetectEncoding(file));
+                        sw.Write(result.result);
+
+                        // 성공 후 카운트
+                        count += result.count;
+                        fileCount++;
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
+                    finally
+                    {
+                        sw?.Close();
+                    }
+                    Script("progress.set", new object[] { i, files.Length });
                 }
-                catch
+
+                Script("progress.hide");
+                Script("hideDragging");
+
+                string msg = "변환된 파일이 없습니다.";
+                if (count > 0)
                 {
-                    continue;
+                    msg = $"{files.Length}개 파일 중 {fileCount}개 파일에 대해\n{count}곳을 치환했습니다.";
                 }
-                finally { sr?.Close(); }
-
-                Replaced result = new Replaced(text, froms, tos);
-                if (result == null) continue;
-
-                if (result.count == 0) continue;
-
-                try
-                {
-                    // 원본 파일의 인코딩대로 저장
-                    sw = new StreamWriter(file, false, TextFile.BOM.DetectEncoding(file));
-                    sw.Write(result.result);
-
-                    // 성공 후 카운트
-                    count += result.count;
-                    fileCount++;
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
-                finally
-                {
-                    sw?.Close();
-                }
-            }
-
-            string msg = "변환된 파일이 없습니다.";
-            if (count > 0)
-            {
-                msg = $"{files.Length}개 파일 중 {fileCount}개 파일에 대해\n{count}곳을 치환했습니다.";
-            }
-            Script("alert", new object[] { msg });
+                Script("alert", new object[] { msg });
+            }).Start();
         }
 
         #region 설정

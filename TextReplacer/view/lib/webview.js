@@ -83,3 +83,37 @@ $(function () {
 		,	zIndex: "9999"
 	}));
 });
+
+var Progress = function() {
+	this.div = $("<div>").css({
+			position: "fixed"
+		,	top: "calc(50% - 20px)"
+		,	left: "calc(50% - 100px)"
+		,	width: "200px"
+		,	height: "40px"
+		,	textAlign: "center"
+		,	background: "rgba(242,242,242,0.7)"
+		,	zIndex: "99999"
+	});
+	this.bar = $("<div>").css({
+			height: "100%"
+		,	background: "#69f"
+	});
+	this.text = $("<span>").css({ lineHeight: "20px" });
+	this.div.append($("<div>").css({
+				height: "20px"
+			,	border: "1px solid #000"
+			,	padding: "2px"
+			,	background: "#fff"
+		}).append(this.bar)
+	).append(this.text);
+	$("body").append(this.div.hide());
+};
+Progress.prototype.set = function(value, total) {
+	this.bar.css({ width: "calc(" + (value / total * 100) + "%)"});
+	this.text.text(value + "/" + total);
+	this.div.show();
+}
+Progress.prototype.hide = function() {
+	this.div.hide();
+}

@@ -18,6 +18,7 @@ function setTextareaHeight(obj) {
 var listFiles;
 var inputFilters;
 var listReplacer;
+var progress;
 
 //C# 쪽에서 호출
 function init(jsonSetting) {
@@ -42,6 +43,8 @@ function init(jsonSetting) {
 			listReplacer.append(li);
 		}
 	}
+
+	progress = new Progress();
 }
 
 function addFile(file) {
