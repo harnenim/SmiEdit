@@ -983,33 +983,43 @@ Subtitle.AssFile.prototype.toTxt = function() {
 }
 Subtitle.AssFile.prototype.fromTxt = function(txt) {
 	this.header = "";
-	body = [];
+	this.body = [];
 	
-	var lines = txt.split("\r\n").join("\n").Split('\n');
+	var lines = txt.split("\r\n").join("\n").split('\n');
 	
+	var header = [];
+	var canBeHeader = true;
 	for (var i = 0; i < lines.length; i++) {
 		var l = lines[i];
 		
-		if (l.substring(0,7) == ("Format:")) {
-			var line = l.trim().split(',');
-			Subtitle.Ass.cols = [];
-			for (var j = 0; j < line.length; j++) {
-				Subtitle.Ass.cols.push(line[j].trim());
-			}
-		} else if (l.substring(0,9) == ("Dialogue:")) {
+		if (l.substring(0,9) == ("Dialogue:")) {
+			canBeHeader = false;
 			var line = l.trim().split(',');
 			var ass = new Subtitle.Ass(
-				Subtitle.Ass.Time2Int(line[1])
-			,	Subtitle.Ass.Time2Int(line[2])
+				Subtitle.Ass.time2Int(line[1])
+			,	Subtitle.Ass.time2Int(line[2])
 			,	line[3]
 			,	line[9]
 			);
 			for (var j = 10; j < line.length; j++) {
 				ass.text += "," + line[j];
 			}
-			body.push(ass);
+			this.body.push(ass);
+			
+		} else if (canBeHeader) {
+			if (l.substring(0,7) == ("Format:")) {
+				//canBeHeader = false;
+				var line = l.trim().split(',');
+				Subtitle.Ass.cols = [];
+				for (var j = 0; j < line.length; j++) {
+					Subtitle.Ass.cols.push(line[j].trim());
+				}
+				
+			}
+			header.push(l);
 		}
 	}
+	this.header = header.join("\n") + "\n";
 
 	return this;
 }

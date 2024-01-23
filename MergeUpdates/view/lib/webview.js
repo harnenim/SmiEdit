@@ -39,6 +39,48 @@ prompt = function(msg, after) {
 	binder.prompt(windowName, msg);
 }
 
+// JSON.stringify 보기 좋게 커스터마이징
+function stringify(obj, depth=0, pad=2, isChild=false) {
+	var str = "";
+	switch (typeof obj) {
+		case "object": {
+			var padLine = "";
+			for (var i = 0; i < pad * depth; i++) {
+				padLine += " ";
+			}
+			
+			if (Array.isArray(obj)) {
+				for (var i = 0; i < obj.length; i++) {
+					str += (i == 0 ? (isChild ? "\n" + padLine + "[" : "[") : "\n" + padLine + ",");
+					for (var j = 1; j < pad; j++) { str += " "; }
+					str += stringify(obj[i], depth + 1, pad);
+				}
+				if (str.length > 0) {
+					str += "\n" + padLine + "]";
+				} else {
+					str = "[]";
+				}
+			} else {
+				for (var key in obj) {
+					str += (str.length == 0 ? (isChild ? "\n" + padLine + "{" : "{") : "\n" + padLine + ",");
+					for (var j = 1; j < pad; j++) { str += " "; }
+					str += "\"" + key + "\": " + stringify(obj[key], depth + 1, pad, true);
+				}
+				if (str.length > 0) {
+					str += "\n" + padLine + "}";
+				} else {
+					str = "{}";
+				}
+			}
+			break;
+		}
+		default: {
+			str = JSON.stringify(obj);
+		}
+	}
+	return str;
+}
+
 function showDragging() {
 	$("body").addClass("drag-file");
 }
