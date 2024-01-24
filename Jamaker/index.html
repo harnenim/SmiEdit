@@ -237,7 +237,7 @@ $(function() {
 		$(this).parents(".frame").data("obj").close();
 	});
 	
-	var fEditor = new Frame("main.html", "editor", "", function() {
+	var fEditor = new Frame("Jamaker.html", "editor", "", function() {
 		fEditor.frame.find(".button").remove();
 		fEditor.frame.find("h3").css({ width: "100%" });
 		
@@ -247,6 +247,7 @@ $(function() {
 		}
 		w.MT = 0; w.ML = 0; w.MR = 0; w.MB = 0;
 		w.editor.hwnd = fEditor;
+		w.editor.windows["editor"] = fEditor;
 	});
 });
 </script>

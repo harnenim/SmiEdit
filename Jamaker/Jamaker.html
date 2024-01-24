@@ -191,7 +191,9 @@ var window_open = function(url, name, options, opener) {
 		if (this.loaded) return;
 		this.loaded = true;
 		
-		this.windows[this.mainView.contentWindow.windowName] = window;
+		if (!this.windows[this.mainView.contentWindow.windowName]) {
+			this.windows[this.mainView.contentWindow.windowName] = window;
+		}
 		
 		this.script("init", [this.strSettingJson]); // C#에서 객체 그대로 못 보내주므로 json string 만드는 걸로
 		this.script("setPlayerDlls", [this.strBridgeList]);
@@ -306,7 +308,7 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 		if (follow) {
 			WinAPI.GetWindowRect(this.getHwnd("editor"), this.lastOffset);
 		}
-		useFollowWindow = follow;
+		this.useFollowWindow = follow;
 	}
 	editor.getWindows = function(targets) {
 		for (var i = 0; i < targets.length; i++) {
