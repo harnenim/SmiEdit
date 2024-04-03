@@ -301,17 +301,17 @@ $(function() {
 					for (var i = ti + 1; i < max; i++) {
 						var tSyncI = targetBfrUpdate.body[i];
 						var bSyncI = originBfrUpdate.body[i + cShift];
-						if (bSyncI.syncType != tSyncI.syncType) {
+						if (bSyncI.syncType != tSyncI.syncType) { // 싱크 타입이 다르면 그룹 끊기
 							break;
 						}
-						if (bSyncI.syncType == Subtitle.SyncType.normal) {
-							if (dist == null) {
+						if (bSyncI.syncType == Subtitle.SyncType.normal) { // 기본 싱크일 경우 shift값 유지돼야 함
+							if (dist == null) { // 현재 그룹 첫 싱크면 싱크 차이 기억
 								dist = bSyncI.start - tSyncI.start;
-							} else if (tSyncI.start + dist != bSyncI.start) {
+							} else if (tSyncI.start + dist != bSyncI.start) { // 싱크가 안 맞으면 그룹 끊기
 								break;
 							}
 						}
-						if (!bSyncI.text.startsWith(tSyncI.text) && !tSyncI.text.startsWith(bSyncI.text)) {
+						if (!bSyncI.text.startsWith(tSyncI.text) && !tSyncI.text.startsWith(bSyncI.text)) { // 내용물이 서로 같아야 함
 							break;
 						}
 						point++;
@@ -330,7 +330,7 @@ $(function() {
 					ti++;
 					continue;
 				}
-
+				
 				for (var i = bi - shift; i < ti + pointMax; i++) {
 					var tSyncI = i < ti ? null : targetBfrUpdate.body[i];
 					var bSyncI = originBfrUpdate.body[i + shift];
@@ -366,14 +366,23 @@ $(function() {
 					for (var i = bi; i < max; i++) {
 						var bSyncI = originBfrUpdate.body[i];
 						var aSyncI = originAftUpdate.body[i + cShift];
-						if (aSyncI.syncType == bSyncI.syncType && aSyncI.start != bSyncI.start) {
-							err[i % 3] = 1;
-							if (err[0] + err[1] + err[2] < 2) {
-								point++;
-								continue;
+						if (aSyncI.syncType == bSyncI.syncType && aSyncI.start != bSyncI.start) { // 싱크 타입이 유지됐는데 싱크가 어긋났으면
+							if (aSyncI.syncType == Subtitle.SyncType.frame // 화면 싱크일 경우 - 최초 배포 시 작업 빼먹었을 가능성
+							 && (bSyncI.text.startsWith(aSyncI.text) || aSyncI.text.startsWith(bSyncI.text))) {
+								// 화면 싱크인데 내용물이 같으면 넘기기
+								err[i % 3] = 0;
+								
 							} else {
-								point--;
-								break;
+								// 일반 싱크 값이 변했거나
+								// 화면 싱크 내용물이 다르면 변동 체크
+								err[i % 3] = 1;
+								if (err[0] + err[1] + err[2] < 2) { // 차이가 크면 그룹 끊기
+									point++;
+									continue;
+								} else {
+									point--;
+									break;
+								}
 							}
 						} else {
 							err[i % 3] = 0;
@@ -439,8 +448,6 @@ $(function() {
 				ai++;
 			}
 		}
-
-		console.log(pairList);
 
 		var dist = 0, distFrame = 0;
 		var frameChanged = 0;
