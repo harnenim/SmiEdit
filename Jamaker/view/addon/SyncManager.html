@@ -496,11 +496,11 @@ function apply() {
 	
 	// 싱크 겹치는 범위 이후 남은 것들
 	for (; fi < frameLines.length; fi++) {
-        var lines = frameLines[fi].split("<~>");
-        lines.push(lines[0]);
-        for (var i = 1; i < lines.length; i++) {
+        var fLines = frameLines[fi].split("<~>");
+        lines.push(fLines[0]);
+        for (var i = 1; i < fLines.length; i++) {
             lines.push("<~>");
-            lines.push(lines[i]);
+            lines.push(fLines[i]);
         }
     }
     for (; bi < basicLines.length; bi++) {

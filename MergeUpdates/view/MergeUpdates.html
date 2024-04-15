@@ -376,11 +376,12 @@ $(function() {
 								// 일반 싱크 값이 변했거나
 								// 화면 싱크 내용물이 다르면 변동 체크
 								err[i % 3] = 1;
-								if (err[0] + err[1] + err[2] < 2) { // 차이가 크면 그룹 끊기
+								if (err[0] + err[1] + err[2] < 2) {
 									point++;
 									continue;
 								} else {
-									point--;
+									// 차이가 크면 그룹 끊기
+									point -= 2;
 									break;
 								}
 							}
