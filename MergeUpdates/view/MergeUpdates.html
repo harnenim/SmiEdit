@@ -455,8 +455,15 @@ $(function() {
 		}
 
 		// 순서 엇갈린 것 정정
-		pairList.sort(function (a, b) {
-			return (a[2] && b[2]) ? (a[2].start < b[2].start ? -1 : 1) : 1;
+		var tmpList = [];
+		for (var i = 0; i < pairList.length; i++) {
+			// 싱크가 삭제되지 않은 것만 남김
+			if (pairList[i][2]) {
+				tmpList.push(pairList[i]);
+			}
+		}
+		pairList = tmpList.sort(function(a, b) {
+			return a[2].start < b[2].start ? -1 : 1;
 		});
 
 		var dist = 0, distFrame = 0;
@@ -479,11 +486,6 @@ $(function() {
 				// 대상 자막에만 있는 싱크인 경우 - 기존 그대로
 				targetAftUpdate.body.push(target);
 				targetAftFrames.body.push(target);
-				continue;
-			}
-
-			if (pair[2] == null) {
-				// 싱크가 삭제된 경우
 				continue;
 			}
 
