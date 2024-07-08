@@ -383,6 +383,9 @@ Typing.prototype.typeKeyboard = function(c) {
 						if (c == 'ㅍ') { this.typing = String.fromCharCode(this.typing.charCodeAt() + 6); return; } // ㄿ
 						if (c == 'ㅎ') { this.typing = String.fromCharCode(this.typing.charCodeAt() + 7); return; } // ㅀ
 						break;
+					case 17: // '갑' - '가':
+						if (c == 'ㅅ') { this.typing = String.fromCharCode(this.typing.charCodeAt() + 1); return; } // ㅄ
+						break;
 				}
 			}
 		}
