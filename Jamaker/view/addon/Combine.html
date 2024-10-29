@@ -314,7 +314,30 @@ $(function() {
 							
 							if ($("<span>").html(line).text().split("　").join("").split(" ").join("").length) {
 								// 공백 줄인 경우는 별도 처리 하지 않음
-								lines[k] = "​" + pad + line + pad + "​";
+								// 태그로 감싼 줄은 태그 안에 공백문자 넣기
+								var prev = "", next = "";
+								while (line.startsWith("\n")) {
+									prev += "\n";
+									line = line.substring(1);
+								}
+								while (line.startsWith("<")) {
+									var tagEnd = line.indexOf(">") + 1;
+									if (tagEnd == 0) {
+										break;
+									}
+									prev += line.substring(0, tagEnd);
+									line = line.substring(tagEnd);
+								}
+								while (line.endsWith(">")) {
+									var tagStart = line.lastIndexOf("<");
+									if (tagStart < 0) {
+										break;
+									}
+									next = line.substring(tagStart) + next;
+									line = line.substring(0, tagStart);
+								}
+								line = "​" + prev + pad + line + pad + next + "​";
+								lines[k] = line;
 							}
 						}
 						sync[TEXT] = lines.join("<br>");

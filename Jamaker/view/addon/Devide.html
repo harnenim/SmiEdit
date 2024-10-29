@@ -44,22 +44,37 @@ function init() {
 	$("#input").val(origin.text.split("\n").slice(start, end).join("\n"));
 }
 
-function smiTrim(text) {
+function smiTrim(text, prev="", next="") {
 	text = text.trim();
 	var valid = true;
-	
-	while (text[0] == "​" || text[0] == "　") {
+
+	while (text.startsWith("<")) {
+		var tagEnd = text.indexOf(">") + 1;
+		if (tagEnd <= 0) {
+			break;
+		}
+		prev += text.substring(0, tagEnd);
+		text = text.substring(tagEnd);
+		valid = false;
+	}
+	while (text.startsWith("​") || text.startsWith("　")) {
 		text = text.substring(1);
 		valid = false;
 	}
-	while (text[text.length-1] == "​" || text[text.length-1] == "　") {
+	while (text.endsWith("​") || text.endsWith("　")) {
 		text = text.substring(0, text.length-1);
 		valid = false;
 	}
-	if (!valid) {
-		text = smiTrim(text);
+	while (text.endsWith(">")) {
+		var tagStart = text.lastIndexOf("<");
+		if (tagStart < 0) {
+			break;
+		}
+		next = text.substring(tagStart) + next;
+		text = text.substring(0, tagStart);
+		valid = false;
 	}
-	return text;
+	return valid ? (prev + text + next ) : smiTrim(text, prev, next);
 }
 
 function devide() {
