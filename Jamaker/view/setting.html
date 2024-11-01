@@ -626,10 +626,11 @@ $(function() {
 		});
 	
 		submitFuncs["style"] = function() {
-			setting.useTab     = $("input[name=useTab]").prop("checked");
-			setting.css        = $("textarea[name=css]"       ).val();
-			setting.viewer.css = $("textarea[name=viewer_css]").val();
-			setting.newFile    = $("textarea[name=newFile]"   ).val();
+			setting.useTab          = $("input[name=useTab]").prop("checked");
+			setting.viewer.useAlign = $("input[name=viewer_useAlign]").prop("checked");
+			setting.css             = $("textarea[name=css]"       ).val();
+			setting.viewer.css      = $("textarea[name=viewer_css]").val();
+			setting.newFile         = $("textarea[name=newFile]"   ).val();
 			setSaved("style", true);
 			opener.setSetting(setting);
 			opener.saveSetting();
@@ -656,13 +657,11 @@ $(function() {
 			if (!dllSetting) {
 				dllSetting = {
 						path: ""
-					,	auto: true
 					,	withRun: true
 					,	withExit: true
 				};
 			}
 			$("input[name=player_control_what_path]"    ).val(dllSetting.path);
-			$("input[name=player_control_what_auto]"    ).prop("checked", dllSetting.auto);
 			$("input[name=player_control_what_withRun]" ).prop("checked", dllSetting.withRun);
 			$("input[name=player_control_what_withExit]").prop("checked", dllSetting.withExit);
 		});
@@ -1288,6 +1287,7 @@ fieldset ol button,
 	
 	<form id="style">
 		<label><input type="checkbox" name="useTab" /> 탭 사용</label><br />
+		<label><input type="checkbox" name="viewer_useAlign" /> 미리보기 줄표로 시작할 경우 왼쪽 정렬</label><br />
 		<label>새 문서
 			<textarea name="newFile" spellcheck="false" style="height: 400px;"></textarea>
 		</label>
