@@ -573,14 +573,19 @@ $(function() {
 		
 		$("#btnApply").on("click", apply);
 		
-		setTimeout(function() {
-			var originFrameAss = $("#originFrameAss").focus();
+		var originFrameAss = $("#originFrameAss");
+		var text = originFrameAss.val();
+		setTimeout(function() { // textarea 렌더링 후 confirm 보여주기 위한 딜레이
 			originFrameAss[0].select();
-			originFrameAss.scrollTop(0).scrollLeft(0);
-			//var text = originFrameAss.val();
+			originFrameAss.focus().scrollTop(0).scrollLeft(0);
 			confirm("작업할 내역을 복사하시겠습니까?\nAegisub에서 작업이 필요합니다.", function() {
-				//navigator.clipboard.writeText(text);
-				document.execCommand("copy");
+				if (opener && opener.binder && !opener.binder._) {
+					// C# 프로그램에서 호출
+					document.execCommand("copy");
+				} else {
+					// 웹버전에서 호출
+					navigator.clipboard.writeText(text);
+				}
 			});
 		}, 100);
 	}

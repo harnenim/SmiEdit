@@ -12,7 +12,7 @@ var title = document.getElementsByTagName("title")[0];
 var lastTab = null;
 var time = 0;
 var showText = "";
-var i = 0;
+var i = -1;
 
 var style = null;
 var setting = {}
@@ -26,11 +26,11 @@ function setSetting(jsonSetting) {
 var lines = [];
 var viewer = null;
 function setLines(newLines) {
-	if (viewer) viewer.html("");
 	lines = JSON.parse(newLines);
 	
 	var receiveTime = time;
 	time = -1;
+	if (viewer) viewer.html("");
 	refreshTime(receiveTime, true); // 내용 바꿀 땐 시간 표시는 갱신 X
 }
 function setTitle(text) {
@@ -51,12 +51,12 @@ function refreshTime(receiveTime, withoutTitle) {
 	
 	if (receiveTime < time || time < 0) {
 		// 역방향 탐색일 경우 초기화
-		i = 0;
+		i = -1;
 		viewer.html("");
 	}
 	// 현재 시간 이전의 가장 마지막 싱크 찾기
 	var index = i;
-	for (var j = i; j < lines.length; j++) {
+	for (var j = (i < 0 ? 0 : i); j < lines.length; j++) {
 		if (lines[j][LINE.SYNC]) {
 			if (lines[j][LINE.SYNC] > receiveTime) {
 				break;
