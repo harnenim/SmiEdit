@@ -1865,10 +1865,12 @@ Subtitle.Smi.normalize = function(smis, withComment=false)  {
 
 	for (var i = 0; i < smis.length - 1; i++) {
 		var smi = smis[i];
+		/*
 		if (smi.syncType != smis[i + 1].syncType) {
 			// 전후 싱크 타입이 맞을 때만 안전함
 			continue;
 		}
+		*/
 		
 		var lower = smi.text.toLowerCase();
 		if (lower.indexOf(" fade=") > 0) {

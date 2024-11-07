@@ -448,6 +448,7 @@ function openHelp(name) {
 }
 
 function runIfCanOpenNewTab(func) {
+	tabToCloseAfterRun = null;
 	if (!setting.useTab) {
 		// 탭 미사용 -> 현재 파일 닫기
 		if (tabs.length) {
@@ -459,8 +460,6 @@ function runIfCanOpenNewTab(func) {
 				return;
 			}
 			tabToCloseAfterRun = $("#tabSelector > .th:not(#btnNewTab)");
-		} else {
-			tabToCloseAfterRun = null;
 		}
 	}
 	if (func) func();
@@ -498,7 +497,6 @@ function openFileForVideo(path, text) {
 	runIfCanOpenNewTab(function() {
 		// C#에서 동영상의 자막 파일 탐색
 		binder.openFileForVideo();
-		// TODO: 미완성
 	});
 }
 
@@ -594,7 +592,7 @@ function saveFile(asNew) {
 }
 function saveFileFinally(text, path) {
 	if (setting.saveWithNormalize) {
-		// Normalize 등 작업 후 저장
+		// 정규화 등 작업 후 저장
 		var smi = new Subtitle.SmiFile();
 		var input = smi.fromTxt(text).body;
 		Subtitle.Smi.normalize(input, true);
@@ -637,6 +635,7 @@ var _for_video_ = false;
 function openNewTab(text, path, forVideo) {
 	if (tabToCloseAfterRun) {
 		closeTab(tabToCloseAfterRun);
+		tabToCloseAfterRun = null;
 	}
 	if (tabs.length >= 4) {
 		alert("탭은 4개까지 열 수 있습니다.");
@@ -649,7 +648,7 @@ function openNewTab(text, path, forVideo) {
 			path = path.substring(0, path.length - 4) + ".smi";
 			text = srt2smi(text);
 		} else {
-			// SMI 파일 역Normalize
+			// SMI 파일 역정규화
 			if (setting.saveWithNormalize) {
 				text = new Subtitle.SmiFile().fromTxt(text).antiNormalize().toTxt().trim();
 			} else {
@@ -699,13 +698,6 @@ function beforeExit() {
 			break;
 		}
 	}
-	/*
-	var msg = "종료하시겠습니까?";
-	if (!saved) {
-		msg = "저장되지 않은 파일이 있습니다.\n" + msg;
-	}
-	confirm(msg, doExit);
-	*/
 	if (saved) {
 		doExit(); // 그냥 꺼지는 게 맞는 것 같음
 	} else {
@@ -720,79 +712,5 @@ function doExit() {
 
 var REG_SRT_SYNC = /^([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*-->( )*([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}$/;
 function srt2smi(text) {
-	/*
-	var lines = text.split("\r\n").join("\n").split("\n");
-	var items = [];
-	var last = { start: 0, end: 0, lines: [], length: 0 };
-	var lastLength = 0;
-	
-	for (var i = 0; i < lines.length; i++) {
-		var line = lines[i];
-		if (line) {
-			if (isFinite(line)) {
-				// 숫자뿐인 대사줄 or 싱크 시작 불분명
-				last.lines.push(line);
-				last.length = Math.max(last.length, lastLength); // 기존 숫자뿐인 줄은 대사줄로 편입
-				lastLength = last.lines.length;
-				
-			} else {
-				if (REG_SRT_SYNC.test(line)) {
-					// 새 싱크 시작
-					last.lines.length = last.length;
-					items.push(last = { start: 0, end: 0, lines: [], length: 0 });
-					var syncs = line.split("-->");
-					{	// 시작 싱크
-						var times = syncs[0].trim().split(",").join(".").split(":");
-						var start = Number(times[0]) * 60 + Number(times[1]);
-						if (times.length > 2) {
-							start = start * 60 + Number(times[2]);
-						}
-						last.start = Math.round(start * 1000);
-					}
-					{	// 종료 싱크
-						var times = syncs[1].trim().split(",").join(".").split(":");
-						var end = Number(times[0]) * 60 + Number(times[1]);
-						if (times.length > 2) {
-							end = end * 60 + Number(times[2]);
-						}
-						last.end = Math.round(end * 1000);
-					}
-					lastLength = 0;
-					
-				} else {
-					// 대사줄 추가
-					last.lines.push(line);
-					last.length = last.lines.length;
-				}
-			}
-		} else {
-			// 공백줄 or 싱크 종료 불분명
-			last.lines.push(line);
-		}
-	}
-	last.lines.length = last.length;
-	
-	lines = [];
-	last = 0;
-	for (var i = 0; i < items.length; i++) {
-		var item = items[i];
-		if (last && last < item.start) {
-			lines.push(SmiEditor.makeSyncLine(last));
-			lines.push("&nbsp;");
-		}
-		lines.push(SmiEditor.makeSyncLine(item.start));
-		lines.push(item.lines.join("<br>"));
-		last = item.end;
-	}
-	lines.push(SmiEditor.makeSyncLine(last));
-	lines.push("&nbsp;");
-	
-	return lines.join("\n");
-	*/
-	/*
-	var srt = new Subtitle.SrtFile().fromTxt(text);
-	var smi = new Subtitle.SmiFile().fromSync(srt.toSync());
-	return smi.toTxt();
-	*/
 	return new Subtitle.SmiFile().fromSync(new Subtitle.SrtFile().fromTxt(text).toSync()).toTxt();
 }
