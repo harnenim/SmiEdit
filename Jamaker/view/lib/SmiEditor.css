@@ -171,9 +171,40 @@
 .hold > .input {
 	left: 100px;
 	right: 0;
+}
+.highlight-textarea > * {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
 	white-space: pre;
+}
+.highlight-textarea > div {
+	background: #fff;
+    border: 1px solid #fff;
+}
+.highlight-textarea > textarea {
+	background: transparent;
+	color: transparent;
 	overflow: scroll;
 	resize: none;
+}
+.highlight-textarea.nonactive > textarea {
+	background: #fff;
+	color: #000;
+}
+.highlight-textarea > div .clamp { color: #888888; }
+.highlight-textarea > div .tag   { color: #22863a; }
+.highlight-textarea > div .attr  { color: #005cc5; }
+.highlight-textarea > div .value { color: #032f62; }
+/*
+.highlight-textarea > div .tag   { color: #aaffbb; }
+.highlight-textarea > div .attr  { color: #aaccff; }
+.highlight-textarea > div .value { color: #aabbdd; }
+*/
+.highlight-textarea > div .sync  { color: #aaaaaa; }
+.hold > .input > textarea {
 	border: 1px solid #aaa;
 	border-width: 1px 0 0 1px;
 }

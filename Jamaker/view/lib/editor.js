@@ -895,8 +895,16 @@ function setSetting(setting) {
 			newFile();
 		}
 	}
-
+	
+	var needToUpdate = (setting.useHighlight != SmiEditor.useHighlight);
 	SmiEditor.setSetting(setting, getAppendStyle());
+	if (needToUpdate) {
+		for (var i = 0; i < tabs.length; i++) {
+			for (var j = 0; j < tabs[i].holds.length; j++) {
+				tabs[i].holds[j].updateHighlight();
+			}
+		}
+	}
 	
 	// 기본 단축키
 	SmiEditor.withCtrls["N"] = newFile;

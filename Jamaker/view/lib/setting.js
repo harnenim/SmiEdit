@@ -260,6 +260,7 @@ var DEFAULT_SETTING =
 	]
 ,	tempSave: 300
 ,	useTab: false // 탭 사용 기본값은 꺼두는 걸로
+,	useHighlight: false // 하이라이트도 기본값 꺼둠
 ,	css	:	".sync     { border-color: #000; }\n"
 		+	".sync.error { background: #f88; }\n"
 		+	".sync.equal { background: #8f8; }\n"
@@ -275,14 +276,16 @@ var DEFAULT_SETTING =
 		+	".th.selected { border-bottom-color: #0f0f0f; }\n"
 		+	"#tabSelector, .hold-selector { background: #333; }\n"
 		+	".th, .hold-selector > .selector { background: #222; }\n"
-		+	"* { color: #fff; }\n"
-		+	"input, textarea { background: #000; }\n"
+		+	"*, .hold * { color: #fff; caret-color: #fff; }\n"
+		+	"input, textarea, .highlight-textarea > div { background: #000; }\n"
 		+	"button { background: #222; }\n"
 		+	".tab > .input { border-color: #666; }\n"
 		+	".sync     { border-color: #fff; }\n"
 		+	".sync.error { background: #088; }\n"
 		+	".sync.equal { background: #808; }\n"
 		+	".sync.range { color     : #888; }\n"
+		+	".highlight-textarea > div .attr  { color: #034f82; }\n"
+		+	".highlight-textarea > div .value { color: #005cc5; }\n"
 		+	"/* */\n"
 ,	newFile:"<SAMI>\n"
 		+	"<HEAD>\n"
