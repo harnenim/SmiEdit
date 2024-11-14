@@ -1962,7 +1962,7 @@ Subtitle.Smi.normalize = function(smis, withComment=false) {
 			if (attr == null) {
 				continue;
 			}
-
+			
 			var types = Typing.toType(attr.text, attr.typing.mode, attr.typing.cursor);
 			var width = Subtitle.Smi.getLineWidth(attr.text);
 
@@ -1978,14 +1978,19 @@ Subtitle.Smi.normalize = function(smis, withComment=false) {
 			for (var j = 0; j < count; j++) {
 				var text = types[j + typingStart];
 				attr.text = Subtitle.Width.getAppendToTarget(Subtitle.Smi.getLineWidth(text), width) + (isLastAttr ? "​" : "");
-
-				var tAttrs = [];
-				tAttrs = tAttrs.concat(attrs.slice(0, attrIndex));
-				tAttrs = tAttrs.concat(new Subtitle.Smi(null, null, text).toAttr());
-				tAttrs.push(attr);
-				if (!isLastAttr) {
-					tAttrs = tAttrs.concat(attrs.slice(attrIndex + 1, attrs.length - attrIndex - 1));
+				var newAttrs = new Subtitle.Smi(null, null, text).toAttr();
+				for (var k = 0; k < newAttrs.length; k++) {
+					newAttrs[k].b = attr.b;
+					newAttrs[k].i = attr.i;
+					newAttrs[k].fc = attr.fc;
+					newAttrs[k].fn = attr.fn;
+					newAttrs[k].fs = attr.fs;
 				}
+				
+				var tAttrs = attrs.slice(0, attrIndex);
+				tAttrs = tAttrs.concat(newAttrs);
+				tAttrs.push(attr);
+				tAttrs = tAttrs.concat(attrs.slice(attrIndex + 1));
 				
 				smis.splice(i + j, 0, new Subtitle.Smi((start * (count - j) + end * (j)) / count,j == 0 ? smi.syncType : Subtitle.SyncType.inner).fromAttr(tAttrs));
 			}

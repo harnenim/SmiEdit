@@ -78,6 +78,8 @@
 }
 .hold-selector > .selector:hover {
 	background: #eee;
+}
+.hold-selector > .selector:not(:first-child):hover {
 	z-index: 9999;
 }
 .hold-selector > .selector .hold-name {
@@ -176,12 +178,15 @@
 	overflow: hidden;
 }
 .highlight-textarea > * {
+	white-space: pre;
+}
+.highlight-textarea > div,
+.highlight-textarea > textarea {
 	position: absolute;
 	top: 0;
 	left: 0;
 	right: 0;
 	bottom: 0;
-	white-space: pre;
 }
 .highlight-textarea > div {
 	background: #fff;

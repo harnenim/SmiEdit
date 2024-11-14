@@ -20,6 +20,18 @@ var Combine = {
 		}
 		// RUBY태그 문법이 미묘하게 달라서 가공 필요
 		smi = smi.split("<RP").join("<!--RP").split("</RP>").join("</RP-->");
+		
+		// 태그 밖의 공백문자 치환
+		var tags = smi.split("<");
+		tags[0] = tags[0].split(" ").join("&nbsp;");
+		for (var i = 1; i < tags.length; i++) {
+			var index = tags[i].indexOf(">");
+			if (index > 0) {
+				tags[i] = tags[i].substring(0, index) + tags[i].substring(index).split(" ").join("&nbsp;");
+			}
+		}
+		smi = tags.join("<");
+		
 		var checker = $("<span>");
 		checker.css(css);
 		checker.html(smi);
@@ -211,9 +223,9 @@ var Combine = {
 			} else { // 둘이 같이 바뀜 -> 새 그룹
 				groups.push(group = {
 						upper: [us]
-				,	lower: [ls]
-				,	maxLines: [us[LINES], ls[LINES]]
-				,	maxWidth: Math.max(us[WIDTH], ls[WIDTH])
+					,	lower: [ls]
+					,	maxLines: [us[LINES], ls[LINES]]
+					,	maxWidth: Math.max(us[WIDTH], ls[WIDTH])
 				});
 				ui++;
 				li++;
@@ -273,7 +285,6 @@ var Combine = {
 							if (LOG) {
 								var curr = "​" + pad + line + pad + "​";
 								width = getWidth(curr);
-								console.log(curr.split("&nbsp;").join(" ") + ": " + width);
 							}
 						}
 						pad = pad.split("&nbsp;").join(" ");

@@ -142,6 +142,8 @@ function refreshTime(receiveTime, withoutTitle) {
 			}
 		}
 		showText[hold] = showLines.join("<br>");
+		
+		// 정규화 자동 적용
 		if (nextSyncLine && setting.saveWithNormalize) {
 			var toNormalize = new Subtitle.SmiFile().fromTxt(lines[hold][indexes[hold]][LINE.TEXT] + "\n" + showText[hold] + "\n" + nextSyncLine[LINE.TEXT]);
 			Subtitle.Smi.normalize(toNormalize.body);

@@ -1129,6 +1129,12 @@ function afterSaveFile(path) {
 	$("#tabSelector .th:eq(" + tab + ") span").text(title);
 	currentTab.holdEdited = false;
 }
+SmiEditor.prototype._afterSave = SmiEditor.prototype.afterSave;
+SmiEditor.prototype.afterSave = function() {
+	this.savedName = this.name;
+	this.savedPos = this.pos;
+	this._afterSave();
+}
 
 function saveTemp() {
 	var currentTab = tabs[tab];

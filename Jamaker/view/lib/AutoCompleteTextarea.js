@@ -100,10 +100,10 @@ AutoCompleteTextarea.prototype.setPos = function() {
 	tmp.remove();
 	
 	// 아래쪽에 넘칠 경우 맞춤
-	if (css.top + AutoCompleteTextarea.view.height() > offset.top + this.ta.height() - this.SB) {
+	if (css.top + AutoCompleteTextarea.view.height() > offset.top + this.ta.outerHeight() - this.SB) {
 		css.top -= (AutoCompleteTextarea.view.height() + LH);
 	}
-
+	
 	// 오른쪽에 넘칠 경우 맞춤
 	css.left = Math.min(css.left, offset.left + this.ta.width() - this.SB - AutoCompleteTextarea.view.width());
 	
