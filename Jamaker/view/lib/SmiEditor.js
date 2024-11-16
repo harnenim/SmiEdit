@@ -2272,10 +2272,49 @@ function extSubmit(method, url, values) {
 		var editor = SmiEditor.selected;
 		if (editor) {
 			var text = editor.getText();
-			var params = {};
-			var value = text.text.substring(text.selection[0], text.selection[1]);
+			var value = "";
+			if (text.selection[0] < text.selection[1]) {
+				value = text.text.substring(text.selection[0], text.selection[1]);
+
+			} else {
+				// 선택된 게 없으면
+				var lines = text.text.split("\n");
+				var lineNo = text.text.substring(0, text.selection[0]).split("\n").length - 1;
+
+				// 현재 싱크 맨 윗줄 찾기
+				var syncLineNo = lineNo;
+				while (syncLineNo >= 0) {
+					if (lines[syncLineNo].substring(0, 6).toUpperCase() == "<SYNC ") {
+						break;
+					}
+					syncLineNo--;
+				}
+
+				if (syncLineNo >= 0) {
+					// 다음 싱크 라인 찾기
+					var nextSyncLineNo = syncLineNo + 1;
+					while (nextSyncLineNo < lines.length) {
+						if (lines[nextSyncLineNo].substring(0, 6).toUpperCase() == "<SYNC ") {
+							break;
+						}
+						nextSyncLineNo++;
+					}
+
+					if (nextSyncLineNo < lines.length) {
+						// 현재 싱크 내용물 선택
+						value = lines.slice(syncLineNo + 1, nextSyncLineNo).join("\n");
+
+					} else {
+						// 현재 줄 선택
+						value = lines[lineNo];
+					}
+				}
+			}
+
 			// string일 경우 태그 탈출 처리
 			value = $("<p>").html(value.split(/<br>/gi).join(" ")).text();
+
+			var params = {};
 			params[name] = value;
 			SmiEditor.Addon.openExtSubmit(method, url, params);
 		}
