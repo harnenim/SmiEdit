@@ -1365,6 +1365,7 @@ SmiEditor.prototype.updateHighlight = function () {
 		this.needToUpdateHighlight = true;
 		return;
 	}
+	this.needToUpdateHighlight = false;
 	this.highlightUpdating = true;
 
 	var self = this;
