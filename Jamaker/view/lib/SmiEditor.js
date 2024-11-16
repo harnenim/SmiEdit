@@ -237,7 +237,7 @@ SmiEditor.prototype.bindEvent = function() {
 	var editor = this;
 	
 	// 내용에 따라 싱크 표시 동기화
-	this.input.on("input propertychange", function() {
+	this.input.on("input propertychange", function () {
 		editor.updateSync();
 	});
 	this.updateSync();
@@ -1090,7 +1090,9 @@ SmiEditor.prototype.taggingRange = function(tag) {
 	this.tagging(tag, true);
 }
 
-SmiEditor.prototype.updateSync = function(range=null) {
+SmiEditor.prototype.updateSync = function (range = null) {
+	this.updateHighlight();
+
 	if (this.syncUpdating) {
 		// 이미 렌더링 중이면 대기열 활성화
 		this.needToUpdateSync = true;
@@ -1113,8 +1115,6 @@ SmiEditor.prototype.updateSync = function(range=null) {
 	var thread = function() {
 		var textLines = text.split("\n");
 		var syncLines = [];
-
-		self.updateHighlight(textLines);
 		
 		// 줄 수 변동량
 		var add = textLines.length - self.lines.length;
@@ -1359,64 +1359,81 @@ SmiEditor.prototype.updateSync = function(range=null) {
 		this.initialized = true;
 	}
 }
-SmiEditor.prototype.updateHighlight = function(lines=null) {
-	if (SmiEditor.useHighlight) {
-		this.hArea.removeClass("nonactive");
-	} else {
-		this.hArea.addClass("nonactive");
-		this.highlightLines = [];
+SmiEditor.prototype.updateHighlight = function () {
+	if (this.highlightUpdating) {
+		// 이미 렌더링 중이면 대기열 활성화
+		this.needToUpdateHighlight = true;
 		return;
 	}
-	if (!lines) {
-		lines = this.input.val().split("\n");
-	}
-	
-	var changeBegin = 0; changeEnd = Math.min(lines.length, this.highlightLines.length);
-	if (this.highlightLines.length) {
-		{	// 수정된 범위 찾기
-			var i;
-			for (i = 0; i < changeEnd; i++) {
-				if (this.highlightLines[i] != lines[i]) {
-					break;
-				}
-			}
-			changeBegin = i;
-			
-			var add = lines.length - this.highlightLines.length;
-			for (i = this.highlightLines.length - 1; i > (add > 0 ? changeBegin : changeBegin - add); i--) {
-				if (this.highlightLines[i] != lines[i + add]) {
-					break;
-				}
-			}
-			changeEnd = i + 1;
-			
-		}
-		
-		{	// 기존 결과물 삭제
-			var removeLines = this.hview.children().splice(changeBegin, changeEnd - changeBegin);
-			for (var i = 0; i < removeLines.length; i++) {
-				$(removeLines[i]).remove();
-			}
-		}
-	} else {
-		add = lines.length;
-	}
-	
-	var newLines = [];
-	var highlightLines = this.hview.children();
-	var lastLine = (changeBegin > 0) ? $(highlightLines[changeBegin - 1]) : null;
-	for (var i = changeBegin; i < changeEnd + add; i++) {
-		var highlightLine = SmiEditor.highlightText(lines[i]).append("<br />");
-		newLines.push(highlightLine);
-		if (lastLine) {
-			lastLine.after(highlightLine);
+	this.highlightUpdating = true;
+
+	var self = this;
+	function thread() {
+		if (SmiEditor.useHighlight) {
+			self.hArea.removeClass("nonactive");
 		} else {
-			this.hview.prepend(highlightLine);
+			self.hArea.addClass("nonactive");
+			self.highlightLines = [];
+			return;
 		}
-		lastLine = highlightLine;
-	}
-	
-	this.highlightLines = lines;
+		var lines = self.input.val().split("\n");
+
+		var changeBegin = 0; changeEnd = Math.min(lines.length, self.highlightLines.length);
+		if (self.highlightLines.length) {
+			{	// 수정된 범위 찾기
+				var i;
+				for (i = 0; i < changeEnd; i++) {
+					if (self.highlightLines[i] != lines[i]) {
+						break;
+					}
+				}
+				changeBegin = i;
+
+				var add = lines.length - self.highlightLines.length;
+				for (i = self.highlightLines.length - 1; i > (add > 0 ? changeBegin : changeBegin - add); i--) {
+					if (self.highlightLines[i] != lines[i + add]) {
+						break;
+					}
+				}
+				changeEnd = i + 1;
+
+			}
+
+			{	// 기존 결과물 삭제
+				var removeLines = self.hview.children().splice(changeBegin, changeEnd - changeBegin);
+				for (var i = 0; i < removeLines.length; i++) {
+					$(removeLines[i]).remove();
+				}
+			}
+		} else {
+			add = lines.length;
+		}
+
+		var newLines = [];
+		var highlightLines = self.hview.children();
+		var lastLine = (changeBegin > 0) ? $(highlightLines[changeBegin - 1]) : null;
+		for (var i = changeBegin; i < changeEnd + add; i++) {
+			var highlightLine = SmiEditor.highlightText(lines[i]).append("<br />");
+			newLines.push(highlightLine);
+			if (lastLine) {
+				lastLine.after(highlightLine);
+			} else {
+				self.hview.prepend(highlightLine);
+			}
+			lastLine = highlightLine;
+		}
+
+		self.highlightLines = lines;
+
+		self.highlightUpdating = false;
+		setTimeout(function () {
+			if (self.needToUpdateHighlight) {
+				// 렌더링 대기열 있으면 재실행
+				self.updateSync();
+			}
+		}, 1);
+	};
+	setTimeout(thread, 1);
 }
 SmiEditor.highlightText = function(text) {
 	var previewLine = $("<span>");
