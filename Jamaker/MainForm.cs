@@ -957,7 +957,10 @@ namespace Jamaker
                     {
                         directory = videoPath.Substring(0, videoPath.LastIndexOf('\\'));
                         filename = videoPath.Substring(directory.Length + 1);
-                        filename = filename.Substring(0, filename.LastIndexOf('.')) + ".smi";
+                        if (filename.IndexOf('.') >= 0)
+                        {
+                            filename = filename.Substring(0, filename.LastIndexOf('.')) + ".smi";
+                        }
                     }
                 }
 
