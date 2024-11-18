@@ -42,8 +42,8 @@ var Tab = function(text, path) {
 	this.hold = 0;
 	this.path = path;
 
-	var texts = text.split("\n<!-- Hold=");
-	var holdInfos = [ { pos: 0, name: "메인", text: texts[0] } ];
+	var texts = text.split("\r\n").join("\n").split("\n<!-- Hold=");
+	var holdInfos = [{ pos: 0, name: "메인", text: texts[0] }];
 	for (var i = 1; i < texts.length; i++) {
 		var hold = texts[i];
 		var begin = hold.indexOf("\n");
