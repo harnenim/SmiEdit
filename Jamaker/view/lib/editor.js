@@ -1211,9 +1211,11 @@ function openNewTab(text, path, forVideo) {
 }
 // C# 쪽에서 호출
 function confirmLoadVideo(path) {
-	confirm("동영상 파일을 같이 열까요?\n" + path, function() {
-		binder.loadVideoFile(path);
-	});
+	setTimeout(function () {
+		confirm("동영상 파일을 같이 열까요?\n" + path, function () {
+			binder.loadVideoFile(path);
+		});
+	}, 1);
 }
 
 // 종료 전 C# 쪽에서 호출
