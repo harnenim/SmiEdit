@@ -29,7 +29,13 @@ var SmiEditor = function(text) {
 	this.area = $("<div class='hold'>");
 	this.area.append(this.colSync = $("<div class='col-sync'>"));
 	this.area.append($("<div class='col-sync' style='background: transparent;'>")); // 블록지정 방지 영역
-	this.area.append(this.input   = $("<textarea class='input' spellcheck='false'>"));
+//	this.area.append(this.input = $("<textarea class='input' spellcheck='false'>"));
+	{	// 문법 하이라이트 기능 지원용
+		this.hArea = $("<div class='input highlight-textarea" + (SmiEditor.useHighlight ? "" : " nonactive") + "'>");
+		this.hArea.append(this.hview = $("<div>"));
+		this.hArea.append(this.input = $("<textarea spellcheck='false'>"));
+		this.area.append(this.hArea);
+	}
 	this.colSync.html('<span class="sync"><br /></span>');
 	if (text) {
 		text = text.split("\r\n").join("\n");
@@ -72,6 +78,7 @@ var SmiEditor = function(text) {
 	
 	this.text = "";
 	this.lines = [["", 0, TYPE.TEXT]];
+	this.highlightLines = [];
 	
 	this.syncUpdating = false;
 	this.needToUpdateSync = false;
@@ -96,6 +103,7 @@ SmiEditor.setSetting = function(setting, appendStyle) {
 	if (setting.sync) {
 		SmiEditor.sync = setting.sync;
 	}
+	SmiEditor.useHighlight = setting.useHighlight;
 	
 	{	// AutoComplete
 		for (var key in SmiEditor.autoComplete) {
@@ -229,7 +237,7 @@ SmiEditor.prototype.bindEvent = function() {
 	var editor = this;
 	
 	// 내용에 따라 싱크 표시 동기화
-	this.input.on("input propertychange", function() {
+	this.input.on("input propertychange", function () {
 		editor.updateSync();
 	});
 	this.updateSync();
@@ -237,6 +245,10 @@ SmiEditor.prototype.bindEvent = function() {
 	// 싱크 스크롤 동기화
 	this.input.on("scroll", function(e) {
 		editor.colSync.scrollTop(editor.input.scrollTop());
+		editor.hview.css({
+			marginTop : -editor.input.scrollTop ()
+		,	marginLeft: -editor.input.scrollLeft()
+		});
 	});
 	
 	// 개발용 임시
@@ -1024,6 +1036,9 @@ SmiEditor.prototype.deleteLine = function() {
 	
 	var text = this.input.val();
 	var range = this.getCursor();
+	if ((range[0] < range[1]) && (text[range[1] - 1] == "\n")) {
+		range[1]--;
+	}
 	var lineRange = [text.substring(0, range[0]).split("\n").length - 1, text.substring(0, range[1]).split("\n").length - 1];
 	var tmp = text.substring(0, range[0]).split("\n");
 	var cursor = range[0] - tmp[tmp.length - 1].length;
@@ -1078,7 +1093,9 @@ SmiEditor.prototype.taggingRange = function(tag) {
 	this.tagging(tag, true);
 }
 
-SmiEditor.prototype.updateSync = function(range=null) {
+SmiEditor.prototype.updateSync = function (range=null) {
+	this.updateHighlight();
+
 	if (this.syncUpdating) {
 		// 이미 렌더링 중이면 대기열 활성화
 		this.needToUpdateSync = true;
@@ -1150,6 +1167,7 @@ SmiEditor.prototype.updateSync = function(range=null) {
 			}
 			range[1]++;
 		}
+		
 		// 수정된 범위 직후의 싱크 찾기
 		for (i = range[1] + 1; i < self.lines.length; i++) {
 			if (self.lines[i][LINE.TYPE]) {
@@ -1344,6 +1362,391 @@ SmiEditor.prototype.updateSync = function(range=null) {
 		this.initialized = true;
 	}
 }
+SmiEditor.prototype.updateHighlight = function () {
+	if (this.highlightUpdating) {
+		// 이미 렌더링 중이면 대기열 활성화
+		this.needToUpdateHighlight = true;
+		return;
+	}
+	this.needToUpdateHighlight = false;
+	this.highlightUpdating = true;
+
+	var self = this;
+	function thread() {
+		if (SmiEditor.useHighlight) {
+			self.hArea.removeClass("nonactive");
+		} else {
+			self.hArea.addClass("nonactive");
+			self.highlightLines = [];
+			return;
+		}
+		var lines = self.input.val().split("\n");
+
+		var changeBegin = 0; changeEnd = Math.min(lines.length, self.highlightLines.length);
+		if (self.highlightLines.length) {
+			{	// 수정된 범위 찾기
+				var i;
+				for (i = 0; i < changeEnd; i++) {
+					if (self.highlightLines[i] != lines[i]) {
+						break;
+					}
+				}
+				changeBegin = i;
+				
+				var add = lines.length - self.highlightLines.length;
+				for (i = self.highlightLines.length - 1; i > (add > 0 ? changeBegin : changeBegin - add); i--) {
+					if (self.highlightLines[i] != lines[i + add]) {
+						break;
+					}
+				}
+				changeEnd = i + 1;
+				
+			}
+			
+			{	// 기존 결과물 삭제
+				var removeLines = self.hview.children().splice(changeBegin, changeEnd - changeBegin);
+				for (var i = 0; i < removeLines.length; i++) {
+					$(removeLines[i]).remove();
+				}
+			}
+		} else {
+			add = lines.length;
+		}
+		
+		var newLines = [];
+		var highlightLines = self.hview.children();
+		var lastLine = (changeBegin > 0) ? $(highlightLines[changeBegin - 1]) : null;
+		var state = lastLine ? lastLine.data("next") : null;
+		var i = changeBegin;
+		for (; i < changeEnd + add; i++) {
+			var highlightLine = SmiEditor.highlightText(lines[i], state).append("<br />");
+			newLines.push(highlightLine);
+			if (lastLine) {
+				lastLine.after(highlightLine);
+			} else {
+				self.hview.prepend(highlightLine);
+			}
+			state = (lastLine = highlightLine).data("next");
+		}
+		if (lastLine) {
+			for (; i < highlightLines.length; i++) {
+				var highlightLine = lastLine.next();
+				if (highlightLine.length == 0 || highlightLine.data("state") == state) {
+					break;
+				}
+				// 다음 줄 문법 하이라이트 재계산 필요
+				highlightLine.remove();
+				lastLine.after(highlightLine = SmiEditor.highlightText(lines[i], state).append("<br />"));
+				state = (lastLine = highlightLine).data("next");
+			}
+		}
+		
+		self.highlightLines = lines;
+
+		self.highlightUpdating = false;
+		setTimeout(function () {
+			if (self.needToUpdateHighlight) {
+				// 렌더링 대기열 있으면 재실행
+				self.updateSync();
+			}
+		}, 1);
+	};
+	setTimeout(thread, 1);
+}
+SmiEditor.highlightText = function(text, state=null) {
+	var previewLine = $("<span>");
+	if (text.toUpperCase().startsWith("<SYNC ")) {
+		return previewLine.addClass("sync").text(text).data({ state: null, next: null });
+	}
+	previewLine.data({ state: state });
+	
+	/*
+	 * 상태값
+	 * 텍스트: null
+	 * 태그?!: /
+	 * 태그명: <
+	 * 태그내: >
+	 * 속성명: a
+	 * 속성값: =, ', "
+	 * 주석  : !
+	 */
+	var pos = 0;
+	var html = "";
+	switch (state) {
+		case '/': html = "<span class='clamp'>"; break;
+		case '>': html = "<span class='tag'  >"; break;
+		case "'": html = "<span class='value'>"; break;
+		case '"': html = "<span class='value'>"; break;
+		case '!': html = "<span class='comment'>"; break;
+	}
+	
+	for (var pos = 0; pos < text.length; pos++) {
+		var c = text[pos];
+		switch (state) {
+			case '/': { // 태그?!
+				state = '<';
+				if (c == '/') { // 종료 태그 시작일 경우
+					html += "/</span><span class='tag'>";
+					break;
+				}
+				// 종료 태그 아닐 경우 아래로 이어서 진행
+				html += "</span><span class='tag'>";
+			}
+			case '<': { // 태그명
+				switch (c) {
+					case '>': { // 태그 종료
+						html += "</span><span class='clamp'>&gt;</span>";
+						state = null;
+						break;
+					}
+					case ' ': { // 태그명 끝
+						html += '</span>&nbsp;';
+						state = '>';
+						break;
+					}
+					case '\t': {
+						html += '</span>&#09;';
+						state = '>';
+						break;
+					}
+					case '<': { // 잘못된 문법
+						html += "&lt;";
+						break;
+					}
+					case '&': {
+						html += "&amp;";
+						break;
+					}
+					default: {
+						html += c;
+						break;
+					}
+				}
+				break;
+			}
+			case '>': { // 태그 내
+				switch (c) {
+					case '>': { // 태그 종료
+						html += "</span><span class='clamp'>&gt;</span>";
+						state = null;
+						break;
+					}
+					case ' ': {
+						html += '&nbsp;';
+						break;
+					}
+					case '\t': {
+						html += '&#09;';
+						break;
+					}
+					case '<': { // 잘못된 문법
+						html += "&lt;";
+						break;
+					}
+					case '&': {
+						html += "&amp;";
+						break;
+					}
+					default: { // 속성명 시작
+						html += "<span class='attr'>" + c;
+						state = 'a';
+						break;
+					}
+				}
+				break;
+			}
+			case 'a': { // 속성명
+				switch (c) {
+					case '>': { // 태그 종료
+						html += "</span></span><span class='clamp'>&gt;</span>";
+						state = null;
+						break;
+					}
+					case '=': { // 속성값 시작
+						html += "</span>=<span class='value'>";
+						state = '=';
+						break;
+					}
+					case ' ': { // 속성 종료
+						html += "</span>&nbsp;";
+						state = '>';
+						break;
+					}
+					case '\t': {
+						html += "</span>&#09;";
+						state = '>';
+						break;
+					}
+					default: {
+						html += c;
+					}
+				}
+				break;
+			}
+			case '=': { // 속성값
+				switch (c) {
+					case '>': { // 태그 종료
+						html += "</span></span><span class='clamp'>&gt;</span>";
+						state = null;
+						break;
+					}
+					case '"': { // 속성값 따옴표 시작
+						html += c;
+						state = '"';
+						break;
+					}
+					case "'": { // 속성값 따옴표 시작
+						html += c;
+						state = "'";
+						break;
+					}
+					case ' ': { // 속성 종료
+						html += "</span>&nbsp;";
+						state = '>';
+						break;
+					}
+					case '\t': {
+						html += "</span>&#09;";
+						state = '>';
+						break;
+					}
+					case '<': {
+						html += "&lt;";
+						break;
+					}
+					case '&': {
+						html += "&amp;";
+						break;
+					}
+					default: {
+						html += c;
+					}
+				}
+				break;
+			}
+			case '"': {
+				switch (c) {
+					case '"': {
+						html += '"</span>';
+						state = '>';
+						break;
+					}
+					case ' ': {
+						html += "&nbsp;";
+						break;
+					}
+					case '\t': {
+						html += "&#09;";
+						break;
+					}
+					case '<': {
+						html += "&lt;";
+						break;
+					}
+					case '&': {
+						html += "&amp;";
+						break;
+					}
+					default: {
+						html += c;
+					}
+				}
+				break;
+			}
+			case "'": {
+				switch (c) {
+					case "'": {
+						html += "'</span>";
+						state = '>';
+						break;
+					}
+					case ' ': {
+						html += "&nbsp;";
+						break;
+					}
+					case '\t': {
+						html += "&#09;";
+						break;
+					}
+					case '<': {
+						html += "&lt;";
+						break;
+					}
+					case '&': {
+						html += "&amp;";
+						break;
+					}
+					default: {
+						html += c;
+					}
+				}
+				break;
+			}
+			case '!': { // 주석
+				if ((pos + 3 <= text.length) && (text.substring(pos, pos+3) == "-->")) {
+					html += "--&gt;</span>";
+					state = null;
+					pos += 2;
+				} else {
+					switch (c) {
+						case '<': {
+							html += "&lt;";
+							break;
+						}
+						case '&': {
+							html += "&amp;";
+							break;
+						}
+						default: {
+							html += c;
+						}
+					}
+				}
+				break;
+			}
+			default: { // 텍스트
+				switch (c) {
+					case '<': { // 태그 시작
+						if ((pos + 4 <= text.length) && (text.substring(pos, pos+4) == "<!--")) {
+							html += "<span class='comment'>&lt;!--";
+							state = '!';
+							pos += 3;
+						} else {
+							html += "<span class='clamp'>&lt;";
+							state = '/';
+						}
+						break;
+					}
+					case '&': {
+						html += "&amp;";
+						break;
+					}
+					case ' ': {
+						html += '&nbsp;';
+						break;
+					}
+					case '\t': {
+						html += '&#09;';
+						break;
+					}
+					default: {
+						html += c;
+					}
+				}
+			}
+		}
+	}
+
+	switch (state) {
+		case '<':
+		case '/':
+		case 'a':
+		case '=':
+			state = null;
+	}
+	return previewLine.html(html ? html : "").data({ next: state });
+}
+
 SmiEditor.prototype.moveLine = function(toNext) {
 	if (this.syncUpdating) return;
 	this.history.log();
@@ -1904,12 +2307,12 @@ SmiEditor.Viewer = {
 };
 
 SmiEditor.Addon = {
-		window: null
-	,	open: function(name) {
+		windows: {}
+	,	open: function(name, target="addon") {
 			var url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html";
-			this.window = window.open(url, "addon", "scrollbars=no,location=no,width=1,height=1");
-			this.moveWindowToSetting();
-			binder.focus("addon");
+			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
+			this.moveWindowToSetting(target);
+			binder.focus(target);
 		}
 	,	openExtSubmit: function(method, url, values) {
 			this.ext = {
@@ -1917,39 +2320,88 @@ SmiEditor.Addon = {
 				,	url: url
 				,	values: values
 			}
-			this.window = window.open("addon/ExtSubmit.html", "addon", "scrollbars=no,location=no,width=1,height=1");
-			this.moveWindowToSetting();
+			this.windows.addon = window.open("addon/ExtSubmit.html", "addon", "scrollbars=no,location=no,width=1,height=1");
+			this.moveWindowToSetting("addon");
 			binder.focus("addon");
 		}
 	,	onloadExtSubmit: function() {
-			var w = this.window;
+			var w = this.windows.addon;
 			if (w.iframe) {
 				w = w.iframe.contentWindow;
 			}
 			w.submit(this.ext.method, this.ext.url, this.ext.values);
 		}
-	,	moveWindowToSetting: function() {
+	,	moveWindowToSetting: function(target) {
 			// 플레이어 창 위에
 			var margin = 40 * DPI;
-			binder.moveWindow("addon"
-					, setting.player.window.x + margin
-					, setting.player.window.y + margin
-					, setting.player.window.width  - (margin * 2)
-					, setting.player.window.height - (margin * 2)
-					, true);
+			var targets = [];
+			if (target) {
+				targets = [target];
+			} else {
+				for (var key in this.windows) {
+					targets.push(key);
+				}
+			}
+			for (var i = 0; i < targets.length; i++) {
+				binder.moveWindow(targets[i]
+						, setting.player.window.x + margin
+						, setting.player.window.y + margin
+						, setting.player.window.width  - (margin * 2)
+						, setting.player.window.height - (margin * 2)
+						, true);
+			}
 		}
 };
-function openAddon(name) { SmiEditor.Addon.open(name); }
+function openAddon(name, target) { SmiEditor.Addon.open(name, target); }
 function extSubmit(method, url, values) {
 	if (typeof values == "string") {
 		var name = values;
 		var editor = SmiEditor.selected;
 		if (editor) {
 			var text = editor.getText();
-			var params = {};
-			var value = text.text.substring(text.selection[0], text.selection[1]);
+			var value = "";
+			if (text.selection[0] < text.selection[1]) {
+				value = text.text.substring(text.selection[0], text.selection[1]);
+
+			} else {
+				// 선택된 게 없으면
+				var lines = text.text.split("\n");
+				var lineNo = text.text.substring(0, text.selection[0]).split("\n").length - 1;
+
+				// 현재 싱크 맨 윗줄 찾기
+				var syncLineNo = lineNo;
+				while (syncLineNo >= 0) {
+					if (lines[syncLineNo].substring(0, 6).toUpperCase() == "<SYNC ") {
+						break;
+					}
+					syncLineNo--;
+				}
+
+				if (syncLineNo >= 0) {
+					// 다음 싱크 라인 찾기
+					var nextSyncLineNo = syncLineNo + 1;
+					while (nextSyncLineNo < lines.length) {
+						if (lines[nextSyncLineNo].substring(0, 6).toUpperCase() == "<SYNC ") {
+							break;
+						}
+						nextSyncLineNo++;
+					}
+
+					if (nextSyncLineNo < lines.length) {
+						// 현재 싱크 내용물 선택
+						value = lines.slice(syncLineNo + 1, nextSyncLineNo).join("\n");
+
+					} else {
+						// 현재 줄 선택
+						value = lines[lineNo];
+					}
+				}
+			}
+
 			// string일 경우 태그 탈출 처리
 			value = $("<p>").html(value.split(/<br>/gi).join(" ")).text();
+
+			var params = {};
 			params[name] = value;
 			SmiEditor.Addon.openExtSubmit(method, url, params);
 		}
