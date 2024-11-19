@@ -407,8 +407,9 @@ var MT = 0, ML = 7, MR = 7, MB = 9;
 				}
 
 				var player = this.getHwnd("player");
-				if (player > 0) {
+				if (player) {
 					var playerOffset = this.player.currentOffset;
+					WinAPI.GetWindowRect(player, playerOffset);
 					this.script("eval", [
 						"setting.player.window.x = " + (playerOffset.left + ML) + ";"
 					+	"setting.player.window.y = " + (playerOffset.top  + MT) + ";"
