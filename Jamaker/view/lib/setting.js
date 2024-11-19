@@ -37,7 +37,7 @@ var checkVersion;
 	var lastNotifyForCommand = "2024.11.11.v1";
 	var lastNotifyForAutoComplete = "";
 	var lastNotifyForStyle = "2023.04.06.v1";
-	var lastNotifyForMenu = "2024.11.18.v1";
+	var lastNotifyForMenu = "2024.11.19.v2";
 }
 
 var DEFAULT_SETTING =
