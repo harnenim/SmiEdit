@@ -455,10 +455,10 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 				}
 				var added = mainBegin + combined.body.length - mainEnd;
 				
-				
+				var combinedLog = null;
 				if (logIndexes.length) {
 					// 기존 정규화 로그와 겹칠 때
-					var combinedLog = logs[logIndexes[0]];
+					combinedLog = logs[logIndexes[0]];
 					if (logIndexes.length > 1) {
 						// 겹치는 게 여러 개면 하나로 통합
 						for (var i = 1; i < logIndexes.length; i++) {
@@ -484,7 +484,7 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 					
 				} else {
 					// 신규 정규화 로그
-					var log = {
+					combinedLog = {
 							from: [mainBegin, mainEnd]
 						,	to  : [mainBegin, mainBegin + combined.body.length]
 						,	start: combined.body[0].start
@@ -502,10 +502,11 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 					if (lastLog) {
 						// 있을 경우 그걸 기준으로 원래 위치 잡아주기
 						var lastAdded = lastLog.to[1] - lastLog.from[1];
-						log.from[0] = log.from[0] - lastAdded;
-						log.from[1] = log.from[1] - lastAdded;
+						combinedLog.from[0] = combinedLog.from[0] - lastAdded;
+						combinedLog.from[1] = combinedLog.from[1] - lastAdded;
 					}
-					logs.splice(i, 0, log);
+					logs.splice(i, 0, combinedLog);
+					logIndexes = [i];
 				}
 				
 				// 뒤쪽에 해당하는 로그가 있었으면 위치 잡아주기
@@ -514,6 +515,54 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 						if (logs[i].to[0] > mainBegin) {
 							logs[i].to[0] += added;
 							logs[i].to[1] += added;
+						}
+					}
+				}
+				
+				if (combinedLog) {
+					// 정규화 로그 분할 가능한지 확인
+					// TODO: 생각해보니 이렇게 할 거면...
+					//       그냥 정규화 로그 관리하지 말고 전체 변환 후에 돌려도 되나?
+					var logIndex = logIndexes[0];
+					var oi = combinedLog.from[0];
+					var ni = combinedLog.to  [0];
+					while ((oi < originBody.length) && (ni < main.body.length)) {
+						if (originBody[oi].start < main.body[ni].start) {
+							oi++;
+							continue;
+						}
+						if (originBody[oi].start > main.body[ni].start) {
+							ni++;
+							continue;
+						}
+						if (originBody[oi].text == main.body[ni].text) {
+							// 변환결과가 원본과 동일한 범위 찾기
+							var i = 1;
+							while ((oi + i < originBody.length) && (ni + i < main.body.length)) {
+								if ((originBody[oi + i].start != main.body[ni + i].start)
+								 || (originBody[oi + i].text  != main.body[ni + i].text )) {
+									break;
+								}
+								i++;
+							}
+							if (i > 2 && (oi + i < originBody.length) && (ni + i < main.body.length)) {
+								// 동일한 범위는 제외하고 앞뒤로 남기기
+								var splittedLog = {
+										from: [combinedLog.from[0], oi]
+									,	to  : [combinedLog.to  [0], ni]
+									,	start: combinedLog.start
+									,	end: main.body[ni].start
+								}
+								combinedLog.from[0] = oi + i;
+								combinedLog.to  [0] = ni + i;
+								combinedLog.start = main.body[ni + i].start;
+								logs.splice(logIndex++, 0, splittedLog);
+							}
+							oi += i;
+							ni += i;
+						} else {
+							oi++;
+							ni++;
 						}
 					}
 				}
