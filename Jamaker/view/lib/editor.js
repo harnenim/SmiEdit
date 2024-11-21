@@ -127,6 +127,7 @@ var Tab = function(text, path) {
 			tab.holdEdited = true;
 			tab.updateHoldSelector();
 			tab.onChangeSaved();
+			SmiEditor.Viewer.refresh();
 		});
 		
 	}).on("click", ".btn-hold-upper", function(e) {
@@ -139,6 +140,7 @@ var Tab = function(text, path) {
 		}
 		tab.updateHoldSelector();
 		tab.onChangeSaved();
+		SmiEditor.Viewer.refresh();
 		
 	}).on("click", ".btn-hold-lower", function(e) {
 		e.stopPropagation();
@@ -150,6 +152,7 @@ var Tab = function(text, path) {
 		}
 		tab.updateHoldSelector();
 		tab.onChangeSaved();
+		SmiEditor.Viewer.refresh();
 	});
 };
 Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
@@ -198,19 +201,6 @@ Tab.prototype.updateHoldSelector = function() {
 		var hold = this.holds[i];
 		timers.push([hold.start, [[i, 1]]]);
 		timers.push([hold.end  , [[i,-1]]]);
-		
-		var pos = 30;
-		if (hold.pos > 0) {
-			for (var j = 0; j < hold.pos; j++) {
-				pos /= 2;
-			}
-		} else if (hold.pos < 0) {
-			for (var j = 0; j < -hold.pos; j++) {
-				pos /= 2;
-			}
-			pos = 60 - pos;
-		}
-		hold.selector.css({ top: pos + "%" });
 	}
 	timers[0][0] = timers[0][2] = 0; // 메인 홀드는 시작 시간 0으로 출력
 	timers.sort(function(a, b) {
@@ -255,15 +245,56 @@ Tab.prototype.updateHoldSelector = function() {
 		}
 	}
 	
+	var posStatus = {};
 	for (var i = 0; i < timers.length; i++) {
 		var timer = timers[i];
-		var pos = (timer[2] / (timers.length + add - 1) * 100);
+		var rate = (timer[2] / (timers.length + add - 1) * 100);
 		for (var j = 0; j < timer[1].length; j++) {
 			var selector = timer[1][j];
+			var hold = this.holds[selector[0]];
 			if (selector[1] == 1) {
-				this.holds[selector[0]].selector.css({ left: pos + "%" });
+				// 홀드 시작
+				hold.selector.css({ left: rate + "%" });
+				
+				// 홀드끼리 영역 겹칠 경우 보완 필요
+				var pos = hold.pos;
+				if (pos > 0) {
+					while (posStatus[pos] && posStatus[pos].length) {
+						posStatus[pos++].push(hold);
+					}
+				} else {
+					while (posStatus[pos] && posStatus[pos].length) {
+						posStatus[pos--].push(hold);
+					}
+				}
+				posStatus[pos] = [hold];
+				hold.viewPos = pos;
+				
+				var top = 30;
+				if (pos > 0) {
+					for (var j = 0; j < pos; j++) {
+						top /= 2;
+					}
+				} else if (hold.pos < 0) {
+					for (var j = 0; j < -pos; j++) {
+						top /= 2;
+					}
+					top = 60 - top;
+				}
+				hold.selector.css({ top: top + "%" });
+				
 			} else {
-				this.holds[selector[0]].selector.css({ right: (100 - pos) + "%" });
+				// 홀드 끝
+				hold.selector.css({ right: (100 - rate) + "%" });
+				
+				// 홀드 위치 사용 중 해제
+				for (var pos in posStatus) {
+					var posHolds = posStatus[pos];
+					var index = posHolds.indexOf(hold);
+					if (index >= 0) {
+						posHolds.splice(index, 1);
+					}
+				}
 			}
 		}
 	}
@@ -362,8 +393,8 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 		// 메인에 가까운 걸 먼저 작업해야 함
 		holds = this.holds.slice(0);
 		holds.sort(function(a, b) {
-			var aPos = a.pos;
-			var bPos = b.pos;
+			var aPos = a.viewPos;
+			var bPos = b.viewPos;
 			if (aPos < 0) aPos = -aPos;
 			if (bPos < 0) bPos = -bPos;
 			if (aPos < bPos) return -1;

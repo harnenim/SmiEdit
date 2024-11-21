@@ -86,8 +86,15 @@
 	z-index: 99999;
 }
 .hold-selector > .selector .hold-name {
+	display: table;
+	width: 100%;
+	height: 100%;
+}
+.hold-selector > .selector .hold-name > span {
+	display: table-cell;
 	padding: 2px;
-	line-height: 24px;
+	vertical-align: middle;
+	white-space: nowrap;
 }
 .hold-selector > .selector button {
 	position: absolute;
