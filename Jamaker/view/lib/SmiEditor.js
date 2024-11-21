@@ -1978,7 +1978,9 @@ SmiEditor.Finder = {
 			}
 		}
 	,	sendMsgAfterRun: function(msg) {
-			binder.sendMsg("finder", msg);
+			setTimeout(function() {
+				binder.sendMsg("finder", msg);
+			}, 1);
 		}
 };
 
@@ -2033,7 +2035,9 @@ SmiEditor.Addon = {
 	,	open: function(name, target="addon") {
 			var url = (name.substring(0, 4) == "http") ? name : "addon/" + name.split("..").join("").split(":").join("") + ".html";
 			this.windows[target] = window.open(url, target, "scrollbars=no,location=no,width=1,height=1");
-			this.moveWindowToSetting(target);
+			setTimeout(function() { // 웹버전에서 딜레이 안 주면 위치를 못 잡는 경우가 있음
+				this.moveWindowToSetting(target);
+			}, 1);
 			binder.focus(target);
 		}
 	,	openExtSubmit: function(method, url, values) {
@@ -2043,7 +2047,9 @@ SmiEditor.Addon = {
 				,	values: values
 			}
 			this.windows.addon = window.open("addon/ExtSubmit.html", "addon", "scrollbars=no,location=no,width=1,height=1");
-			this.moveWindowToSetting("addon");
+			setTimeout(function() {
+				this.moveWindowToSetting("addon");
+			}, 1);
 			binder.focus("addon");
 		}
 	,	onloadExtSubmit: function() {

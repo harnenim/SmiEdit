@@ -1,5 +1,5 @@
 var Combine = {
-	css: { font: '100px "맑은 고딕"' }	
+	css: { font: '100px "맑은 고딕"' }
 };
 {
 	var STIME = 0;
@@ -11,7 +11,7 @@ var Combine = {
 	var WIDTH = 6;
 	var UPPER = 4;
 	var LOWER = 5;
-
+	
 	var LOG = false;
 	
 	function getWidth(smi, checker) {
@@ -32,12 +32,12 @@ var Combine = {
 		return checker.html(smi).width();
 	}
 	function getChecker() {
-		var checker = $("<span>");
-		checker.css(Combine.css);
-		$("body").append(checker);
-		return checker;
+		if (!Combine.checker) {
+			$("body").append(Combine.checker = $("<span>"));
+		}
+		return Combine.checker.css(Combine.css).show();
 	}
-
+	
 	function parse(text, checker) {
 		var lines = text.split("\n");
 		var parseds = [];
@@ -403,7 +403,7 @@ var Combine = {
 				}
 			}
 		}
-		checker.remove();
+		checker.hide();
 		
 		var lines = [];
 		var lastSync = 0;
