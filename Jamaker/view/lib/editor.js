@@ -192,6 +192,10 @@ Tab.prototype.updateHoldSelector = function() {
 		return;
 	}
 	this.area.addClass("with-hold");
+	console.log("updateHoldSelector");
+
+	var BEGIN = 1;
+	var END = -1;
 	
 	// 홀드 여부 달라질 수 있음
 	SmiEditor.refreshStyle(setting, getAppendStyle());
@@ -199,22 +203,23 @@ Tab.prototype.updateHoldSelector = function() {
 	var timers = [];
 	for (var i = 0; i < this.holds.length; i++) {
 		var hold = this.holds[i];
-		timers.push([hold.start, [[i, 1]]]);
-		timers.push([hold.end  , [[i,-1]]]);
+		timers.push({ time: hold.start, holds: [{ index: i, type: 1 }] });
+		timers.push({ time: hold.end  , holds: [{ index: i, type:-1 }] });
 	}
-	timers[0][0] = timers[0][2] = 0; // 메인 홀드는 시작 시간 0으로 출력
+	timers[0].time = timers[0].rate = 0; // 메인 홀드는 시작 시간 0으로 출력
 	timers.sort(function(a, b) {
-		if (a[0] < b[0])
+		if (a.time < b.time)
 			return -1;
-		if (a[0] > b[0])
+		if (a.time > b.time)
 			return 1;
 		return 0;
 	});
 	
 	for (var i = 0; i < timers.length - 1; i++) {
-		if (timers[i][0] == timers[i+1][0]) {
-			timers[i][1].push(timers[i+1][1][0]);
-			timers.splice(i+1, 1);
+		if (timers[i].time == timers[i+1].time) {
+			timers[i].holds.push(timers[i+1].holds[0]);
+			timers.splice(i + 1, 1);
+			i--;
 		}
 	}
 	
@@ -224,9 +229,9 @@ Tab.prototype.updateHoldSelector = function() {
 			var timer = timers[i];
 			
 			var a = 0;
-			for (var j = 0; j < timer[1].length; j++) {
-				if (timer[1][j][1] < 0) {
-					var min = begins[timer[1][j][0]] + 4;
+			for (var j = 0; j < timer.holds.length; j++) {
+				if (timer.holds[j].type == END) {
+					var min = begins[timer.holds[j].index] + 4;
 					if (i + add < min) {
 						Math.max(a = min - (i + add));
 					}
@@ -235,24 +240,26 @@ Tab.prototype.updateHoldSelector = function() {
 			if (a) {
 				add += a;
 			}
-			timer[2] = i + add;
+			timer.rate = i + add;
 			
-			for (var j = 0; j < timer[1].length; j++) {
-				if (timer[1][j][1] > 0) {
-					begins[timer[1][j][0]] = timer[2];
+			for (var j = 0; j < timer.holds.length; j++) {
+				if (timer.holds[j].type == BEGIN) {
+					begins[timer.holds[j].index] = timer.rate;
 				}
 			}
 		}
 	}
-	
+	console.log(JSON.parse(JSON.stringify(timers)));
+
 	var posStatus = {};
 	for (var i = 0; i < timers.length; i++) {
 		var timer = timers[i];
-		var rate = (timer[2] / (timers.length + add - 1) * 100);
-		for (var j = 0; j < timer[1].length; j++) {
-			var selector = timer[1][j];
-			var hold = this.holds[selector[0]];
-			if (selector[1] == 1) {
+		var rate = (timer.rate / (timers.length + add - 1) * 100);
+		for (var j = 0; j < timer.holds.length; j++) {
+			var selector = timer.holds[j];
+			console.log(i + ", " + j + ": " + JSON.stringify(selector));
+			var hold = this.holds[selector.index];
+			if (selector.type == BEGIN) {
 				// 홀드 시작
 				hold.selector.css({ left: rate + "%" });
 				
@@ -272,11 +279,11 @@ Tab.prototype.updateHoldSelector = function() {
 				
 				var top = 30;
 				if (pos > 0) {
-					for (var j = 0; j < pos; j++) {
+					for (var k = 0; k < pos; k++) {
 						top /= 2;
 					}
 				} else if (hold.pos < 0) {
-					for (var j = 0; j < -pos; j++) {
+					for (var k = 0; k < -pos; k++) {
 						top /= 2;
 					}
 					top = 60 - top;

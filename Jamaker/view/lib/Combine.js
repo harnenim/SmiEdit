@@ -35,7 +35,8 @@ var Combine = {
 		if (!Combine.checker) {
 			$("body").append(Combine.checker = $("<span>"));
 		}
-		return Combine.checker.css(Combine.css).show();
+		Combine.checker.css(Combine.css);
+		return Combine.checker.show();
 	}
 	
 	function parse(text, checker) {
