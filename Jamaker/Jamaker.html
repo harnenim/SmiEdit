@@ -65,6 +65,12 @@ Binder.prototype.loadVideoFile = function(path) {
 Binder.prototype.openTempDir = function() {
 	this._.openTempDir();
 }
+Binder.prototype.exportSetting = function() {
+	this._.exportSetting();
+}
+Binder.prototype.importSetting = function() {
+	this._.importSetting();
+}
 Binder.prototype.doExit = function(resetPlayer, exitPlayer) {
 	this._.doExit(resetPlayer, exitPlayer);
 }
@@ -541,10 +547,11 @@ var accessHandle;
 		editor.menuKeys = {};
 		
 		menus = menus.concat([["샘플용"
+			, "GitHub실행|window.open('https://github.com/harnenim/Jamaker')"
 			, "플레이어 실행|binder.runPlayer()"
-			, "임시 저장 파일 확인하기|hwnd.openTempDir()"
-			, "설정 export|hwnd.exportSetting()"
-			, "설정 import|hwnd.importSetting()"
+			, "임시 저장 파일 확인하기|binder.openTempDir()"
+			, "설정 export|binder.exportSetting()"
+			, "설정 import|binder.importSetting()"
 			]]);
 		
 		for (var i = 0; i < menus.length; i++) {
