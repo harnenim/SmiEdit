@@ -540,6 +540,9 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 		if (withComment) {
 			if (withCombine) {
 				// 홀드 결합 있을 경우 주석처리 재계산
+				// TODO: 홀드를 합칠 때 결합이 아예 없을 경우 중복을 줄이는 형태로 개선할 수 있으면 좋을 듯함
+				//       오프닝/엔딩 홀드를 분리하는 식으로 쓰려면 필수일 듯
+				//       노래방 자막 크기가 커져도 태그 하이라이트 기능에 지장이 생김
 				logs = [];
 				var oi = 0;
 				var ni = 0;
@@ -1176,7 +1179,6 @@ function saveFile(asNew, isExport) {
 			binder.save(currentTab.getSaveText(true, !(exporting = isExport)), path);
 		});
 	} else {
-		exporting = isExport;
 		binder.save(currentTab.getSaveText(true, !(exporting = isExport)), path);
 	}
 }
@@ -1184,13 +1186,13 @@ function saveFile(asNew, isExport) {
 // 저장 후 C# 쪽에서 호출
 function afterSaveFile(path) {
 	var currentTab = tabs[tab];
-	for (var i = 0; i < currentTab.holds.length; i++) {
-		currentTab.holds[i].afterSave();
-	}
 	if (exporting) {
-		// 내보내기 동작일 땐 파일명 바꾸지 않음
+		// 내보내기 동작일 땐 상태 바꾸지 않음
 		exporting = false;
 		return;
+	}
+	for (var i = 0; i < currentTab.holds.length; i++) {
+		currentTab.holds[i].afterSave();
 	}
 	currentTab.path = path;
 	var title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";

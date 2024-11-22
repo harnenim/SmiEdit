@@ -303,6 +303,10 @@ var Combine = {
 									if (tagEnd == 0) {
 										break;
 									}
+									while (line.length > tagEnd && line[tagEnd] == "\n") {
+										// 태그 직후에 줄바꿈을 한 경우가 있음
+										tagEnd++;
+									}
 									prev += line.substring(0, tagEnd);
 									line = line.substring(tagEnd);
 								}
