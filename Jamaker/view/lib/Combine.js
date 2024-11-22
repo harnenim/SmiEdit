@@ -318,8 +318,9 @@ var Combine = {
 									next = line.substring(tagStart) + next;
 									line = line.substring(0, tagStart);
 								}
-								line = "​" + prev + pad + line + pad + next + "​";
+								line = prev + "​" + pad + line + pad + "​" + next;
 								lines[k] = line;
+								console.log(line);
 							}
 						}
 						sync[TEXT] = lines.join("<br>");
