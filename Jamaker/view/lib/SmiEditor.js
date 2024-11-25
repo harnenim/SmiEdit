@@ -520,6 +520,23 @@ SmiEditor.activateKeyEvent = function() {
 										delLen = 4;
 									}
 								}
+								if (!delLen && cursor[0] >= 3 && text[cursor[0]-1] == ">") {
+									var prev = text.substring(0, cursor[0]);
+									var index = prev.lastIndexOf("<");
+									if (index >= 0) {
+										delLen = cursor[0] - index;
+									}
+								}
+								if (!delLen && cursor[0] >= 4 && text[cursor[0]-1] == ";") {
+									var prev = text.substring(0, cursor[0]);
+									var index = prev.lastIndexOf("&");
+									if (index >= 0) {
+										delLen = cursor[0] - index;
+										if (delLen > 10) { // &~~; 형태가 열 글자를 넘진 않음
+											delLen = 0;
+										}
+									}
+								}
 								if (delLen) {
 									e.preventDefault();
 									editor.input.val(text.substring(0, cursor[0] - delLen) + text.substring(cursor[0]));
@@ -533,6 +550,55 @@ SmiEditor.activateKeyEvent = function() {
 						}
 					}
 					break;
+				}
+				case 46: { // Delete
+					if (hasFocus) {
+						if (e.ctrlKey) { // Ctrl+Delete → 공백문자 그룹 삭제
+							var text = editor.input.val();
+							var cursor = editor.getCursor();
+							if (cursor[0] == cursor[1]) {
+								var delLen = 0;
+								if (cursor[0] + 12 <= text.length) {
+									if (text.substring(cursor[0], cursor[0]+12) == "<br><b>　</b>") {
+										delLen = 12;
+									}
+								}
+								if (!delLen && cursor[0] + 8 <= text.length) {
+									if (text.substring(cursor[0], cursor[0]+ 8) == "<b>　</b>") {
+										delLen = 8;
+									}
+								}
+								if (!delLen && cursor[0] + 4 <= text.length) {
+									if (text.substring(cursor[0], cursor[0]+ 4) == "<br>") {
+										delLen = 4;
+									}
+								}
+								if (!delLen && text[cursor[0]] == "<") {
+									var index = text.indexOf(">", cursor[0]);
+									if (index > 0) {
+										delLen = index - cursor[0] + 1;
+									}
+								}
+								if (!delLen && text[cursor[0]] == "&") {
+									var index = text.indexOf(";", cursor[0]);
+									if (index > 0) {
+										delLen = index - cursor[0] + 1;
+										if (delLen > 10) { // &~~; 형태가 열 글자를 넘진 않음
+											delLen = 0;
+										}
+									}
+								}
+								if (delLen) {
+									e.preventDefault();
+									editor.input.val(text.substring(0, cursor[0]) + text.substring(cursor[0] + delLen));
+									
+									editor.setCursor(cursor[0]);
+									editor.updateSync();
+									editor.scrollToCursor();
+								}
+							}
+						}
+					}
 				}
 			}
 			
