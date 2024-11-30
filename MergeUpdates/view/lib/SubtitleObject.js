@@ -1039,9 +1039,12 @@ Subtitle.Ass.prototype.fromSync = function(sync) {
 	return this;
 }
 
-Subtitle.AssFile = function() {
+Subtitle.AssFile = function(txt) {
 	this.header = "";
 	this.body = [];
+	if (txt) {
+		this.fromTxt(txt);
+	}
 }
 Subtitle.AssFile.prototype.toTxt = function() {
 	var result = this.header.split("\r\n").join("\n");
@@ -1923,8 +1926,9 @@ Subtitle.Smi.normalize = function(smis, withComment=false) {
 				}
 				smis.splice(i + j, 0, new Subtitle.Smi((start * (frames - j) + end * j) / frames, Subtitle.SyncType.inner).fromAttr(attrs));
 			}
+			smi.comment = "<!-- End=" + end + "\n" + origin.split("<").join("<​").split(">").join("​>") + "\n-->";
 			if (withComment) {
-				smi.text = "<!-- End=" + end + "\n" + origin.split("<").join("<​").split(">").join("​>") + "\n-->\n" + smi.text;
+				smi.text = smi.comment + "\n" + smi.text;
 			}
 			result.logs.push({
 					from: [i - added, i - added + 1]
@@ -2038,10 +2042,13 @@ Subtitle.Smi.fillEmptySync = function(smis) {
 		}
 	}
 }
-Subtitle.SmiFile = function() {
+Subtitle.SmiFile = function(txt) {
 	this.header = ""; // 세부적으로 나누려다가 주석도 있고 해서 일단 패스
 	this.footer = "";
 	this.body = [];
+	if (txt) {
+		this.fromTxt(txt);
+	}
 }
 Subtitle.SmiFile.prototype.toTxt = function() {
 	return this.header.split("\r\n").join("\n")
@@ -2195,42 +2202,26 @@ Subtitle.SmiFile.prototype.fromSync = function(syncs) {
 }
 
 Subtitle.SmiFile.prototype.antiNormalize = function () {
-	var commentRange = [-1, -1];
-	var comment = null;
+	var result = [this];
 	
 	for (i = 0; i < this.body.length; i++) {
 		var smi = this.body[i];
+		var afterComment = null;
 		
-		if (commentRange[0] < 0) {
-			// 주석 시작점 찾기
-			if (!smi.text.startsWith("<!-- End=")) {
-				continue;
-			}
-			commentRange[0] = i;
-			
-			var commentEnd = smi.text.indexOf("-->");
-			if (commentEnd < 0) {
-				// 주석이 여기에서 안 끝났을 경우
-				continue;
-			}
-			// 주석이 여기에서 온전히 끝났을 경우
-			comment = smi.text.substring(9, commentEnd).trim();
-			commentRange[1] = i + 1;
-			
-		} else if (commentRange[1] < 0) {
-			// 주석 나머지 내용
-			var commentEnd = smi.text.indexOf("-->");
-			if (commentEnd < 0) {
-				// 주석이 여기에서 안 끝났을 경우
-				continue;
-			}
-			// 주석이 여기에서 끝났을 경우
-			comment += "\n" + smi.text.substring(0, commentEnd).trim();
-			commentRange[1] = i + 1;
-			
-		} else {
+		// 주석 시작점 찾기
+		if (!smi.text.startsWith("<!-- End=")) {
 			continue;
 		}
+		
+		// 주석 끝 찾기
+		var commentEnd = smi.text.indexOf("-->");
+		if (commentEnd < 0) {
+			continue;
+		}
+		
+		// 주석이 여기에서 온전히 끝났을 경우
+		var comment = smi.text.substring(9, commentEnd).trim();
+		afterComment = smi.text.substring(commentEnd + 3).trim();
 		
 		comment = comment.split("<​").join("<").split("​>").join(">");
 		try {
@@ -2241,7 +2232,7 @@ Subtitle.SmiFile.prototype.antiNormalize = function () {
 			if (index > 0) {
 				comment = comment.substring(index + 1);
 			}
-			var removeStart = commentRange[0] + (index < 0 ? 0 : 1);
+			var removeStart = i + (index < 0 ? 0 : 1);
 			var removeEnd = removeStart;
 			for(; removeEnd < this.body.length; removeEnd++) {
 				if (this.body[removeEnd].start >= syncEnd) {
@@ -2249,9 +2240,9 @@ Subtitle.SmiFile.prototype.antiNormalize = function () {
 				}
 			}
 			if (comment.length > 6 && comment.substring(0, 6).toUpperCase() == "<SYNC ") {
-				var newBody = new Subtitle.SmiFile().fromTxt(comment).body;
-				if (commentRange[0] > 0) {
-					newBody = this.body.slice(0, commentRange[0]).concat(newBody);
+				var newBody = new Subtitle.SmiFile(comment).body;
+				if (i > 0) {
+					newBody = this.body.slice(0, i).concat(newBody);
 				}
 				if (removeEnd < this.body.length
 						&& !this.body[removeEnd].text.split("&nbsp;").join("").trim()
@@ -2261,20 +2252,39 @@ Subtitle.SmiFile.prototype.antiNormalize = function () {
 					this.body = newBody.concat(this.body.slice(removeEnd));
 				}
 				
+			} else if (comment.startsWith("Hold=")) {
+				removeStart = i;
+				var hold = new Subtitle.SmiFile();
+				hold.body = this.body.splice(removeStart, removeEnd - removeStart);
+				hold.body[0].text = afterComment;
+				hold.antiNormalize();
+				hold.next = this.body[removeStart];
+				
+				hold.name = comment = comment.substring(5);
+				hold.pos = 1;
+				var index = comment.indexOf("|");
+				if (index) {
+					try {
+						hold.pos = Number(comment.substring(0, index));
+					} catch (e) {
+						console.log(e);
+					}
+					hold.name = comment.substring(index + 1);
+				}
+				result.push(hold);
+				i--;
+				
 			} else {
-				this.body[commentRange[0]].text = comment;
+				this.body[i].text = comment;
 				this.body.splice(removeStart, removeEnd - removeStart);
 			}
 			
 		} catch (e) {
 			console.log(e);
 		}
-		
-		commentRange = [-1, -1];
-		comment = "";
 	}
 	
-	return this;
+	return result;
 }
 
 
@@ -2320,8 +2330,11 @@ Subtitle.Srt.int2Time = function(time) {
 	return intPadding(h) + ":" + intPadding(m) + ":" + intPadding(s) + "," + intPadding(ms);
 }
 
-Subtitle.SrtFile = function() {
+Subtitle.SrtFile = function(txt) {
 	this.body = [];
+	if (txt) {
+		this.fromTxt(txt);
+	}
 }
 Subtitle.SrtFile.prototype.toTxt = function() {
 	var items = [];

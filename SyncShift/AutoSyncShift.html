@@ -1,0 +1,359 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Auto Sync Shift 샘플</title>
+<link rel="stylesheet" type="text/css" href="bridge/WebForm.css" />
+<script src="view/lib/jquery-3.2.1.min.js"></script>
+<script src="bridge/WinAPI.js"></script>
+<script src="bridge/Binder.js"></script>
+<script>
+Binder.prototype.saveSetting = function(setting) {
+	this._.saveSetting(setting);
+}
+Binder.prototype.selectAudio = function(index) {
+	this._.selectAudio(index);
+}
+Binder.prototype.openFileDialog = function(type, withSaveSkf) {
+	this._.openFileDialog(type, withSaveSkf);
+}
+Binder.prototype.dropOriginFile = function(withSaveSkf) {
+	this._.dropOriginFile(withSaveSkf);
+}
+Binder.prototype.dropTargetFile = function(withSaveSkf) {
+	this._.dropTargetFile(withSaveSkf);
+}
+Binder.prototype.selectAudio = function(track) {
+	this._.selectAudio(track);
+}
+Binder.prototype.calcShift = function(ranges) {
+	this._.calcShift(ranges);
+}
+Binder.prototype.exit = function() {
+	this._.exit(setting);
+}
+</script>
+<script src="bridge/WebForm.js"></script>
+<script>
+var main = new WebForm();
+{	// main
+	main.settingJson = '{"saveSkf":{"origin":true,"target":true},"separators":"&nbsp;&nbsp;\\n@harne_"}';
+	
+	main.run = function() {
+		this.initializeComponent();
+		
+		var settingJson = localStorage.getItem("setting.AutoSyncShift");
+		if (settingJson) {
+			main.settingJson = settingJson;
+		}
+		
+		main.mainView.src = "view/AutoSyncShift.html";
+		main.mainView.onload = function() {
+			// 브라우저 샘플에선 url 변형 필요
+			main.mainView.contentWindow._open_ = main.mainView.contentWindow.open;
+			main.mainView.contentWindow.open = function(url, name, options) {
+				if (url.substring(0, 4) != "http") {
+					url = location.href.substring(0, location.href.lastIndexOf("/")) + "/view/" + url;
+				}
+				return main.windows[name] = window_open(url, name, options, main.mainView.contentWindow);
+			}
+			
+			main.mainView.contentWindow.binder = main.binder = new Binder(main);
+			// 브라우저 샘플에선 이게 안 도는 경우가 있나?
+			/*
+			setTimeout(function() {
+				main.mainView.contentWindow.binder.initAfterLoad();
+			}, 1000);
+			*/
+
+			var cd = main.mainView.contentDocument;
+			cd.addEventListener("dragenter", function(e) {
+				e.preventDefault();
+				main.showDragging();
+			});
+		};
+		
+		//FormClosing += new FormClosingEventHandler(BeforeExit);
+		//FormClosed += new FormClosedEventHandler(WebFormClosed);
+	}
+
+	main.initAfterLoad = function() {
+		this.super_initAfterLoad();
+		this.script("init", [main.settingJson]);
+	};
+	
+	main.beforeExit = function(e) {
+		this.script("beforeExit");
+	}
+	/*
+	public void DoExit(bool resetPlayer, bool exitPlayer)
+
+	public void WebFormClosed(object sender, FormClosedEventArgs e)
+	*/
+}
+{
+	main.saveSetting = async function(setting) {
+		// TODO: C#
+	}
+}
+{
+	main.isOriginVideoFile = true;
+	main.withSaveSkf = true;
+	main.setProgress = function(progress, status) {
+		main.script("setProgress", [progress, status]);
+	}
+	main.readVideoFile = function(path) {
+		main.script("showProcessing", [ "불러오는 중" ]);
+		var progress = main.isOriginVideoFile ? "#originVideo > .input" : "#targetVideo > .input";
+		
+		// TODO: C# - ffmpeg
+		{
+			var i = 0;
+			var interval = setInterval(function() {
+				if (i == 20) {
+					i = 0;
+					clearInterval(interval);
+				}
+				main.setProgress(progress, i++ * 0.05);
+			}, 50);
+		}
+		setTimeout(function() {
+			if (true) { // 성공했다고 가정
+				if (main.isOriginVideoFile) {
+					main.originVideoFilePath = path;
+					main.script("setOriginVideoFile", [path]);
+				} else {
+					main.tragetVideoFilePath = path;
+					main.script("setTargetVideoFile", [path]);
+				}
+				
+				// TODO: C#
+				var audios = [ "track1", "track2", "track3" ];
+				
+				if (audios.length == 0) {
+					// 오디오가 없을 때
+					main.alert("오디오가 없습니다.");
+					main.script("hideProcessing");
+					
+				} else if (audios.length == 1) {
+					// 오디오가 하나일 때
+					main.selectAudio(audios[0]);
+					
+				} else {
+					// 오디오가 여러 개라고 가정
+					main.script("showAudioSelector", [ audios.join("|") ]);
+					
+				}
+				
+			} else {
+				main.setProgress(progress, 0);
+				main.script("hideProcessing");
+			}
+		}, 1000);
+	}
+	main.selectAudio = function(track) {
+		// TODO: C#에서 진행
+		if (main.withSaveSkf) {
+			if (main.isOriginVideoFile) {
+				console.log("save origin skf");
+				main.script("refreshRangeAfterReadOriginVideoFile", [ 142857 ]);
+				
+			} else {
+				console.log("save target skf");
+			}
+		}
+		main.setProgress(main.isOriginVideoFile ? "#originVideo > .input" : "#targetVideo > .input", 0);
+		main.script("hideProcessing");
+	}
+	main.readSkfFile = async function(path) {
+		main.script("showProcessing", [ "불러오는 중" ]);
+		if (true) { // 성공했다고 가정
+			if (main.isOriginVideoFile) {
+				main.originVideoFilePath = path;
+				main.script("setOriginVideoFile", [path]);
+			} else {
+				main.targetVideoFilePath = path;
+				main.script("setTargetVideoFile", [path]);
+			}
+			
+		} else {
+			main.setProgress(main.isOriginVideoFile ? "#originVideo > .input" : "#targetVideo > .input", 0);
+			main.script("hideProcessing");
+		}
+	}
+	main.readSubtitleFile = async function(path, file) {
+		this.script("setOriginSubtitleFile", [path, await file.text()]);
+	}
+	main.openFileDialog = async function(type, withSaveSkf) {
+		var setting = {types:[{description:'자막 파일',accept:{'text/*':['.smi', '.srt', '.ass']}}]};
+		if (type % 10 == 0) {
+			// 동영상 혹은 skf 파일
+			setting = {types:[{description:'동영상 혹은 skf 파일',accept:{'video/*':['.avi', '.mkv', '.mp4', '.ts', '.m2ts', '.skf']}}]};
+		}
+		var fb = await window.showOpenFilePicker(setting);
+		if (fb && fb[0]) {
+			this.droppedFiles = [await fb[0].getFile()];
+			switch (Math.floor(type / 10)) {
+				case 1: {
+					main.dropOriginFile(withSaveSkf);
+					break;
+				}
+				case 2: {
+					main.dropTargetFile(withSaveSkf);
+					break;
+				}
+			} 
+		}
+	}
+	main.dropOriginFile = async function(withSaveSkf) {
+		if (!this.droppedFiles) return;
+		if (this.droppedFiles.length < 1) {
+			this.droppedFiles = null;
+			return;
+		}
+		var hasVideo = false;
+		var hasSubtitle = false;
+		for (var i = 0; i < this.droppedFiles.length; i++) {
+			try {
+				var file = this.droppedFiles[i];
+				var path = file.name;
+				var ext = path.substring(path.length - 4);
+				switch (ext) {
+					case ".avi":
+					case ".mkv":
+					case ".mp4":
+					case ".ts":
+					case ".m2ts": {
+						if (hasVideo) break;
+						hasVideo = true;
+						main.isOriginVideoFile = true;
+						main.withSaveSkf = withSaveSkf;
+						main.readVideoFile(path);
+						break;
+					}
+					case ".skf": {
+						if (hasVideo) break;
+						hasVideo = true;
+						main.isOriginVideoFile = true;
+						main.readSkfFile(path);
+						break;
+					}
+					case ".smi":
+					case ".ass":
+					case ".srt": {
+						if (hasSubtitle) break;
+						hasSubtitle = true;
+						main.readSubtitleFile(path, file);
+						break;
+					}
+				}
+				if (hasVideo && hasSubtitle) {
+					break;
+				}
+			} catch (e) {
+				console.log(e);
+			}
+		}
+	}
+	main.dropTargetFile = function(withSaveSkf) {
+		if (!this.droppedFiles) return;
+		if (this.droppedFiles.length < 1) {
+			this.droppedFiles = null;
+			return;
+		}
+		for (var i = 0; i < this.droppedFiles.length; i++) {
+			try {
+				var file = this.droppedFiles[i];
+				var path = file.name;
+				var ext = path.substring(path.length - 4);
+				switch (ext) {
+					case ".avi":
+					case ".mkv":
+					case ".mp4":
+					case ".ts":
+					case ".m2ts": {
+						hasVideo = true;
+						main.isOriginVideoFile = false;
+						main.withSaveSkf = withSaveSkf;
+						main.readVideoFile(path);
+						break;
+					}
+				}
+			} catch (e) {}
+		}
+	}
+	main.calcShift = async function(ranges) {
+		ranges = ranges.split("|");
+		for (var i = 0; i < ranges.length; i++) {
+			main.script("addShift", [ranges[i].split("~")[0], i * 11111]);
+		}
+		
+		// TODO: C#에서 진행
+		main.script("showProcessing", [ "작업 중" ]);
+		{
+			var i = 0;
+			var interval = setInterval(function() {
+				if (i == 20) {
+					i = 0;
+					clearInterval(interval);
+				}
+				main.setProgress("#settingCalc", i++ * 0.05);
+			}, 50);
+		}
+		setTimeout(function() {
+			main.script("hideProcessing");
+			main.setProgress("#settingCalc", 0);
+		}, 1000);
+	}
+	main.save = async function(text) {
+		
+		
+		// TODO: C#에서 진행
+	}
+}
+
+var Skf = function(sfps, kfps) {
+	this.sfps = sfps;
+	this.kfps = kfps;
+}
+Skf.prototype.save = function(path) {}
+Skf.prototype.load = function(path) {}
+Skf.prototype.getSfps10 = function() {}
+
+var FFmpeg = function(filePath) {
+	this.filePath = filePath;
+}
+FFmpeg.path = null;
+FFmpeg.prototype.getVideoInfo = function() {}
+FFmpeg.prototype.getVideoLength = function() {}
+FFmpeg.prototype.getTracks = function() {}
+FFmpeg.prototype.trackToSfps = function(index) {}
+FFmpeg.prototype.trackToKfps = function() {}
+
+var CalcShift = function () {
+		
+};
+$(function() {
+	main.run();
+	window.addEventListener("beforeunload", function(e) {
+		main.beforeExit(e);
+		return false;
+	});
+});
+</script>
+<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+html, body {
+	width: 100%;
+	height: 100%;
+	border: 0;
+	overflow: hidden;
+}
+</style>
+</head>
+<body></body>
+</html>
