@@ -144,7 +144,10 @@ function refreshTime(receiveTime, withoutTitle) {
 		showText[hold] = showLines.join("<br>");
 		
 		// 정규화 자동 적용
-		if (nextSyncLine && setting.saveWithNormalize) {
+		if ((showLines.length < 16) // 싱크 안 찍은 줄에 fade 같은 게 들어가면 연산량 과도해질 수 있음
+		 && nextSyncLine
+		 && setting.saveWithNormalize
+		) {
 			var toNormalize = new Subtitle.SmiFile(lines[hold][indexes[hold]][LINE.TEXT] + "\n" + showText[hold] + "\n" + nextSyncLine[LINE.TEXT]);
 			Subtitle.Smi.normalize(toNormalize.body);
 			if (toNormalize.body.length > 2) {
