@@ -58,6 +58,14 @@
 		var $fieldTarget;
 		var operation = { type: null, input: [] };
 
+        function syncText(sync) {
+            var h = sync;
+            var ms = h % 1000; h = (h - ms) / 1000;
+            var s = h % 60; h = (h - s) / 60;
+			var m = h % 60; h = (h - m) / 60;
+			return h + ":" + (m > 9 ? "" : "0") + m + ":" + (s > 9 ? "" : "0") + s + ":" + (ms > 99 ? "" : "0") + (ms > 9 ? "" : "0") + ms;
+		}
+
 		$(function () {
 			$(".preset").each(function () {
 				var preset = $(this);
@@ -165,14 +173,23 @@
 			$("#targetVideo input").val(path);
 		}
 		function setOriginSubtitleFile(path, text) {
-			$("#originSub input").val(path);
+            $("#originSub input").val(path);
+
+            var range = [0, 0]
+            var ranges = [];
+
+            var separators = $("#inputSeparator").val().split("\n");
+            for (var i = 0; i < separators.length; i++) {
+                var separator = separators[i].trim();
+                if (separator.length == 0) {
+                    separators.splice(i--, 1);
+                }
+            }
+            separators.push("\n\n");
 
 			var $preview = $fieldOrigin.find(".preview-body");
 			var ext = path.substring(path.length - 4);
-			if (ext == ".srt") {
-				//ext = ".smi";
-			}
-			if (ext == ".smi") {
+            if (ext == ".smi") {
 				var texts = text.split("\r\n").join("\n").split("\n<!-- Hold=");
 				var holdInfos = [{ text: texts[0] }];
 				for (var i = 1; i < texts.length; i++) {
@@ -208,44 +225,12 @@
 				// SMI 파일 역정규화
 				var origin = operation.origin = new Subtitle.SmiFile(holdInfos[0].text);
 				operation.type = "smi";
-				/*
-				싱크 조절기에선 내포 홀드 건너뜀 - End는 따로 잡아줘야 함
-				var normalized = origin.antiNormalize();
-				holdInfos = normalized.concat(holdInfos.slice(1));
-				holdInfos[0] = normalized[0];
-				holdInfos[0].pos = 0;
-				holdInfos[0].name = "메인";
-				holdInfos[0].text = holdInfos[0].toTxt().trim();
-				for (var i = 1; i < normalized.length; i++) {
-					// 내포된 홀드는 종료싱크가 빠졌을 수 있음
-					var hold = holdInfos[i];
-					if (hold.next && hold.body[hold.body.length - 1].text.split("&nbsp;").join("").trim().length > 0) {
-						hold.body.push(new Subtitle.Smi(hold.next.start, hold.next.syncType, "&nbsp;"));
-					}
-					holdInfos[i].text = hold.toTxt().trim();
-				}
-				for (var i = normalized.length; i < holdInfos.length; i++) {
-					holdInfos[i].text = new Subtitle.SmiFile(holdInfos[i].text).antiNormalize()[0].toTxt().trim();
-				}
-				*/
 				for (var i = 1; i < holdInfos.length; i++) {
 					holdInfos[i].text = new Subtitle.SmiFile(holdInfos[i].text).antiNormalize()[0].toTxt().trim();
 				}
 				operation.input = holdInfos;
 
-				var separators = $("#inputSeparator").val().split("\n");
-				for (var i = 0; i < separators.length; i++) {
-					var separator = separators[i].trim();
-					if (separator.length == 0) {
-						separators.splice(i--, 1);
-					}
-				}
-				separators.push("\n\n");
-
-				var range = [0, 0]
-				var ranges = [];
-
-				setPreview($preview, origin.body);
+                setPreview($preview, origin.body);
 
 				for (var i = 0; i < origin.body.length; i++) {
 					var item = origin.body[i];
@@ -262,51 +247,130 @@
 						}
 					}
 				}
-				$("#rangeList .list-body").empty();
-				for (var j = 0; j < ranges.length; j++) {
-					var range = ranges[j];
-					if (range[0] == range[1]) {
-						continue;
-					}
-					addRange(range);
+
+            } else if (ext == ".srt") {
+                operation.type = "srt";
+                operation.origin = new Subtitle.SrtFile(text);
+
+                setPreview($preview, operation.origin.body);
+
+                for (var i = 0; i < operation.origin.body.length; i++) {
+                    var item = operation.origin.body[i];
+                    if (range[0] <= 0) {
+                        range[0] = item.start;
+                        ranges.push(range);
+                    } else if (range[1] + 20000 < item.start) {
+                        // 20초 이상 벌어지면 범위 분리
+                        ranges.push(range = [item.start, item.end]);
+                    }
+                    range[1] = item.end;
+
+                    for (var j = 0; j < separators.length; j++) {
+                        if (item.text.indexOf(separators[j]) >= 0) {
+                            range = [-1, 0];
+                            break;
+                        }
+                    }
 				}
 
-			} else if (ext == ".ass") {
+            } else if (ext == ".ass") {
+                operation.type = "ass";
+                operation.origin = new Subtitle.AssFile(text);
 
+                operation.sorted = new Subtitle.AssFile(text);
+				operation.sorted.body.sort(function (a, b) {
+					if (a.start == b.start) {
+						return a.end - b.end;
+					}
+					return a.start - b.start;
+				})
+                setPreview($preview, operation.sorted.body);
+
+                for (var i = 0; i < operation.sorted.body.length; i++) {
+                    var item = operation.sorted.body[i];
+                    if (range[0] <= 0) {
+                        range[0] = item.start;
+                        ranges.push(range);
+                    } else if (range[1] + 20000 < item.start) {
+                        // 20초 이상 벌어지면 범위 분리
+                        ranges.push(range = [item.start, item.end]);
+                    }
+                    range[1] = Math.max(range[1], item.end);
+
+                    for (var j = 0; j < separators.length; j++) {
+                        if (item.text.indexOf(separators[j]) >= 0) {
+                            range = [-1, 0];
+                            break;
+                        }
+                    }
+                }
 			}
+
+            $("#rangeList .list-body").empty();
+            for (var j = 0; j < ranges.length; j++) {
+                var range = ranges[j];
+                if (range[0] == range[1]) {
+                    continue;
+                }
+                addRange(range);
+            }
 		}
 		function setPreview($preview, body) {
 			$preview.empty();
 			var $preset = $preview.data("preset");
 
-			for (var i = 0; i < body.length; i++) {
-				var item = body[i];
-				var $line = $preset.clone().data({ item: item });
-				$line.find(".sync").text(item.start);
+            switch (operation.type) {
+				case "smi":
+					for (var i = 0; i < body.length; i++) {
+						var item = body[i];
+						var $line = $preset.clone().data({ item: item });
+                        $line.find(".sync").text(syncText(item.start));
 
-				var text = item.text.split("\n").join("").split(/<br>/gi).join("\n").split("<!--");
-				for (var j = 1; j < text.length; j++) {
-					var index = text[j].indexOf("-->");
-					if (index >= 0) {
-						text[j] = text[j].substring(index + 3);
-					} else {
-						text[j] = "";
+						var text = item.text.split("\n").join("").split(/<br>/gi).join("\n").split("<!--");
+						for (var j = 1; j < text.length; j++) {
+							var index = text[j].indexOf("-->");
+							if (index >= 0) {
+								text[j] = text[j].substring(index + 3);
+							} else {
+								text[j] = "";
+							}
+						}
+						text = text.join("").split("<");
+						for (var j = 1; j < text.length; j++) {
+							var index = text[j].indexOf(">");
+							if (index >= 0) {
+								text[j] = text[j].substring(index + 1);
+							} else {
+								text[j] = "";
+							}
+						}
+						$line.find(".text").html(text.join("").split("\n").join("<br />").split("&").join("&amp;"));
+						if (item.syncType) {
+							$line.addClass("type" + item.syncType);
+						}
+						$preview.append($line);
 					}
-				}
-				text = text.join("").split("<");
-				for (var j = 1; j < text.length; j++) {
-					var index = text[j].indexOf(">");
-					if (index >= 0) {
-						text[j] = text[j].substring(index + 1);
-					} else {
-						text[j] = "";
-					}
-				}
-				$line.find(".text").html(text.join("").split("\n").join("<br />").split("&").join("&amp;"));
-				if (item.syncType) {
-					$line.addClass("type" + item.syncType);
-				}
-				$preview.append($line);
+					break;
+
+                case "srt":
+                    for (var i = 0; i < body.length; i++) {
+                        var item = body[i];
+                        var $line = $preset.clone().data({ item: item });
+                        $line.find(".sync").text(syncText(item.start));
+                        $line.find(".text").text(item.text);
+                        $preview.append($line);
+                    }
+                    break;
+
+                case "ass":
+                    for (var i = 0; i < body.length; i++) {
+                        var item = body[i];
+                        var $line = $preset.clone().data({ item: item });
+                        $line.find(".sync").text(syncText(item.start * 10));
+                        $line.find(".text").text(item.text);
+                        $preview.append($line);
+                    }
+					break;
 			}
 		}
 
@@ -437,11 +501,35 @@
 					for (var hi = 1; hi < operation.input.length; hi++) {
 						var holdInfo = operation.input[hi];
 						operation.output.push({
-							pos: holdInfo.pos
-							, name: holdInfo.name
-							, text: shiftText(holdInfo.text)
+								pos: holdInfo.pos
+							,	name: holdInfo.name
+							,	text: shiftText(holdInfo.text)
 						});
 					}
+					break;
+				}
+				case "srt": {
+					var origin = operation.origin;
+					var target = operation.target = new Subtitle.SrtFile();
+					for (var i = 0; i < origin.body.length; i++) {
+						var item = origin.body[i];
+                        target.body.push(new Subtitle.Srt(shiftSync(item.start), shiftSync(item.end), item.text));
+                    }
+                    setPreview($fieldTarget.find(".preview-body"), target.body);
+                    operation.output = [{ text: target.toTxt() }];
+					break;
+				}
+                case "ass": {
+                    var origin = operation.origin;
+					var target = operation.target = new Subtitle.AssFile();
+					target.header = origin.header;
+                    for (var i = 0; i < origin.body.length; i++) {
+                        var item = origin.body[i];
+                        target.body.push(new Subtitle.Ass(Math.round(shiftSync(item.start * 10) / 10), Math.round(shiftSync(item.end * 10) / 10), item.style, item.text));
+                    }
+                    setPreview($fieldTarget.find(".preview-body"), target.body);
+                    operation.output = [{ text: target.toTxt() }];
+                    break;
 				}
 			}
 		}
@@ -636,13 +724,13 @@
 		}
 
 		.preview .sync {
-			width: 50px;
+			width: 72px;
 			text-align: right;
 		}
 
 		.preview .text {
 			border-left: 1px solid #aaa;
-			width: calc(100% - 50px);
+			width: calc(100% - 72px);
 		}
 
 		.preview .line.type1 .sync {

@@ -15,6 +15,9 @@ namespace Jamaker
     public class VideoInfo
     {
     	public static string exePath = Path.Combine(Directory.GetCurrentDirectory(), "ffmpeg");
+
+        // 원래 키프레임도 보려고 했는데...
+        // 생각보다 키프레임이 화면전환에 안 맞는 경우가 많음
     	public static bool withKeyframe = false;
 
         public string path;

@@ -503,9 +503,9 @@ namespace Jamaker
                     }
                 }
 
-                List<SyncShift> result = new List<SyncShift>();
-
                 WebProgress progress = new WebProgress(this, "#settingCalc");
+                /*
+                List<SyncShift> result = new List<SyncShift>();
                 foreach (Range range in ranges)
                 {
                     SyncShift.GetShifts(originVideoFile.GetSfs(), targetVideoFile.GetSfs()
@@ -513,10 +513,12 @@ namespace Jamaker
                         , new Range[] { range }
                         , range.shift);
                 }
+                */
+                List<SyncShift> result = SyncShift.GetShiftsForRanges(originVideoFile.GetSfs(), targetVideoFile.GetSfs(), ranges, progress);
 
                 foreach (SyncShift shift in result)
                 {
-                    Script("addShift", new object[] { shift.start, shift.shift });
+                    Script("addShift", new object[] { shift.start * 10, shift.shift * 10 });
                 }
 
                 HideProcessing();

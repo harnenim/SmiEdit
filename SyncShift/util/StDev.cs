@@ -9,6 +9,9 @@ namespace Jamaker
         public List<double> pows = new List<double>();
         public double sum = 0;
         public double pSum = 0;
+        public double avg = 0;
+        public double value = 0;
+
         public StDev() { }
         public StDev(List<double> values)
         {
@@ -19,13 +22,13 @@ namespace Jamaker
         }
         public void Add(double value)
         {
-            var pow = Math.Pow(value, 2);
+            var pow = value * value;
             sum += value;
             pSum += pow;
             values.Add(value);
             pows.Add(pow);
         }
-        public void function(int index, double value)
+        public void Replace(int index, double value)
         {
             while (index < 0)
             {
@@ -33,7 +36,7 @@ namespace Jamaker
             }
             index %= values.Count;
 
-            var pow = Math.Pow(value, 2);
+            var pow = value * value;
             sum += value - values[index];
             pSum += pow - pows[index];
             values[index] = value;
@@ -48,9 +51,15 @@ namespace Jamaker
         {
             return (pSum / values.Count) - Math.Pow(GetAvg(), 2);
         }
-        public double GetStDev()
+        public StDev Calc()
         {
-            return Math.Sqrt(GetVar());
+            avg = sum / values.Count;
+            value = Math.Sqrt((pSum / values.Count) - (avg * avg));
+            return this;
+        }
+        public static StDev From(List<double> values)
+        {
+            return new StDev(values).Calc();
         }
     }
 

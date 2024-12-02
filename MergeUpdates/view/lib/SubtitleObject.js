@@ -791,8 +791,12 @@ Subtitle.Ass.int2Time = function(time) {
 	var ds= Math.floor(time % 100);
 	return h + ":" + intPadding(m) + ":" + intPadding(s) + "." + intPadding(ds);
 }
-function intPadding(value) {
-	return (value < 10 ? "0" : "") + value;
+function intPadding(value, length = 2) {
+	value = "" + value;
+	while (value.length < length) {
+		value = "0" + value;
+	}
+	return value;
 }
 Subtitle.Ass.time2Int = function(time) {
 	var vs = time.split(':');
@@ -2323,11 +2327,11 @@ Subtitle.Srt.prototype.fromSync = function(sync) {
 }
 
 Subtitle.Srt.int2Time = function(time) {
-	var h = Math.floor(time / 360000);
-	var m = Math.floor(time / 6000) % 60;
-	var s = Math.floor(time / 100) % 60;
+	var h = Math.floor(time / 3600000);
+	var m = Math.floor(time / 60000) % 60;
+	var s = Math.floor(time / 1000) % 60;
 	var ms= Math.floor(time % 1000);
-	return intPadding(h) + ":" + intPadding(m) + ":" + intPadding(s) + "," + intPadding(ms);
+	return intPadding(h) + ":" + intPadding(m) + ":" + intPadding(s) + "," + intPadding(ms, 3);
 }
 
 Subtitle.SrtFile = function(txt) {
