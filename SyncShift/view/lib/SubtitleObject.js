@@ -2208,10 +2208,10 @@ Subtitle.SmiFile.prototype.fromSync = function(syncs) {
 Subtitle.SmiFile.prototype.antiNormalize = function () {
 	var result = [this];
 	
-	for (i = 0; i < this.body.length; i++) {
+	for (var i = 0; i < this.body.length; i++) {
 		var smi = this.body[i];
 		var afterComment = null;
-		
+
 		// 주석 시작점 찾기
 		if (!smi.text.startsWith("<!-- End=")) {
 			continue;
@@ -2281,6 +2281,7 @@ Subtitle.SmiFile.prototype.antiNormalize = function () {
 			} else {
 				this.body[i].text = comment;
 				this.body.splice(removeStart, removeEnd - removeStart);
+				i --;
 			}
 			
 		} catch (e) {
