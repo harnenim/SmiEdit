@@ -39,17 +39,23 @@ function setProgress(name, ratio) {
 	}
 	progresses[id].width(ratio * 100 + "%");
 }
-function showAudioSelector(list) {
+function showAudioSelector(list, isOrigin, withSaveSkf) {
 	var list = list.split("|");
-	var ol = $("#selectAudio").show().find(".list").empty();
+	var sa = $("#selectAudio").show();
+	var ol = sa.find(".list").empty();
 	for (var i = 0; i < list.length; i++) {
 		ol.append($("<li>").text(list[i]));
 	}
+	sa.data({
+			isOrigin: isOrigin
+		,	withSaveSkf: withSaveSkf
+	});
 }
 $(function() {
-	$("#selectAudio .list").on("click", "li", function() {
-		binder.selectAudio($(this).text().split(":")[0]);
-		$("#selectAudio").hide();
+	var sa = $("#selectAudio");
+	sa.find(".list").on("click", "li", function () {
+        binder.selectAudio($(this).text().split("ː")[0], sa.data("isOrigin"), sa.data("withSaveSkf"));
+		sa.hide();
 	});
 });
 	</script>
@@ -58,6 +64,8 @@ var $fieldOrigin;
 var $fieldTarget;
 var operation = { type: null, input: [] };
 
+/*
+// 생각해보니 숫자 복붙하는 경우가 있었음...
 function syncText(sync) {
     var h = sync;
     var ms = h % 1000; h = (h - ms) / 1000;
@@ -65,6 +73,7 @@ function syncText(sync) {
 	var m = h % 60; h = (h - m) / 60;
 	return h + ":" + (m > 9 ? "" : "0") + m + ":" + (s > 9 ? "" : "0") + s + ":" + (ms > 99 ? "" : "0") + (ms > 9 ? "" : "0") + ms;
 }
+*/
 
 $(function() {
 	$(".preset").each(function() {
@@ -287,7 +296,7 @@ function refreshPreview(isTarget=false) {
 	var $preset = $preview.data("preset");
 	function getLine(item, sync, text) {
 		var $line = $preset.clone().data({ item: item });
-		$line.find(".sync").text(syncText(sync));
+		$line.find(".sync").text(sync);
 		$line.find(".text").empty().html(text);
 		return $line;
 	}

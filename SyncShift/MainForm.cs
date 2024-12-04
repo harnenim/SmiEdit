@@ -143,12 +143,8 @@ namespace Jamaker
 
 
         VideoInfo originVideoFile = null;
-        VideoInfo originSubtitleFile = null;
         VideoInfo targetVideoFile = null;
-
-        bool isOriginVideoFile = true;
-        bool withSaveSkf = true;
-
+        
         public void ShowProcessing(string message)
         {
             Script("showProcessing", new object[] { message });
@@ -163,47 +159,47 @@ namespace Jamaker
         }
 
         VideoInfo readingVideoFile = null;
-        public void ReadVideoFile(string path)
+        public void ReadVideoFile(string path, bool isOrigin, bool withSaveSkf)
         {
             Console.WriteLine("ReadVideoFile: {0}", path);
             ShowProcessing("불러오는 중");
-            var progress = isOriginVideoFile ? "#originVideo > .input" : "#targetVideo > .input";
+            var progress = isOrigin ? "#originVideo > .input" : "#targetVideo > .input";
             readingVideoFile = new VideoInfo(path, new WebProgress(this, progress));
             new Thread(new ThreadStart(() =>
             {
-                readingVideoFile.RefreshInfo(AfterRefreshInfo);
+                readingVideoFile.RefreshInfo((VideoInfo video) => {
+                	AfterRefreshInfo(video, isOrigin, withSaveSkf);
+                });
             })).Start();
         }
-        public void AfterRefreshInfo(VideoInfo video)
+        public void AfterRefreshInfo(VideoInfo video, bool isOrigin, bool withSaveSkf)
         {
             Console.WriteLine("AfterRefreshInfo");
-            if (video.length > 0)
+            if (video.duration > 0)
             {
-                if (isOriginVideoFile)
+                if (isOrigin)
                 {
-                    originVideoFile = video;
-                    Script("setOriginVideoFile", new object[] { video.path });
+                    Script("setOriginVideoFile", new object[] { (originVideoFile = video).path });
                 }
                 else
                 {
-                    targetVideoFile = video;
-                    Script("setTargetVideoFile", new object[] { video.path });
+                    Script("setTargetVideoFile", new object[] { (targetVideoFile = video).path });
                 }
 
                 List<StreamAttr> streams = video.streams;
 
-                List<int> audios = new List<int>();
+                List<StreamAttr> audios = new List<StreamAttr>();
                 for (int i = 0; i < streams.Count; i++)
                 {
                     StreamAttr stream = streams[i];
-                    Console.WriteLine("Stream {0}: {1}({2})", i, stream.type, stream.language);
+                    Console.WriteLine("Stream {0}: {1}({2})", stream.map, stream.type, stream.language);
                     foreach (KeyValuePair<string, string> pair in stream.metadata)
                     {
                         Console.WriteLine("  {0}: {1}", pair.Key, pair.Value);
                     }
                     if (streams[i].type.Equals("audio"))
                     {
-                        audios.Add(i);
+                        audios.Add(stream);
                     }
                 }
                 Console.WriteLine("audios.Count: {0}", audios.Count);
@@ -216,17 +212,17 @@ namespace Jamaker
                         return;
                     case 1:
                         {
-                            SelectAudio(audios[0]);
+                            SelectAudio(audios[0].map, isOrigin, withSaveSkf);
                             break;
                         }
                     default:
                         string data = null;
-                        foreach (int index in audios)
+                        foreach (StreamAttr audio in audios)
                         {
-                            string item = string.Format("{0}: [{1}] {2}", index, streams[index].language, streams[index].metadata["title"]);
+                            string item = string.Format("{0}ː[{1}] {2}", audio.map, audio.language, audio.metadata["title"]);
                             data = data == null ? item : (data + "|" + item);
                         }
-                        Script("showAudioSelector", new object[] { data });
+                        Script("showAudioSelector", new object[] { data, isOrigin, withSaveSkf });
                         break;
                 }
             }
@@ -236,44 +232,35 @@ namespace Jamaker
                 HideProcessing();
             }
         }
-        public void SelectAudio(int track)
+        public void SelectAudio(string map, bool isOrigin, bool withSaveSkf)
         {
-            Console.WriteLine("SelectAudio: {0}", track);
-            if (isOriginVideoFile)
+            Console.WriteLine("SelectAudio: {0}", map);
+            VideoInfo video = originVideoFile;
+            string progress = "#originVideo > .input";
+            
+            if (isOrigin)
             {
-                Script("refreshRangeAfterReadOriginVideoFile", new object[] { originVideoFile.length });
-                new Thread(new ThreadStart(() =>
-                {
-                    originVideoFile.audioTrackIndex = track;
-                    originVideoFile.RefreshSkf();
-                    if (withSaveSkf)
-                    {
-                        originVideoFile.SaveSkf();
-                    }
-                    SetProgress("#originVideo > .input", 0);
-                    HideProcessing();
-                })).Start();
+                Script("refreshRangeAfterReadOriginVideoFile", new object[] { video.duration });
             }
             else
             {
-                new Thread(new ThreadStart(() =>
-                {
-                    targetVideoFile.audioTrackIndex = track;
-                    targetVideoFile.RefreshSkf();
-                    if (withSaveSkf)
-                    {
-                        targetVideoFile.SaveSkf();
-                    }
-                    SetProgress("#targetVideo > .input", 0);
-                    HideProcessing();
-                })).Start();
+            	video = targetVideoFile;
+            	progress = "#targetVideo > .input";
             }
+            
+            new Thread(new ThreadStart(() =>
+            {
+            	video.audioMap = map;
+            	video.RefreshSkf(withSaveSkf);
+            	SetProgress(progress, 0);
+            	HideProcessing();
+            })).Start();
         }
-        public void ReadSkfFile(string path)
+        public void ReadSkfFile(string path, bool isOrigin)
         {
             Console.WriteLine("ReadSkfFile: {0}", path);
             ShowProcessing("불러오는 중");
-            if (isOriginVideoFile)
+            if (isOrigin)
             {
                 Script("setOriginVideoFile", new object[] { path });
                 originVideoFile = new VideoInfo(path);
@@ -370,17 +357,14 @@ namespace Jamaker
                         {
                             if (hasVideo) break;
                             hasVideo = true;
-                            isOriginVideoFile = true;
-                            this.withSaveSkf = withSaveSkf;
-                            ReadVideoFile(path);
+                            ReadVideoFile(path, true, withSaveSkf);
                             break;
                         }
                     case ".skf":
                         {
                             if (hasVideo) break;
                             hasVideo = true;
-                            isOriginVideoFile = true;
-                            ReadSkfFile(path);
+                            ReadSkfFile(path, true);
                             break;
                         }
                     case ".smi":
@@ -419,15 +403,12 @@ namespace Jamaker
                     case ".ts":
                     case ".m2ts":
                         {
-                            isOriginVideoFile = false;
-                            this.withSaveSkf = withSaveSkf;
-                            ReadVideoFile(path);
+                            ReadVideoFile(path, false, withSaveSkf);
                             break;
                         }
                     case ".skf":
                         {
-                            isOriginVideoFile = false;
-                            ReadSkfFile(path);
+                            ReadSkfFile(path, false);
                             break;
                         }
                 }

@@ -7,6 +7,7 @@ namespace Jamaker
 {
     public class StreamAttr
     {
+        public string map;
         public string type;
         public string language;
         public Dictionary<string, string> metadata = new Dictionary<string, string>();
@@ -21,9 +22,8 @@ namespace Jamaker
     	public static bool withKeyframe = false;
 
         public string path;
-        public int duration = 0;
-        public List<StreamAttr> streams = new List<StreamAttr>();
-        public int length;
+        public int duration;
+        public List<StreamAttr> streams;
         public WebProgress progress;
         public bool isSkf = false;
 
@@ -42,32 +42,39 @@ namespace Jamaker
         public void RefreshInfo(AfterRefreshInfo afterRefreshInfo)
         {
             RefreshVideoInfo();
-            RefreshVideoLength();
             afterRefreshInfo(this);
         }
         
         private static Process GetProcess(string exe)
         {
-            Process proc = new Process();
-            proc.StartInfo.UseShellExecute = false;
-            proc.StartInfo.CreateNoWindow = true;
-            proc.StartInfo.RedirectStandardOutput = true;
-            proc.StartInfo.FileName = Path.Combine(exePath, exe);
-            return proc;
+            return GetProcess(exe, false);
+        }
+        private static Process GetProcess(string exe, bool withStandardError)
+        {
+        	Process proc = new Process();
+        	proc.StartInfo.UseShellExecute = false;
+        	proc.StartInfo.CreateNoWindow = true;
+        	proc.StartInfo.RedirectStandardOutput = true;
+        	proc.StartInfo.RedirectStandardError = withStandardError;
+        	proc.StartInfo.FileName = Path.Combine(exePath, exe);
+        	return proc;
         }
 
         private void RefreshVideoInfo()
         {
-            Process proc = GetProcess("ffprobe.exe");
+            Process proc = GetProcess("ffprobe.exe", true);
             proc.StartInfo.Arguments = "\"" + path + "\"";
-            proc.StartInfo.RedirectStandardError = true;
             proc.Start();
 
+            streams = new List<StreamAttr>();
+            duration = 10000000;
+            
             StreamAttr lastStream = null;
             bool isMetadata = false;
             string[] lines = proc.StandardError.ReadToEnd().Split(new char[] { '\n', '\r' });
             foreach (string line in lines)
             {
+                //Console.WriteLine(line);
                 if (line.Trim().Length == 0) continue;
                 if (lastStream != null && line.Equals("    Metadata:"))
                 {
@@ -104,12 +111,13 @@ namespace Jamaker
                 }
                 else if (line.StartsWith("    Stream #"))
                 {
-                    string pattern = "Stream #[0-9]+:[0-9]+\\((.*)\\): (.*): ";
+                    string pattern = "Stream #([0-9]+:[0-9])+\\((.*)\\): (.*): ";
                     System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(line, pattern);
                     System.Text.RegularExpressions.GroupCollection groups = m.Groups;
                     streams.Add(lastStream = new StreamAttr()
-                    {   type = groups[2].Value.ToLower()
-                      , language = groups[1].Value
+                    {   map = groups[1].Value
+                      , type = groups[3].Value.ToLower()
+                      , language = groups[2].Value
                     });
                 }
                 else if (lastStream != null && line.StartsWith("      title           : "))
@@ -118,43 +126,31 @@ namespace Jamaker
                 }
             }
             proc.Close();
-        }
 
-        public int RefreshVideoLength()
-        {
-            Process proc = GetProcess("ffprobe.exe");
+            Console.WriteLine("RefreshVideoLength");
+            proc = GetProcess("ffprobe.exe");
             proc.StartInfo.Arguments = "-hide_banner -show_format -show_streams -pretty \"" + path + "\"";
             proc.Start();
-            string[] lines = proc.StandardOutput.ReadToEnd().Split(new char[] { '\n', '\r' });
+            lines = proc.StandardOutput.ReadToEnd().Split(new char[] { '\n', '\r' });
             foreach (string line in lines)
             {
-                if (line.ToUpper().IndexOf("DURATION=") < 0) continue;
-
-                int index = line.IndexOf("=");
-                if (index < 0) continue;
-
-                string[] vs = line.Substring(index + 1).Split(':');
-                if (vs.Length == 1) continue;
-
-                double v = 0;
-                for (int i = 0; i < vs.Length; i++)
-                {
-                    v = v * 60 + Convert.ToDouble(vs[i]);
-                }
-                return length = (int)(v * 1000);
+                Console.WriteLine(line);
             }
             proc.Close();
-
-            return length = 10000000;
         }
 
         public List<int> audioTrackIndexes = new List<int>();
-        public int audioTrackIndex = 0;
+        public string audioMap = null;
         private List<double> sfs = null;
         private List<double> kfs = null;
 
         public void RefreshSkf()
         {
+            RefreshSkf(false);
+        }
+        public void RefreshSkf(bool withSaveSkf)
+        {
+            Console.WriteLine("RefreshSkf");
             if (isSkf)
             {
                 LoadSkf();
@@ -163,45 +159,16 @@ namespace Jamaker
             {
                 GetSfs();
                 GetKfs();
+                if (withSaveSkf) SaveSkf();
             }
         }
 
         public List<double> GetSfs()
         {
-            if (sfs != null)
-            {
-                return sfs;
-            }
-
-
-            int size = 0;
-            {
-                StreamAttr audioStream = streams[audioTrackIndex];
-                string dur = null;
-                try
-                {
-                    dur = audioStream.metadata["DURATION"];
-                }
-                catch (Exception)
-                {
-                    dur = audioStream.metadata["DURATION-eng"];
-                }
-                string[] vs = dur.Split(':');
-
-                double v = 0;
-                for (int i = 0; i < vs.Length; i++)
-                {
-                    v = v * 60 + Convert.ToDouble(vs[i]);
-                }
-
-                size = (int)(v * 1000);
-            }
-
             sfs = new List<double>();
 
-            Process proc = GetProcess("ffmpeg.exe");
-            proc.StartInfo.Arguments = "-i \"" + path + "\" -vn -ar 44100 -ac " + audioTrackIndex + " -f f32le -";
-            proc.StartInfo.RedirectStandardError = true;
+            Process proc = GetProcess("ffmpeg.exe", true);
+            proc.StartInfo.Arguments = string.Format("-i \"{0}\" -vn -map {1} -ar 44100 -ac 1 -f f32le -", path, audioMap);
             proc.ErrorDataReceived += new DataReceivedEventHandler(Proc_ErrorDataReceived);
             proc.Start();
             proc.BeginErrorReadLine();
@@ -238,13 +205,15 @@ namespace Jamaker
                         sfs.Add(sum / count);
                         sum = 0;
                         if (count % 441000 == 0)
-                            progress.Set(ratio * (count / (size * 44.1)));
+                        {
+                            progress.Set(ratio * (count / (duration * 44.1)));
+                        }
                     }
                 }
             }
             proc.Close();
 
-            progress.Set(0.3);
+            progress.Set(ratio);
 
             return sfs;
         }
@@ -259,9 +228,8 @@ namespace Jamaker
 
             if (withKeyframe)
             {
-            	Process proc = GetProcess("ffmpeg.exe");
+            	Process proc = GetProcess("ffmpeg.exe", true);
                 proc.StartInfo.Arguments = "-loglevel error -skip_frame nokey -select_streams v:0 -show_entries frame=pkt_pts_time -of csv=print_section=0 \"" + path + "\"";
-                proc.StartInfo.RedirectStandardError = true;
                 proc.ErrorDataReceived += new DataReceivedEventHandler(Proc_ErrorDataReceived);
                 proc.Start();
                 proc.BeginErrorReadLine();
@@ -278,7 +246,7 @@ namespace Jamaker
                         Console.WriteLine(time);
                         kfs.Add(time);
                         if (true)
-                            progress.Set(0.3 + (0.7 * (time * 1000 / length)));
+                            progress.Set(0.3 + (0.7 * (time * 1000 / duration)));
                     }
                     catch (Exception) { }
                 }

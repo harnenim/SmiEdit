@@ -1,9 +1,4 @@
-﻿using CefSharp.Structs;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
-using System.IO;
-using System.Reflection;
-
-namespace Jamaker
+﻿namespace Jamaker
 {
     class BaseBinder
     {
@@ -62,9 +57,9 @@ namespace Jamaker
         {
             _.DropTargetFile(withSaveSkf);
         }
-        public void SelectAudio(int index)
+        public void SelectAudio(string map, bool isOrigin, bool withSaveSkf)
         {
-            _.SelectAudio(index);
+            _.SelectAudio(map, isOrigin, withSaveSkf);
         }
         public void CalcShift(string ranges, string shifts)
         {
