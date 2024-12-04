@@ -165,6 +165,10 @@ namespace Jamaker
 
         public List<double> GetSfs()
         {
+            if (sfs != null)
+            {
+                return sfs;
+            }
             sfs = new List<double>();
 
             Process proc = GetProcess("ffmpeg.exe", true);
