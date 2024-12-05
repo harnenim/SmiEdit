@@ -99,7 +99,7 @@ var Tab = function(text, path) {
 	
 	var tab = this;
 	this.holdSelector.on("click", ".selector", function() {
-		tab.selectHold(SmiEditor.selected = $(this).data("hold"));
+		tab.selectHold($(this).data("hold"));
 		
 	}).on("dblclick", ".hold-name", function(e) {
 		e.stopPropagation();
@@ -319,6 +319,8 @@ Tab.prototype.selectHold = function(hold) {
 	} else {
 		index = this.holds.indexOf(hold);
 	}
+	SmiEditor.selected = hold;
+
 	this.holdSelector.find(".selector").removeClass("selected");
 	this.holdArea.find(".hold").hide();
 	hold.selector.addClass("selected");
