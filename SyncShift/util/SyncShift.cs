@@ -61,13 +61,13 @@ namespace Jamaker
 				        for (int i = 0; i<SyncShift.CHECK_RANGE; i++) {
 					        ratios.Add(Math.Log10((origin[start + i] + 0.000001) / (target[start + shift + add + i] + 0.000001)));
 				        }
-                        StDev point = StDev.From(ratios);
+                        StDev point = new StDev(ratios);
 				        if (minPoint == null || point.value < minPoint.value) {
 					        // 오차가 기존값보다 작음
 					        Console.WriteLine("오차가 기존값보다 작음(+)");
 					        minPoint = point;
 					        minAdd = add;
-                            Console.WriteLine(point);
+                            Console.WriteLine(point.value);
 					        if (point.value == 0.0) {
 						        Console.WriteLine("완전히 일치: 정답 찾음");
 						        // 완전히 일치: 정답 찾음
@@ -78,7 +78,7 @@ namespace Jamaker
                         {
                             Console.WriteLine("오차가 기존값에 비해 지나치게 큼(+)");
                             // 오차가 기존값에 비해 지나치게 큼: 이미 정답을 찾았다고 간주
-                            Console.WriteLine(point);
+                            Console.WriteLine(point.value);
                             doPlus = false;
                         }
 				
@@ -103,14 +103,14 @@ namespace Jamaker
                         {
                             ratios.Add(Math.Log10((origin[start + shift + i] + 0.000001) / (target[start + shift - add + i] + 0.000001)));
                         }
-                        StDev point = StDev.From(ratios);
+                        StDev point = new StDev(ratios);
                         if (minPoint == null || point.value < minPoint.value)
                         {
                             // 오차가 기존값보다 작음
                             Console.WriteLine("오차가 기존값보다 작음(-)");
                             minPoint = point;
                             minAdd = -add;
-                            Console.WriteLine(point);
+                            Console.WriteLine(point.value);
                             if (point.value == 0.0)
                             {
                                 // 완전히 일치: 정답 찾음
@@ -122,7 +122,7 @@ namespace Jamaker
                         {
                             // 오차가 기존값에 비해 지나치게 큼: 이미 정답을 찾았다고 간주
                             Console.WriteLine("오차가 기존값에 비해 지나치게 큼(-)");
-                            Console.WriteLine(point);
+                            Console.WriteLine(point.value);
                             doMinus = false;
                         }
                     }
@@ -140,50 +140,44 @@ namespace Jamaker
                 return shifts;
             }
             Console.WriteLine("최종값");
-            Console.WriteLine(minPoint);
+            Console.WriteLine(minPoint.value);
             shifts.Add(new SyncShift(start, shift = (shift + minAdd)));
 
             // 현재 가중치가 어디까지 이어질지 구하기
             double limit = Math.Max(minPoint.value * 12, 0.0001);
             int count = 0;
-            int index = start + 10;
+            int offset = start + 10;
             double v = 0;
-            int oShift, tShift;
+            int oShift = 0, tShift = shift;
 
-            if (shift > 0)
+            if (shift < 0)
             {
-                oShift = 0;
-                tShift = shift;
-            }
-            else
-            {
-                oShift = -shift;
-                tShift = 0;
+                offset -= shift;
             }
 
-            while (index + oShift < limitOfOrigin && index + tShift < target.Count)
+            while (offset + oShift < limitOfOrigin && offset + tShift < target.Count)
             {
-                v = Math.Abs(Math.Log10((origin[index + oShift] + 0.000001) / (target[index + tShift] + 0.000001)) - minPoint.avg);
+                v = Math.Abs(Math.Log10((origin[offset + oShift] + 0.000001) / (target[offset + tShift] + 0.000001)) - minPoint.avg);
                 if (v > limit)
                 {
-                    Console.WriteLine(index + ": " + v + " / " + limit);
+                    Console.WriteLine(offset + ": " + v + " / " + limit);
                     if (++count >= 5) break;
                 }
                 else if (count > 0)
                     count = 0;
-                index++;
+                offset++;
 
-                if (index % 100 == 0)
+                if (offset % 100 == 0)
                 {
-                    progress.Set((double)index / origin.Count);
+                    progress.Set((double)offset / origin.Count);
                 }
             }
             Console.WriteLine(v + " > " + limit);
 
             // 5초 이상 남았을 때만 나머지 범위 확인
-            if (index + 500 < range.end)
+            if (offset + 500 < range.end)
             {
-                shifts.AddRange(GetShiftsForRange(origin, target, new Range(index, range.end), progress));
+                shifts.AddRange(GetShiftsForRange(origin, target, new Range(offset, range.end), progress));
             }
 
             return shifts;
@@ -274,5 +268,27 @@ namespace Jamaker
             return fShifts;
         }
         */
+    }
+    
+    class StDev
+    {
+        public double avg = 0;
+        public double value = 0;
+
+        public StDev(List<double> values)
+        {
+        	double sum = 0;
+        	double pSum = 0;
+        	
+            foreach (double value in values)
+            {
+                double pow = value * value;
+                sum += value;
+                pSum += pow;
+            }
+            
+            avg = sum / values.Count;
+            value = Math.Sqrt((pSum / values.Count) - (avg * avg));
+        }
     }
 }

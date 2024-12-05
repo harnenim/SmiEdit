@@ -12,7 +12,7 @@ namespace Jamaker
 {
     public partial class MainForm : Form
     {
-        private string settingJson = "{\"saveSkf\":{\"origin\":true,\"target\":true},\"separators\":\"&nbsp;&nbsp;\\n하느@harne_\"}";
+        private string settingJson = "{\"saveSkf\":{\"origin\":true,\"target\":true},\"separators\":\"&nbsp;&nbsp;\\n하느@harne_\",\"maxBlank\":30}";
 
         public MainForm()
         {

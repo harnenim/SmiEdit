@@ -53,8 +53,8 @@ function showAudioSelector(list, isOrigin, withSaveSkf) {
 }
 $(function() {
 	var sa = $("#selectAudio");
-	sa.find(".list").on("click", "li", function () {
-        binder.selectAudio($(this).text().split("ː")[0], sa.data("isOrigin"), sa.data("withSaveSkf"));
+	sa.find(".list").on("click", "li", function() {
+		binder.selectAudio($(this).text().split("ː")[0], sa.data("isOrigin"), sa.data("withSaveSkf"));
 		sa.hide();
 	});
 });
@@ -176,9 +176,6 @@ function drop(x, y) {
 	}
 }
 
-// 20초 이상 벌어지면 범위 분리... 설정 가능하게?
-var MAX_EMPTY_LENGTH = 20000;
-
 function setOriginVideoFile(path) {
 	$("#originVideo input").val(path);
 }
@@ -196,6 +193,27 @@ function setOriginSubtitleFile(path, text) {
         }
     }
     separators.push("\n\n");
+    
+    var tmp = $("<span>");
+    function hasSeparator(text) {
+    	for (var index = 0; index < separators.length; index++) {
+    		if (text.indexOf(separators[index]) >= 0) {
+    			return true;
+    		}
+    	}
+    	return false;
+    }
+    
+    var maxBlank = $("#inputMaxBlank").val();
+    if (isFinite(maxBlank)) {
+	    maxBlank = Number(maxBlank) * 1000;
+    } else {
+    	maxBlank = 999999999;
+    	setTimeout(function() {
+	    	alert("공백 시간은 숫자여야 합니다.");
+	    	$("#inputMaxBlank").val(maxBlank = 30);
+    	}, 1);
+    }
 
 	var sortedBody = [];
 	
@@ -262,21 +280,18 @@ function setOriginSubtitleFile(path, text) {
 		if (range[0] <= 0) {
 			range[0] = item.ms;
 			ranges.push(range);
-		} else if (range[1] + MAX_EMPTY_LENGTH < item.ms) {
+		} else if (range[1] + maxBlank < item.ms) {
 			ranges.push(range = [item.ms, item.me]);
 		}
 		range[1] = Math.max(range[1], item.me);
 		
-		for (var j = 0; j < separators.length; j++) {
-			if (item.text.indexOf(separators[j]) >= 0) {
-				// 구분자에 의해 새 범위 시작
-				if (range[1] && range[1] < range[0] + 10000) {
-					// 기존 범위가 10초 미만이면 제거
-					ranges.pop();
-				}
-				range = [-1, 0];
-				break;
+		if (hasSeparator(item.previewText, separators)) {
+			// 구분자에 의해 새 범위 시작
+			if (range[1] && range[1] < range[0] + 10000) {
+				// 기존 범위가 10초 미만이면 제거
+				ranges.pop();
 			}
+			range = [-1, 0];
 		}
 	}
 
@@ -328,14 +343,16 @@ function refreshPreview(isTarget=false) {
 					}
 				}
 				var $line = getLine(item, item.start, text.join("").split("\n").join("<br />").split("&").join("&amp;"));
+				item.previewText = $line.text();
 				if (item.syncType) {
 					$line.addClass("type" + item.syncType);
 				}
+				body.push(item);
 				
 				last.me = item.ms = item.start;
+				item.me = item.ms + 1000;
 				if ($line.find(".text").text().split("&nbsp;").join(" ").trim().length) {
-					item.me = item.ms + 1000;
-					body.push(last = item);
+					last = item;
 				} else {
 					last = {};
 				}
@@ -348,6 +365,7 @@ function refreshPreview(isTarget=false) {
 			for (var i = 0; i < body.length; i++) {
 				var item = body[i];
 				var $line = getLine(item, item.start, item.text.split("\n").join("<br />"));
+				item.previewText = $line.text();
 				
 				item.ms = item.start;
 				item.me = item.end;
@@ -379,6 +397,7 @@ function refreshPreview(isTarget=false) {
 				item.me = item.end   * 10;
 				
 				var $line = getLine(item, item.ms, text.split("\\N").join("<br />"));
+				item.previewText = $line.text();
 				$preview.append($line);
 			}
 			break;
@@ -391,6 +410,7 @@ function init(setting) {
 	$("#chkSaveSkfOrigin").prop("checked", setting.saveSkf.origin);
 	$("#chkSaveSkfTarget").prop("checked", setting.saveSkf.target);
 	$("#inputSeparator").val(setting.separators);
+	$("#inputMaxBlank").val(isFinite(setting.maxBlank) ? setting.maxBlank : 30);
 }
 function addRange(range=[0,0]) {
 	var body = $("#rangeList .list-body");
@@ -421,16 +441,31 @@ function calcShift() {
 	var isCorrect = true;
 	$("#rangeList .list-body > div").each(function() {
 		var item = $(this);
-		var start = Number(item.find("input.start").val());
+		var start = item.find("input.start").val();
+		if (isFinite(start)) {
+			start = Number(start);
+		} else {
+			return isCorrect = false;
+		}
 		if (start < last) {
 			return isCorrect = false;
 		}
-		var end = Number(item.find("input.end").val());
+		var end = item.find("input.end").val();
+		if (isFinite(end)) {
+			end = Number(end);
+		} else {
+			return isCorrect = false;
+		}
 		if (end <= start) {
 			return isCorrect = false;
 		}
 		ranges.push(start + "~" + (last = end));
 	});
+	if (!isCorrect) {
+		alert("범위에는 숫자만 입력하시기 바랍니다.");
+		return;
+	}
+	
 	var shifts = [];
 	$("#shiftList .list-body > div").each(function() {
 		var item = $(this);
@@ -565,13 +600,17 @@ function applySave() {
 	save();
 }
 function beforeExit() {
-	binder.exitAfterSaveSetting(JSON.stringify({
+	var setting = {
 			saveSkf: {
 					origin: $("#chkSaveSkfOrigin").prop("checked")
 				,	target: $("#chkSaveSkfTarget").prop("checked")
 			}
 		,	separators: $("#inputSeparator").val()
-	}));
+		,	maxBlank: 30
+	};
+	try { setting.maxBlank = Number($("#inputMaxBlank" ).val()); } catch (e) { }
+	
+	binder.exitAfterSaveSetting(JSON.stringify(setting));
 }
 	</script>
 	<style>
@@ -666,7 +705,7 @@ body > * {
 fieldset {
 	position: fixed;
 	bottom: 0;
-	width: calc( 50% - 82px);
+	width: calc( 50% - 92px);
 	border: 1px solid #888;
 	margin: 4px 8px 8px;
 	padding: 4px 8px 0;
@@ -749,10 +788,11 @@ fieldset.hover {
 }
 
 #settingForm {
-	left: calc(50% - 66px);
-	width: 132px;
-	padding: 16px 0;
-	margin-bottom: -1px;
+	left: calc(50% - 76px);
+	width: 152px;
+	margin: 8px 0;
+	padding-top: 8px;
+	overflow-y: auto;
 }
 
 #settingForm > button,
@@ -774,9 +814,11 @@ fieldset.hover {
 #settingForm > #settingSkf {
 	line-height: 24px;
 	border: 0;
+	text-align: center;
 }
 #settingSkf > label {
 	display: block;
+	margin-right: 12px;
 }
 
 h4 {
@@ -785,12 +827,16 @@ h4 {
 	text-align: center;
 	margin-bottom: 4px;
 }
-#settingForm > #settingSeparator {
-	padding-bottom: 0;
+#settingSeparator label {
+	display: block;
 }
 #inputSeparator {
+	width: 100%;
 	height: 60px;
 	line-height: 18px;
+}
+#inputMaxBlank {
+	width: 30px;
 }
 .list-header > span {
 	display: block;
@@ -963,8 +1009,13 @@ h4 {
 			<label><input type="checkbox" id="chkSaveSkfTarget" /> <span>대상.skf 저장</span></label>
 		</div>
 		<div id="settingSeparator">
-			<h4>범위 구분자</h4>
-			<textarea id="inputSeparator" spellcheck="false"></textarea>
+			<label>
+				<h4>범위 구분자</h4>
+				<textarea id="inputSeparator" spellcheck="false"></textarea>
+			</label>
+			<label>
+				<input type="text" id="inputMaxBlank" />초 이상의 공백
+			</label>
 		</div>
 		<div id="settingRange">
 			<div id="rangeList">

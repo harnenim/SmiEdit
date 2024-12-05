@@ -31,13 +31,12 @@ Binder.prototype.save = function(result, operation) {
 }
 </script>
 <script src="bridge/WebForm.js"></script>
-<script src="util/StDev.js"></script>
 <script src="util/SyncShift.js"></script>
 <script src="util/VideoInfo.js"></script>
 <script>
 var main = new WebForm();
 {	// main
-	main.settingJson = '{"saveSkf":{"origin":true,"target":true},"separators":"&nbsp;&nbsp;\\n@harne_"}';
+	main.settingJson = '{"saveSkf":{"origin":true,"target":true},"separators":"&nbsp;&nbsp;\\n@harne_","maxBlank":30}';
 	
 	main.run = function() {
 		this.initializeComponent();
