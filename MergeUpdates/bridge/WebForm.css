@@ -13,7 +13,7 @@ html, body {
 .menustrip {
 	height: 20px;
 	background: #f0f0f0;
-    user-select: none;
+	user-select: none;
 }
 .menustrip li,
 .submenu   li {
@@ -23,7 +23,7 @@ html, body {
 .menustrip li {
 	float: left;
 	height: 20px;
-    padding: 0 8px;
+	padding: 0 8px;
 	text-align: center;
 }
 .menustrip li:hover,
@@ -35,11 +35,11 @@ html, body {
 	position: absolute;
 	top: 20px;
 	background: #f0f0f0;
-    border: 1px solid #666;
-    border-top: 0;
+	border: 1px solid #666;
+	border-top: 0;
 	z-index: 9999;
 	display: none;
-    user-select: none;
+	user-select: none;
 }
 .submenu.open {
 	display: block;

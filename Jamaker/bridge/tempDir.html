@@ -3,20 +3,37 @@
 <head>
 <meta charset="utf-8">
 <title>임시 저장 파일</title>
-<script src="../view/lib/jquery-3.2.1.min.js"></script>
 <script>
+function newEl(html) {
+	var tmp = document.createElement("div");
+	tmp.innerHTML = html.trim();
+	return tmp.children[0];
+}
+
 var keys = localStorage.getItem("tmpKeys").split(":");
-$(function() {
-	var body = $("body").empty();
+document.addEventListener("DOMContentLoaded", function () {
 	for (var i = 0; i < keys.length; i++) {
 		var key = keys[i];
-		body.append($("<a>").attr("href", "javascript:loadTmp(\""+key+"\")").text(key));
+		document.body.append(newEl("<a href='javascript:loadTmp(\""+key.split("\\").join("\\\\")+"\")'>" + key + "</a>"));
 	}
 });
 function loadTmp(key) {
+	console.log(key);
 	var text = localStorage.getItem(key);
+	console.log(text);
 	if (opener) {
 		opener.editor.script("openFile", [key.substring(18), text, false]);
+	}
+}
+function clearTmp() {
+	if (confirm("비우시겠습니까?")) {
+		var keys = localStorage.getItem("tmpKeys").split(":");
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
+			localStorage.removeItem(key);
+		}
+		localStorage.removeItem("tmpKeys");
+		location.reload();
 	}
 }
 </script>
@@ -34,6 +51,6 @@ a:hover {
 </style>
 </head>
 <body>
-	
+	<a href="javascript:clearTmp()">임시 저장 파일 비우기</a>
 </body>
 </html>

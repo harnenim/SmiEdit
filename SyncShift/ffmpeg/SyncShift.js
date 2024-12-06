@@ -4,20 +4,25 @@ var SyncShift = function(start, shift) {
 }
 
 SyncShift.CHECK_RANGE = 500;
-SyncShift.MAX_POINT = 0.1;
+SyncShift.MAX_POINT = 0.5;
 SyncShift.WITH_KEYFRAME = false;
 
 SyncShift.GetShiftsForRanges = function(origin, target, ranges, progress) {
     progress.Set(0);
+    var targetRangeStart = 0;
 	var shifts = [];
     for (var i = 0; i < ranges.length; i++) {
     	var range = ranges[i];
-    	shifts = shifts.concat(SyncShift.GetShiftsForRange(origin, target, range, progress));
+    	var rangeShifts = SyncShift.GetShiftsForRange(origin, target, range, targetRangeStart, progress);
+    	if (rangeShifts.length) {
+    		shifts = shifts.concat(rangeShifts);
+    		targetRangeStart = range.end + rangeShifts[rangeShifts.length - 1].shift;
+    	}
     }
     progress.Set(0);
     return shifts;
 }
-SyncShift.GetShiftsForRange = function(origin, target, range, progress) {
+SyncShift.GetShiftsForRange = function(origin, target, range, targetRangeStart, progress) {
 	progress.Set(range.start / origin.length);
 	
 	var shifts = [];
@@ -26,100 +31,104 @@ SyncShift.GetShiftsForRange = function(origin, target, range, progress) {
 	var limitOfOrigin = Math.min(range.end, origin.length);
 
     var minPoint = null;
-    var minAdd = 0;
+    var minShift = shift;
     var doPlus = true, doMinus = true;
     
-	for (var add = 0; (doPlus || doMinus)
-	               && (start + shift + add < target.length - SyncShift.CHECK_RANGE)
-	               && (start - shift + add < limitOfOrigin - SyncShift.CHECK_RANGE); add++) {
+    if ((limitOfOrigin < start + SyncShift.CHECK_RANGE)
+     || (target.length < targetRangeStart + SyncShift.CHECK_RANGE)) {
+		console.log("비교 대상이 너무 짧음");
+		doPlus = doMinus = false;
+    }
+    
+	for (var add = 0; (doPlus || doMinus); add++) {
 		if (doPlus) {
-			if ((start + SyncShift.CHECK_RANGE < limitOfOrigin)
-			 && (start + SyncShift.CHECK_RANGE + shift + add < target.length)) {
-				var ratios = [];
-				for (var i = 0; i < SyncShift.CHECK_RANGE; i++) {
-					ratios.push(Math.log10((origin[start + i] + 0.000001) / (target[start + shift + add + i] + 0.000001)));
+			var tShift = shift + add;
+			if (start + tShift + SyncShift.CHECK_RANGE > target.length) {
+				console.log("탐색 범위 벗어남({0} + {1}): {2} > {3}".split("{0}").join(shift).split("{1}").join(add).split("{2}").join(start + tShift + SyncShift.CHECK_RANGE).split("{3}").join(target.length));
+				doPlus = false;
+				continue;
+			}
+			var ratios = [];
+			for (var i = 0; i < SyncShift.CHECK_RANGE; i++) {
+				ratios.push(Math.log10((origin[start + i] + 0.000001) / (target[start + tShift + i] + 0.000001)));
+			}
+			var point = new StDev(ratios);
+			if (minPoint == null || point.value < minPoint.value) {
+				// 오차가 기존값보다 작음
+				console.log("오차가 기존값보다 작음({0} + {1})".split("{0}").join(shift).split("{1}").join(add));
+				minPoint = point;
+				minShift = tShift;
+                console.log(point.value);
+				if (point.value == 0.0) {
+					console.log("완전히 일치: 정답 찾음");
+					// 완전히 일치: 정답 찾음
+					break;
 				}
-				var point = new StDev(ratios);
-				if (minPoint == null || point.value < minPoint.value) {
-					// 오차가 기존값보다 작음
-					console.log("오차가 기존값보다 작음(+)");
-					minAdd = add;
-					minPoint = point;
-					console.log(point);
-					if (point.value == 0.0) {
-						console.log("완전히 일치: 정답 찾음");
-						// 완전히 일치: 정답 찾음
-						break;
-					}
-				} else if (point.value > minPoint.value * 20) {
-					console.log("오차가 기존값에 비해 지나치게 큼(+)");
-					// 오차가 기존값에 비해 지나치게 큼: 이미 정답을 찾았다고 간주
-					console.log(point);
-					doPlus = false;
-				}
-				
-			} else {
-				console.log("탐색 범위 벗어남(+)");
+			} else if (point.value > minPoint.value * 20) {
+				console.log("오차가 기존값에 비해 지나치게 큼{0} + {1})".split("{0}").join(shift).split("{1}").join(add));
+				// 오차가 기존값에 비해 지나치게 큼: 이미 정답을 찾았다고 간주
+                console.log(point.value);
 				doPlus = false;
 			}
 		}
 		if (doMinus) {
-			if ((start + SyncShift.CHECK_RANGE + shift + add < limitOfOrigin)
-			 && (start + SyncShift.CHECK_RANGE + shift < target.length)) {
-				if (start + shift - add < 0) {
-					continue;
-				}
-				var ratios = [];
-	            for (var i = 0; i < SyncShift.CHECK_RANGE; i++) {
-	            	var ratio = Math.log10((origin[start + shift + i] + 0.000001) / (target[start + shift - add + i] + 0.000001));
-            		ratios.push(ratio);
-	            }
-				var point = new StDev(ratios);
-				if (minPoint == null || point.value < minPoint.value) {
-					// 오차가 기존값보다 작음
-					console.log("오차가 기존값보다 작음(-)");
-					minAdd = -add;
-					minPoint = point;
-					console.log(point);
-					if (point.value == 0.0) {
-						// 완전히 일치: 정답 찾음
-						console.log("완전히 일치: 정답 찾음");
-						break;
-					}
-				} else if (point.value > minPoint.value * 20) {
-					// 오차가 기존값에 비해 지나치게 큼: 이미 정답을 찾았다고 간주
-					console.log("오차가 기존값에 비해 지나치게 큼(-)");
-					console.log(point);
+			var tShift = shift - add;
+			var originStart = start;
+            if (start + tShift < targetRangeStart) {
+				// 가중치 이미 확인한 영역까지 침범
+				// origin 앞쪽을 잘라내고 시작
+				originStart = targetRangeStart - tShift;
+			    if (limitOfOrigin < originStart + SyncShift.CHECK_RANGE) {
+					console.log("탐색 범위 벗어남({0} - {1})".split("{0}").join(shift).split("{1}").join(add));
 					doMinus = false;
+					continue;
+			    }
+			}
+			var ratios = [];
+			for (var i = 0; i < SyncShift.CHECK_RANGE; i++) {
+				var ratio = Math.log10((origin[originStart + i] + 0.000001) / (target[originStart + tShift + i] + 0.000001));
+				ratios.push(ratio);
+			}
+			var point = new StDev(ratios);
+			if (minPoint == null || point.value < minPoint.value) {
+				// 오차가 기존값보다 작음
+				console.log("오차가 기존값보다 작음({0} - {1})".split("{0}").join(shift).split("{1}").join(add));
+				minPoint = point;
+				minShift = tShift;
+                console.log(point.value);
+				if (point.value == 0.0) {
+					// 완전히 일치: 정답 찾음
+					console.log("완전히 일치: 정답 찾음");
+					break;
 				}
-			} else {
-				console.log("탐색 범위 벗어남(-)");
+			} else if (point.value > minPoint.value * 20) {
+				// 오차가 기존값에 비해 지나치게 큼: 이미 정답을 찾았다고 간주
+				console.log("오차가 기존값에 비해 지나치게 큼({0} - {1})".split("{0}").join(shift).split("{1}").join(add));
+				console.log(point);
 				doMinus = false;
 			}
 		}
 	}
 	
-	if (minPoint > SyncShift.MAX_POINT) {
+	if (minPoint == null || minPoint.value > SyncShift.MAX_POINT) {
 		console.log("찾지 못함");
 		return shifts;
 	}
 	console.log("최종값");
-	console.log(minPoint);
-	shifts.push(new SyncShift(start, shift = (shift + minAdd)));
+	console.log(minPoint.value);
+	shifts.push(new SyncShift(start, shift = minShift));
 	
     // 현재 가중치가 어디까지 이어질지 구하기
     var limit = Math.max(minPoint.value * 12, 0.0001);
     var count = 0;
     var offset = start + 10;
     var v = 0;
-    var oShift = 0
-    var tShift = shift;
     if (shift < 0) {
     	offset -= shift;
     }
     
-    while (offset + oShift < limitOfOrigin && offset + tShift < target.length) {
-        v = Math.abs(Math.log10((origin[offset + oShift] + 0.000001) / (target[offset + tShift] + 0.000001)) - minPoint.avg);
+    while (offset < limitOfOrigin && offset + shift < target.length) {
+        v = Math.abs(Math.log10((origin[offset] + 0.000001) / (target[offset + shift] + 0.000001)) - minPoint.avg);
         if (v > limit) {
             console.log(offset + ": " + v + " / " + limit);
             if (++count >= 5) break;
@@ -136,7 +145,7 @@ SyncShift.GetShiftsForRange = function(origin, target, range, progress) {
 
     // 5초 이상 남았을 때만 나머지 범위 확인
     if (offset + 500 < range.end) {
-        shifts = shifts.concat(SyncShift.GetShiftsForRange(origin, target, new Range(offset, range.end), progress));
+    	shifts = shifts.concat(SyncShift.GetShiftsForRange(origin, target, new Range(offset, range.end), (offset + shift), progress));
     }
     
 	return shifts;

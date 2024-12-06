@@ -439,12 +439,14 @@ function calcShift() {
 	var ranges = [];
 	var last = -1;
 	var isCorrect = true;
+	var alertNumber = false;
 	$("#rangeList .list-body > div").each(function() {
 		var item = $(this);
 		var start = item.find("input.start").val();
 		if (isFinite(start)) {
 			start = Number(start);
 		} else {
+			alertNumber = true;
 			return isCorrect = false;
 		}
 		if (start < last) {
@@ -454,6 +456,7 @@ function calcShift() {
 		if (isFinite(end)) {
 			end = Number(end);
 		} else {
+			alertNumber = true;
 			return isCorrect = false;
 		}
 		if (end <= start) {
@@ -462,23 +465,33 @@ function calcShift() {
 		ranges.push(start + "~" + (last = end));
 	});
 	if (!isCorrect) {
-		alert("범위에는 숫자만 입력하시기 바랍니다.");
+		if (alertNumber) {
+			alert("범위에는 숫자만 입력하시기 바랍니다.");
+		} else {
+			alert("범위가 어긋난 부분이 있습니다.");
+		}
 		return;
 	}
 	
 	var shifts = [];
+	var last = -1;
 	$("#shiftList .list-body > div").each(function() {
 		var item = $(this);
-		var start = Number(item.find("input.start").val());
-		var shift = Number(item.find("input.shift").val());
-		shifts.push(start + ":" + shift);
+		var start = item.find("input.start").val();
+		if (!isFinite(start)) {
+			return;
+		}
+		if (start <= last) {
+			return;
+		}
+		var shift = item.find("input.start").val();
+		if (!isFinite(shift)) {
+			return;
+		}
+		shifts.push(Number(start) + ":" + Number(shift));
 	});
-	if (isCorrect) {
-		$("#shiftList .list-body").empty();
-		binder.calcShift(ranges.join("|"), shifts.join("|"));
-	} else {
-		alert("범위가 어긋난 부분이 있습니다.");
-	}
+	$("#shiftList .list-body").empty();
+	binder.calcShift(ranges.join("|"), shifts.join("|"));
 }
 
 function apply() {
@@ -1035,6 +1048,11 @@ h4 {
 		</div>
 		<div id="settingCalc">
 			<button id="btnCalc">가중치 계산</button>
+		</div>
+		<div style="border: 0;">
+			음성 데이터를 비교하여<br />
+			유사한 부분을 탐색하며<br />
+			어긋날 수도 있습니다.
 		</div>
 		
 		<div id="shiftList">

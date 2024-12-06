@@ -264,9 +264,9 @@ $(function() {
 	});
 
 	$("#btnUpdate").on("click", function() {
-		var originBfrUpdate = new Subtitle.SmiFile().fromTxt($originBfrUpdate.val());
-		var originAftUpdate = new Subtitle.SmiFile().fromTxt($originAftUpdate.val());
-		var targetBfrUpdate = new Subtitle.SmiFile().fromTxt($targetBfrUpdate.val());
+		var originBfrUpdate = new Subtitle.SmiFile($originBfrUpdate.val());
+		var originAftUpdate = new Subtitle.SmiFile($originAftUpdate.val());
+		var targetBfrUpdate = new Subtitle.SmiFile($targetBfrUpdate.val());
 		var targetAftUpdate = new Subtitle.SmiFile();
 		var targetAftFrames = new Subtitle.SmiFile();
 		targetAftUpdate.header = targetAftFrames.header = targetBfrUpdate.header;
@@ -548,8 +548,8 @@ $(function() {
 	});
 
 	$("#btnFinish").on("click", async function() {
-		var targetAftFinish = new Subtitle.SmiFile().fromTxt($targetAftUpdate.val());
-		var targetAftFrames = new Subtitle.SmiFile().fromTxt($targetAftFrames.val());
+		var targetAftFinish = new Subtitle.SmiFile($targetAftUpdate.val());
+		var targetAftFrames = new Subtitle.SmiFile($targetAftFrames.val());
 
 		if (targetAftFinish.body.length != targetAftFrames.body.length) {
 			alert("좌측 둘의 싱크 수는 같아야 합니다.");

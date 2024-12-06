@@ -84,6 +84,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ffmpeg\SyncShift.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -97,8 +98,7 @@
     <Compile Include="TransparentPanel.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="util\VideoInfo.cs" />
-    <Compile Include="util\SyncShift.cs" />
+    <Compile Include="ffmpeg\VideoInfo.cs" />
     <Compile Include="WebView.cs" />
     <Compile Include="WinAPI.cs" />
     <EmbeddedResource Include="MainForm.resx">
@@ -137,9 +137,13 @@
     <Content Include="ffmpeg\ffprobe.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="ffmpeg\SyncShift.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ffmpeg\VideoInfo.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="jamaker.ico" />
-    <Content Include="util\SyncShift.js" />
-    <Content Include="util\VideoInfo.js" />
     <Content Include="view\AutoSyncShift.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
