@@ -34,14 +34,14 @@ var checkVersion;
 		}
 		return notified;
 	}
-	var lastNotifyForCommand = "2024.12.05.v2";
+	var lastNotifyForCommand = "2024.12.07.v1";
 	var lastNotifyForAutoComplete = "";
 	var lastNotifyForStyle = "2023.04.06.v1";
 	var lastNotifyForMenu = "2024.11.19.v2";
 }
 
 var DEFAULT_SETTING =
-{	version: "2024.12.05.v2"
+{	version: "2024.12.07.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -111,6 +111,8 @@ var DEFAULT_SETTING =
 			   + '// ※ 정지화면 있을 경우 재생 중인지 확신이 안 설 때가 있어서\n'
 			   + '//    토글이 아닌 재생이 있는 게 맞을 듯'
 		,	'z': '/* 정지 */\n' + 'SmiEditor.PlayerAPI.stop()'
+		,	"s": "/* 되감기 */\nSmiEditor.PlayerAPI.move(-SmiEditor.sync.move);\nSmiEditor.PlayerAPI.play();"
+		,	"r": "/* 실행 취소 */\neditor.history.back();"
 		}
 	,	withCtrls:
 		{	't': '/* 일괄 싱크 찍기 */\n' + 'editor.reSync();'
