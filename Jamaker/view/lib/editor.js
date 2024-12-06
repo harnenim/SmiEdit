@@ -530,9 +530,10 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 
 					// 변환결과가 원본과 동일하지 않은 범위 찾기
 					var newLog = {
-							from: [oi]
-						,	to  : [ni]
+							from: [oi, originBody.length]
+						,	to  : [ni, main.body.length]
 						,	start: main.body[ni].start
+						,	end: 999999999
 					};
 					while ((oi < originBody.length) && (ni < main.body.length)) {
 						if (originBody[oi].start < main.body[ni].start) {
@@ -552,9 +553,9 @@ Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
 						newLog.from[1] = oi;
 						newLog.to  [1] = ni;
 						newLog.end = main.body[ni].start;
-						logs.push(newLog);
 						break;
 					}
+					logs.push(newLog);
 				}
 				// 메인 홀드에 없는 내용만 남음
 				if (ni < main.body.length) {
