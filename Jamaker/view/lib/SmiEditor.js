@@ -1791,6 +1791,7 @@ SmiEditor.prototype.moveToSide = function(direction) {
 	}
 	
 	if (direction > 0) {
+		// 오른쪽으로 이동
 		var remained = true;
 		var added = false;
 		for (var i = 0; i < direction; i++) {
@@ -1825,10 +1826,20 @@ SmiEditor.prototype.moveToSide = function(direction) {
 				}
 			}
 		}
+		if (!remained) {
+			// 오른쪽에 추가했던 공백을 다 없앴어도 원본에 공백 있을 수 있음
+			for (var i = 0; i < textLines.length; i++) {
+				var textLine = textLines[i];
+				if (textLine.endsWith(" ") || textLine.endsWith("　")) {
+					textLines[i] = textLine + "​";
+				}
+			}
+		}
 		var br = (remained ? "​" : "") + ("<br>" + ((remained || added) ? "\n" : "")) + (added ? "​" : "");
 		textLines = ((added ? "​" : "") + textLines.join(br) + (remained ? "​" : "")).split("\n");
 		
 	} else {
+		// 왼쪽으로 이동
 		var remained = true;
 		var added = false;
 		for (var i = 0; i < -direction; i++) {
@@ -1860,6 +1871,15 @@ SmiEditor.prototype.moveToSide = function(direction) {
 				if (!textLines[j].startsWith("　")) {
 					remained = false;
 					break;
+				}
+			}
+		}
+		if (!remained) {
+			// 왼쪽에 추가했던 공백을 다 없앴어도 원본에 공백 있을 수 있음
+			for (var i = 0; i < textLines.length; i++) {
+				var textLine = textLines[i];
+				if (textLine.startsWith(" ") || textLine.startsWith("　")) {
+					textLines[i] = "​" + textLine;
 				}
 			}
 		}
