@@ -88,10 +88,10 @@ VideoInfo.prototype.LoadSkf = function() {
 	    for (var i = 0; i < sfsLength; i++) {
 	    	sfs.push(view.getFloat64(i * 8, true));
 	    }
-	    view = new DataView(buffer.slice(8 + (sfsLength * 8), 8 + ((sfsLength + kfsLength) * 8)));
+	    view = new DataView(buffer.slice(8 + (sfsLength * 8), 8 + (sfsLength * 8 + kfsLength * 4)));
 	    for (var i = 0; i < kfsLength; i++) {
-	    	kfs.push(view.getFloat64((sfsLength + i) * 8));
-	    }
+	    	kfs.push(view.getInt32(i * 4, true));
+        }
 	}
 	fr.readAsArrayBuffer(this.file);
 }

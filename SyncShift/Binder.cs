@@ -45,21 +45,21 @@
         {
             _.ExitAfterSaveSetting(setting);
         }
-        public void OpenFileDialog(int type, bool withSaveSkf)
+        public void OpenFileDialog(int type, bool withSaveSkf, bool withKf)
         {
-            _.OpenFileDialog(type, withSaveSkf);
+            _.OpenFileDialog(type, withSaveSkf, withKf);
         }
         public void DropOriginFile(bool withSaveSkf)
         {
             _.DropOriginFile(withSaveSkf);
         }
-        public void DropTargetFile(bool withSaveSkf)
+        public void DropTargetFile(bool withSaveSkf, bool withKf)
         {
-            _.DropTargetFile(withSaveSkf);
+            _.DropTargetFile(withSaveSkf, withKf);
         }
-        public void SelectAudio(string map, bool isOrigin, bool withSaveSkf)
+        public void SelectAudio(string map, bool isOrigin, bool withSaveSkf, bool withKf)
         {
-            _.SelectAudio(map, isOrigin, withSaveSkf);
+            _.SelectAudio(map, isOrigin, withSaveSkf, withKf);
         }
         public void CalcShift(string ranges, string shifts)
         {

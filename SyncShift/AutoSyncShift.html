@@ -11,17 +11,17 @@
 Binder.prototype.exitAfterSaveSetting = function(setting) {
 	this._.exitAfterSaveSetting(setting);
 }
-Binder.prototype.openFileDialog = function(type, withSaveSkf) {
-	this._.openFileDialog(type, withSaveSkf);
+Binder.prototype.openFileDialog = function(type, withSaveSkf, withKf) {
+	this._.openFileDialog(type, withSaveSkf, withKf);
 }
 Binder.prototype.dropOriginFile = function(withSaveSkf) {
 	this._.dropOriginFile(withSaveSkf);
 }
-Binder.prototype.dropTargetFile = function(withSaveSkf) {
-	this._.dropTargetFile(withSaveSkf);
+Binder.prototype.dropTargetFile = function(withSaveSkf, withKf) {
+	this._.dropTargetFile(withSaveSkf, withKf);
 }
-Binder.prototype.selectAudio = function(map, isOrigin, withSaveSkf) {
-	this._.selectAudio(map, isOrigin, withSaveSkf);
+Binder.prototype.selectAudio = function(map, isOrigin, withSaveSkf, withKf) {
+	this._.selectAudio(map, isOrigin, withSaveSkf, wthKf);
 }
 Binder.prototype.calcShift = function(ranges, shifts) {
 	this._.calcShift(ranges, shifts);
@@ -111,7 +111,7 @@ var main = new WebForm();
 	}
 	
 	main.readingVideoFile = null;
-	main.readVideoFile = function(file, isOrigin, withSaveSkf) {
+	main.readVideoFile = function(file, isOrigin, withSaveSkf, withKf) {
 		console.log("ReadVideoFile: {0}".split("{0}").join(path));
 		main.showProcessing("불러오는 중");
 		var progress = isOrigin ? "#originVideo > .input" : "#targetVideo > .input";
@@ -131,7 +131,7 @@ var main = new WebForm();
 			main.hideProcessing();
 		}
 	}
-	main.selectAudio = function(map, isOrigin, withSaveSkf) {
+	main.selectAudio = function(map, isOrigin, withSaveSkf, withKf) {
 		console.log("SelectAudio: {0}".split("{0}").join(map));
 		var video = main.originVideoFile;
 		var progress = "#originVideo > .input";
@@ -143,7 +143,7 @@ var main = new WebForm();
 		}
 		setTimeout(function() {
 			video.audioMap = map;
-			video.refreshSkf();
+			video.refreshSkf(withKf);
 			if (withSaveSkf)
 			{
 				video.SaveSkf();
@@ -169,6 +169,10 @@ var main = new WebForm();
 			setTimeout(function() {
 				main.targetVideoFile.RefreshSkf();
 				main.hideProcessing();
+				setTimeout(function() {
+					var kfs = main.targetVideoFile.GetKfs();
+					main.script("setKfs", ["[" + kfs.join(",") + "]"]);
+				}, 1000);
 			});
 		}
 	}
@@ -177,7 +181,7 @@ var main = new WebForm();
 		console.log("ReadSubtitleFile: {0}".split("{0}").join(path));
 		this.script("setOriginSubtitleFile", [path, await file.text()]);
 	}
-	main.openFileDialog = async function(type, withSaveSkf) {
+	main.openFileDialog = async function(type, withSaveSkf, withKf) {
 		var setting = {types:[{description:'자막 파일',accept:{'text/*':['.smi', '.srt', '.ass']}}]};
 		if (type % 10 == 0) {
 			// 동영상 혹은 skf 파일
@@ -200,7 +204,7 @@ var main = new WebForm();
 					break;
 				}
 				case 2: {
-					main.dropTargetFile(withSaveSkf);
+					main.dropTargetFile(withSaveSkf, withKf);
 					break;
 				}
 			} 
@@ -261,7 +265,7 @@ var main = new WebForm();
 			}
 		}
 	}
-	main.dropTargetFile = function(withSaveSkf) {
+	main.dropTargetFile = function(withSaveSkf, withKf) {
 		console.log("DropTargetFile: {0}".split("{0}").join(withSaveSkf));
 		if (!this.droppedFiles) return;
 		if (this.droppedFiles.length < 1) {
@@ -282,7 +286,7 @@ var main = new WebForm();
 					case ".m2ts": {
 						/*
 						main.withSaveSkf = withSaveSkf;
-						main.readVideoFile(file, false, withSaveSkf);
+						main.readVideoFile(file, false, withSaveSkf, withKf);
 						*/
 						if (hasVideo) break;
 						hasVideo = true;

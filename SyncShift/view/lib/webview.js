@@ -127,6 +127,14 @@ $(function () {
 		,	background: "rgba(127,127,127,0.2)"
 		,	zIndex: "9999"
 	}));
+
+	$("[title]").each(function () {
+		var obj = $(this);
+		var title = obj.attr("title").split("\\n");
+		if (title.length > 1) {
+			obj.attr("title", title.join("\n"));
+		}
+	});
 });
 
 var Progress = function() {

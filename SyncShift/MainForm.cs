@@ -12,7 +12,7 @@ namespace Jamaker
 {
     public partial class MainForm : Form
     {
-        private string settingJson = "{\"saveSkf\":{\"origin\":true,\"target\":true},\"separators\":\"&nbsp;&nbsp;\\n하느@harne_\",\"maxBlank\":30}";
+        private readonly string settingJson = "{\"saveSkf\":{\"origin\":true,\"target\":true},\"separators\":\"&nbsp;&nbsp;\\n하느@harne_\",\"maxBlank\":30}";
 
         public MainForm()
         {
@@ -159,7 +159,7 @@ namespace Jamaker
         }
 
         VideoInfo readingVideoFile = null;
-        public void ReadVideoFile(string path, bool isOrigin, bool withSaveSkf)
+        public void ReadVideoFile(string path, bool isOrigin, bool withSaveSkf, bool withKf)
         {
             Console.WriteLine("ReadVideoFile: {0}", path);
             ShowProcessing("불러오는 중");
@@ -168,11 +168,11 @@ namespace Jamaker
             new Thread(new ThreadStart(() =>
             {
                 readingVideoFile.RefreshInfo((VideoInfo video) => {
-                	AfterRefreshInfo(video, isOrigin, withSaveSkf);
+                	AfterRefreshInfo(video, isOrigin, withSaveSkf, withKf);
                 });
             })).Start();
         }
-        public void AfterRefreshInfo(VideoInfo video, bool isOrigin, bool withSaveSkf)
+        public void AfterRefreshInfo(VideoInfo video, bool isOrigin, bool withSaveSkf, bool withKf)
         {
             Console.WriteLine("AfterRefreshInfo");
             if (video.duration > 0)
@@ -212,7 +212,7 @@ namespace Jamaker
                         return;
                     case 1:
                         {
-                            SelectAudio(audios[0].map, isOrigin, withSaveSkf);
+                            SelectAudio(audios[0].map, isOrigin, withSaveSkf, withKf);
                             break;
                         }
                     default:
@@ -222,7 +222,7 @@ namespace Jamaker
                             string item = string.Format("{0}ː[{1}] {2}", audio.map, audio.language, audio.metadata["title"]);
                             data = data == null ? item : (data + "|" + item);
                         }
-                        Script("showAudioSelector", new object[] { data, isOrigin, withSaveSkf });
+                        Script("showAudioSelector", new object[] { data, isOrigin, withSaveSkf, withKf });
                         break;
                 }
             }
@@ -232,7 +232,7 @@ namespace Jamaker
                 HideProcessing();
             }
         }
-        public void SelectAudio(string map, bool isOrigin, bool withSaveSkf)
+        public void SelectAudio(string map, bool isOrigin, bool withSaveSkf, bool withKf)
         {
             Console.WriteLine("SelectAudio: {0}", map);
             VideoInfo video = originVideoFile;
@@ -251,7 +251,7 @@ namespace Jamaker
             new Thread(new ThreadStart(() =>
             {
             	video.audioMap = map;
-            	video.RefreshSkf(withSaveSkf);
+            	video.RefreshSkf(withSaveSkf, withKf);
             	SetProgress(progress, 0);
             	HideProcessing();
             })).Start();
@@ -263,20 +263,18 @@ namespace Jamaker
             if (isOrigin)
             {
                 Script("setOriginVideoFile", new object[] { path });
-                originVideoFile = new VideoInfo(path);
+                originVideoFile = VideoInfo.FromSkfFile(path);
                 new Thread(new ThreadStart(() =>
                 {
-                    originVideoFile.RefreshSkf();
                     HideProcessing();
                 })).Start();
             }
             else
             {
                 Script("setTargetVideoFile", new object[] { path });
-                targetVideoFile = new VideoInfo(path);
+                targetVideoFile = VideoInfo.FromSkfFile(path);
                 new Thread(new ThreadStart(() =>
                 {
-                    targetVideoFile.RefreshSkf();
                     HideProcessing();
                 })).Start();
             }
@@ -298,13 +296,13 @@ namespace Jamaker
             }
             finally { sr?.Close(); }
         }
-        public void OpenFileDialog(int type, bool withSaveSkf)
+        public void OpenFileDialog(int type, bool withSaveSkf, bool withKf)
         {
             if (InvokeRequired)
             {
                 Invoke(new Action(() =>
                 {
-                    OpenFileDialog(type, withSaveSkf);
+                    OpenFileDialog(type, withSaveSkf, withKf);
                 }));
             }
             string filter = "지원되는 자막 파일|*.smi;*.srt;*.ass";
@@ -325,7 +323,7 @@ namespace Jamaker
                         }
                     case 2:
                         {
-                            DropTargetFile(withSaveSkf);
+                            DropTargetFile(withSaveSkf, withKf);
                             break;
                         }
                 }
@@ -356,7 +354,7 @@ namespace Jamaker
                         {
                             if (hasVideo) break;
                             hasVideo = true;
-                            ReadVideoFile(path, true, withSaveSkf);
+                            ReadVideoFile(path, true, withSaveSkf, false);
                             break;
                         }
                     case ".skf":
@@ -382,7 +380,7 @@ namespace Jamaker
                 }
             }
         }
-        public void DropTargetFile(bool withSaveSkf)
+        public void DropTargetFile(bool withSaveSkf, bool withKf)
         {
             Console.WriteLine("DropTargetFile: {0}", withSaveSkf);
             if (droppedFiles == null)
@@ -402,7 +400,7 @@ namespace Jamaker
                     case ".ts":
                     case ".m2ts":
                         {
-                            ReadVideoFile(path, false, withSaveSkf);
+                            ReadVideoFile(path, false, withSaveSkf, withKf);
                             break;
                         }
                     case ".skf":
@@ -479,6 +477,18 @@ namespace Jamaker
                 {
                     Script("addShift", new object[] { shift.start * 10, shift.shift * 10 });
                 }
+
+                List<int> kfs = targetVideoFile.GetKfs();
+                string strKfs = null;
+                foreach (int kf in kfs)
+                {
+                    if (strKfs == null)
+                        strKfs = "[" + kf;
+                    else
+                        strKfs += "," + kf;
+                }
+                strKfs += "]";
+                Script("setKfs", new object[] { strKfs });
 
                 HideProcessing();
                 SetProgress("#settingCalc", 0);

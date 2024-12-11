@@ -39,7 +39,7 @@ function setProgress(name, ratio) {
 	}
 	progresses[id].width(ratio * 100 + "%");
 }
-function showAudioSelector(list, isOrigin, withSaveSkf) {
+function showAudioSelector(list, isOrigin, withSaveSkf, trustKf) {
 	var list = list.split("|");
 	var sa = $("#selectAudio").show();
 	var ol = sa.find(".list").empty();
@@ -49,12 +49,13 @@ function showAudioSelector(list, isOrigin, withSaveSkf) {
 	sa.data({
 			isOrigin: isOrigin
 		,	withSaveSkf: withSaveSkf
+		,	trustKf: trustKf
 	});
 }
 $(function() {
 	var sa = $("#selectAudio");
 	sa.find(".list").on("click", "li", function() {
-		binder.selectAudio($(this).text().split("ː")[0], sa.data("isOrigin"), sa.data("withSaveSkf"));
+		binder.selectAudio($(this).text().split("ː")[0], sa.data("isOrigin"), sa.data("withSaveSkf"), sa.data("trustKf"));
 		sa.hide();
 	});
 });
@@ -64,8 +65,6 @@ var $fieldOrigin;
 var $fieldTarget;
 var operation = { type: null, input: [] };
 
-/*
-// 생각해보니 숫자 복붙하는 경우가 있었음...
 function syncText(sync) {
     var h = sync;
     var ms = h % 1000; h = (h - ms) / 1000;
@@ -73,7 +72,6 @@ function syncText(sync) {
 	var m = h % 60; h = (h - m) / 60;
 	return h + ":" + (m > 9 ? "" : "0") + m + ":" + (s > 9 ? "" : "0") + s + ":" + (ms > 99 ? "" : "0") + (ms > 9 ? "" : "0") + ms;
 }
-*/
 
 $(function() {
 	$(".preset").each(function() {
@@ -103,13 +101,13 @@ $(function() {
 		return result;
 	}
 	$("#originVideo button").on("click", function() {
-		binder.openFileDialog(10, $("#chkSaveSkfOrigin").prop("checked"));
+		binder.openFileDialog(10, $("#chkSaveSkfOrigin").prop("checked"), false);
 	});
 	$("#originSub button").on("click", function() {
-		binder.openFileDialog(11, $("#chkSaveSkfOrigin").prop("checked"));
+		binder.openFileDialog(11, $("#chkSaveSkfOrigin").prop("checked"), false);
 	});
 	$("#targetVideo button").on("click", function() {
-		binder.openFileDialog(20, $("#chkSaveSkfTarget").prop("checked"));
+		binder.openFileDialog(20, $("#chkSaveSkfTarget").prop("checked"), $("#chkTrustKfTarget").prop("checked"));
 	});
 	$("#rangeList, #shiftList").on("mouseover", "input.start, input.end", function() {
 		$fieldOrigin.find(".hover").removeClass("hover");
@@ -172,7 +170,7 @@ function drop(x, y) {
 	if (area == $fieldOrigin) {
 		binder.dropOriginFile($("#chkSaveSkfOrigin").prop("checked"));
 	} else if (area == $fieldTarget) {
-		binder.dropTargetFile($("#chkSaveSkfTarget").prop("checked"));
+		binder.dropTargetFile($("#chkSaveSkfTarget").prop("checked"), $("#chkTrustKfTarget").prop("checked"));
 	}
 }
 
@@ -222,18 +220,20 @@ function setOriginSubtitleFile(path, text) {
 		operation.type = "smi";
 		operation.origin = new Subtitle.SmiFile(text);
 		operation.input = Subtitle.SmiFile.textToHolds(text);
-		sortedBody = refreshPreview();
+		operation.target = new Subtitle.SmiFile();
 
 	} else if (ext == ".srt") {
 		operation.type = "srt";
 		operation.origin = new Subtitle.SrtFile(text);
-		sortedBody = refreshPreview();
+		operation.target = new Subtitle.SrtFile();
 		
 	} else if (ext == ".ass") {
 		operation.type = "ass";
 		operation.origin = new Subtitle.AssFile(text);
-		sortedBody = refreshPreview();
+		operation.target = new Subtitle.AssFile();
 	}
+	sortedBody = refreshPreview();
+	refreshPreview(true);
 	
     var range = [0, 0]
     var ranges = [];
@@ -275,11 +275,14 @@ function refreshPreview(isTarget=false) {
 	function getLine(item, sync, text) {
 		var $line = $preset.clone().data({ item: item });
 		$line.find(".sync").text(sync);
+		$line.find(".time").text(syncText(sync));
 		$line.find(".text").empty().html(text);
 		return $line;
 	}
 	
 	var body = (isTarget ? operation.target : operation.origin).body;
+	var lastSync = 0;
+	var errCount = 0;
 	switch (operation.type) {
 		case "smi":
 			var originBody = body;
@@ -324,6 +327,11 @@ function refreshPreview(isTarget=false) {
 					last = {};
 				}
 				
+				if (item.ms < lastSync) {
+					$line.addClass("error");
+					errCount++;
+				}
+				lastSync = item.ms;
 				$preview.append($line);
 			}
 			break;
@@ -337,6 +345,11 @@ function refreshPreview(isTarget=false) {
 				item.ms = item.start;
 				item.me = item.end;
 				
+				if (item.ms < lastSync) {
+					$line.addClass("error");
+					errCount++;
+				}
+				lastSync = item.ms;
 				$preview.append($line);
 			}
 			break;
@@ -365,9 +378,20 @@ function refreshPreview(isTarget=false) {
 				
 				var $line = getLine(item, item.ms, text.split("\\N").join("<br />"));
 				item.previewText = $line.text();
+				
+				if (item.ms < lastSync) {
+					$line.addClass("error");
+					errCount++;
+				}
+				lastSync = item.ms;
 				$preview.append($line);
 			}
 			break;
+	}
+	if (errCount) {
+		setTimeout(function() {
+			alert("역전된 싱크가 " + errCount + "개 있습니다.");
+		}, 1);
 	}
 	return body;
 }
@@ -376,6 +400,7 @@ function init(setting) {
 	setting = JSON.parse(setting);
 	$("#chkSaveSkfOrigin").prop("checked", setting.saveSkf.origin);
 	$("#chkSaveSkfTarget").prop("checked", setting.saveSkf.target);
+	$("#chkTrustKfTarget").prop("checked", setting.saveSkf.withKf);
 	$("#inputSeparator").val(setting.separators);
 	$("#inputMaxBlank").val(isFinite(setting.maxBlank) ? setting.maxBlank : 30);
 }
@@ -461,6 +486,11 @@ function calcShift() {
 	binder.calcShift(ranges.join("|"), shifts.join("|"));
 }
 
+var kfs = [];
+function setKfs(strKfs) {
+	kfs = JSON.parse(strKfs);
+}
+
 function apply() {
 	var shifts = [];
 	$("#shiftList .list-body > div").each(function() {
@@ -474,22 +504,24 @@ function apply() {
 		addShift();
 		shifts.push({ start: 0, shift: 0 });
 	}
+
+	var withKf = kfs.length > 2 && $("#chkTrustKfTarget").prop("checked");
 	
-	function shiftSync(sync) {
-		for (var i = 1; i < shifts.length; i++) {
+	function getShiftIndex(sync) {
+		var i = 1;
+		for (; i < shifts.length; i++) { // 몇 개 안 되니까 그냥 루프 돌림
 			if (sync < shifts[i].start) {
 				i--;
 				break;
 			}
 		}
-		return Math.min(sync + shifts[Math.min(i, shifts.length - 1)].shift, 999999999);
+		return Math.min(i, shifts.length - 1);
 	}
-	function shiftText(text) {
-		var hold = new Subtitle.SmiFile(text);
-		for (var i = 0; i < hold.body.length; i++) {
-			hold.body[i].start = shiftSync(hold.body[i].start);
+	function shiftSync(sync, index=-1) {
+		if (index < 0) {
+			index = getShiftIndex(sync);
 		}
-		return hold.toTxt().trim();
+		return Math.min(sync + shifts[index].shift, 999999999);
 	}
 	
 	switch (operation.type) {
@@ -498,31 +530,105 @@ function apply() {
 			var target = operation.target = new Subtitle.SmiFile();
 			target.header = origin.header;
 			target.footer = origin.footer;
-			for (var i = 0; i < origin.body.length; i++) {
-				var item = origin.body[i];
-				if (item.text.startsWith("<!-- End=")) {
-					var commentEnd = item.text.indexOf("-->");
-					if (commentEnd > 0) {
-						var comment = item.text.substring(9, commentEnd).trim().split("<​").join("<").split("​>").join(">");
-						afterComment = item.text.substring(commentEnd + 3).trim();
-
-						var index = comment.indexOf("\n");
-						if (index > 0) {
-							var syncEnd = Number(index < 0 ? comment : comment.substring(0, index));
-							comment = comment.substring(index + 1);
-							
-							syncEnd = shiftSync(syncEnd);
-							if (comment.length > 6 && comment.substring(0, 6).toUpperCase() == "<SYNC ") {
-								comment = shiftText(comment);
+			
+			function shiftText(text) {
+				var hold = new Subtitle.SmiFile(text);
+				for (var i = 0; i < hold.body.length; i++) {
+					hold.body[i].start = shiftSync(hold.body[i].start);
+				}
+				return hold.toTxt().trim();
+			}
+			
+			{
+				var ki = 0;
+				for (var i = 0; i < origin.body.length; i++) {
+					var item = origin.body[i];
+					if (item.text.startsWith("<!-- End=")) {
+						var commentEnd = item.text.indexOf("-->");
+						if (commentEnd > 0) {
+							var comment = item.text.substring(9, commentEnd).trim().split("<​").join("<").split("​>").join(">");
+							afterComment = item.text.substring(commentEnd + 3).trim();
+	
+							var index = comment.indexOf("\n");
+							if (index > 0) {
+								var syncEnd = Number(index < 0 ? comment : comment.substring(0, index));
+								comment = comment.substring(index + 1);
+								
+								syncEnd = shiftSync(syncEnd);
+								if (comment.length > 6 && comment.substring(0, 6).toUpperCase() == "<SYNC ") {
+									comment = shiftText(comment);
+								}
+								comment = comment.trim().split("<").join("<​").split(">").join("​>");
+								item.text = "<!-- End=" + syncEnd + "\n" + comment + "\n-->\n" + afterComment;
 							}
-							comment = comment.trim().split("<").join("<​").split(">").join("​>");
-							item.text = "<!-- End=" + syncEnd + "\n" + comment + "\n-->\n" + afterComment;
 						}
 					}
+					var shiftIndex = getShiftIndex(item.start);
+					var smi = new Subtitle.Smi(shiftSync(item.start, shiftIndex), item.syncType, item.text);
+					target.body.push(smi);
+	
+	                if (withKf && (smi.syncType == Subtitle.SyncType.frame)) {
+						console.log("withKf: " + smi.start);
+	
+						var shift = shifts[shiftIndex];
+						if (shift.skipped == null) {
+							shift.fCount = 0;
+							shift.fSum = 0;
+							shift.skipped = [];
+						}
+						
+						while (kfs[ki] < smi.start) {
+							if (ki == 0) break;
+							ki--;
+						}
+						while ((ki+1 < kfs.length) && (kfs[ki+1] < smi.start)) {
+							ki++;
+						}
+						var distPrev = smi.start - kfs[ki];
+						var distNext = (ki+1 < kfs.length) ? (kfs[ki+1] - smi.start) : 999999999;
+						if (distPrev > 150 && distNext > 150) { // 3프레임 이상의 오차
+							shift.skipped.push(smi);
+							continue;
+						}
+						var add = (distPrev < distNext) ? -distPrev : distNext;
+						console.log("add to " + smi.start + ": " + add);
+						shift.fSum += add;
+						shift.fCount++;
+						console.log(smi.start + " -> " + (smi.start + add));
+						smi.start += add;
+					}
 				}
-				target.body.push(new Subtitle.Smi(shiftSync(item.start), item.syncType, item.text));
 			}
-			refreshPreview(true);
+			{ // 중간 싱크 재계산
+				var from = null;
+				for (var i = 0; i < target.body.length; i++) {
+					var item = target.body[i];
+					if (item.syncType == Subtitle.SyncType.inner) continue;
+					if (from == null) continue;
+					
+					var count = i - from.index;
+					if (count > 1) {
+						for (var j = 1; j < count - 1; j++) {
+							target.body[from.index + j].start = Math.round(((from.sync * (count - j)) + (item.start * j)) / count);
+						}
+					}
+					from = {
+							index: i
+						,	sync: item.start
+					};
+				}
+			}
+			
+			for (var shiftIndex = 0; shiftIndex < shifts.length; shiftIndex++) {
+				var shift = shifts[shiftIndex];
+				if (shift.skipped == null || shift.tCount == 0 || shift.skipped.length == 0) {
+					continue;
+				}
+				var add = Math.round(shift.fSum / shift.fCount);
+				for (var i = 0; i < shift.skipped.length; i++) {
+					shift.skipped[i].start += add;
+				}
+			}
 			
 			operation.output = [{ text: target.toTxt() }];
 			for (var hi = 1; hi < operation.input.length; hi++) {
@@ -533,6 +639,8 @@ function apply() {
 					,	text: shiftText(holdInfo.text)
 				});
 			}
+			
+			refreshPreview(true);
 			break;
 		}
 		case "srt": {
@@ -540,10 +648,11 @@ function apply() {
 			var target = operation.target = new Subtitle.SrtFile();
 			for (var i = 0; i < origin.body.length; i++) {
 				var item = origin.body[i];
-				target.body.push(new Subtitle.Srt(shiftSync(item.start), shiftSync(item.end), item.text));
+				var srt = new Subtitle.Srt(shiftSync(item.start), shiftSync(item.end), item.text);
+				target.body.push(srt);
 			}
-			refreshPreview(true);
 			operation.output = [{ text: target.toTxt() }];
+			refreshPreview(true);
 			break;
 		}
 		case "ass": {
@@ -552,10 +661,11 @@ function apply() {
 			target.header = origin.header;
 			for (var i = 0; i < origin.body.length; i++) {
 				var item = origin.body[i];
-				target.body.push(new Subtitle.Ass(Math.round(shiftSync(item.start * 10) / 10), Math.round(shiftSync(item.end * 10) / 10), item.style, item.text));
+				var ass = new Subtitle.Ass(Math.round(shiftSync(item.start * 10) / 10), Math.round(shiftSync(item.end * 10) / 10), item.style, item.text);
+				target.body.push(ass);
 			}
-			refreshPreview(true);
 			operation.output = [{ text: target.toTxt() }];
+			refreshPreview(true);
 			break;
 		}
 	}
@@ -584,6 +694,7 @@ function beforeExit() {
 			saveSkf: {
 					origin: $("#chkSaveSkfOrigin").prop("checked")
 				,	target: $("#chkSaveSkfTarget").prop("checked")
+				,	withKf: $("#chkTrustKfTarget").prop("checked")
 			}
 		,	separators: $("#inputSeparator").val()
 		,	maxBlank: 30
@@ -646,7 +757,7 @@ div.file > * {
 	height: 20px;
 }
 div.file > label {
-	width: 40px;
+	width: 32px;
 	line-height: 20px;
 }
 
@@ -685,13 +796,13 @@ body > * {
 fieldset {
 	position: fixed;
 	bottom: 0;
-	width: calc( 50% - 92px);
+	width: calc( 50% - 90px);
 	border: 1px solid #888;
 	margin: 4px 8px 8px;
 	padding: 4px 8px 0;
 }
 fieldset.hover {
-	background: #ffe;
+	outline: 2px solid #f00
 }
 
 #fieldOrigin { left : 0; }
@@ -734,6 +845,7 @@ fieldset.hover {
 	border-bottom: 1px solid #aaa;
 }
 .preview .sync,
+.preview .time,
 .preview .text {
 	float: left;
 	padding: 2px;
@@ -741,11 +853,19 @@ fieldset.hover {
 	min-height: 18px;
 }
 .preview .sync {
-	width: 72px;
+	width: 50px;
 	text-align: right;
 }
+.preview .time {
+	width: 80px;
+	border-left: 1px solid #aaa;
+	text-align: center;
+}
+.preview .preview-header .sync {
+	width: 130px;
+}
 .preview .text {
-	width: calc(100% - 72px);
+	width: calc(100% - 130px);
 	white-space: normal;
 	border-left: 1px solid #aaa;
 }
@@ -758,18 +878,19 @@ fieldset.hover {
 .preview-header .line > * {
 	text-align: center;
 }
+.preview .line.error .sync,
+.preview .line.error .time {
+	background: #faa;
+}
 
 #viewOrigin,
 #viewTarget {
 	height: calc(100% - 64px);
 }
-#viewTarget {
-	margin-top: 36px;
-}
 
 #settingForm {
-	left: calc(50% - 76px);
-	width: 152px;
+	left: calc(50% - 75px);
+	width: 150px;
 	margin: 8px 0;
 	padding-top: 8px;
 	overflow-y: auto;
@@ -792,13 +913,13 @@ fieldset.hover {
 }
 
 #settingForm > #settingSkf {
-	line-height: 24px;
+	line-height: 20px;
 	border: 0;
 	text-align: center;
 }
 #settingSkf > label {
 	display: block;
-	margin-right: 12px;
+	padding-right: 10px;
 }
 
 h4 {
@@ -952,6 +1073,7 @@ h4 {
 			<div class="preview-body">
 				<div class="line preset">
 					<div class="sync">싱크</div>
+					<div class="time">시간</div>
 					<div class="text">내용</div>
 				</div>
 			</div>
@@ -967,6 +1089,10 @@ h4 {
 			<button>찾아보기...</button>
 		</div>
 		
+		<div class="file" title="화면 싱크를 가급적 키프레임에 맞춥니다.\nOTT 영상에선 맞지 않는 경우가 많습니다.\n체크할 경우 영상을 불러올 때 키프레임 분석이 함께 진행됩니다.">
+			<label style="width: auto; padding-left: 32px; "><input type="checkbox" id="chkTrustKfTarget" /> <span>키프레임 신뢰</span></label>
+		</div>
+		
 		<div class="preview" id="viewTarget">
 			<div class="preview-header">
 				<div class="line">
@@ -977,6 +1103,7 @@ h4 {
 			<div class="preview-body">
 				<div class="line preset">
 					<div class="sync">싱크</div>
+					<div class="time">시간</div>
 					<div class="text">내용</div>
 				</div>
 			</div>
@@ -985,10 +1112,10 @@ h4 {
 	
 	<div id="settingForm">
 		<div id="settingSkf">
-			<label><input type="checkbox" id="chkSaveSkfOrigin" /> <span>원본.skf 저장</span></label>
-			<label><input type="checkbox" id="chkSaveSkfTarget" /> <span>대상.skf 저장</span></label>
+			<label title="음성 분석 파일을 생성하여\n영상 파일 대신에 불러올 수 있습니다."><input type="checkbox" id="chkSaveSkfOrigin" /> <span>원본.skf 저장</span></label>
+			<label title="음성 분석 파일을 생성하여\n영상 파일 대신에 불러올 수 있습니다."><input type="checkbox" id="chkSaveSkfTarget" /> <span>대상.skf 저장</span></label>
 		</div>
-		<div id="settingSeparator">
+		<div id="settingSeparator" title="자막 파일을 불러올 때\n가중치 계산 범위를 나눌 구분자입니다.">
 			<label>
 				<h4>범위 구분자</h4>
 				<textarea id="inputSeparator" spellcheck="false"></textarea>
@@ -1013,13 +1140,8 @@ h4 {
 				<button id="btnAddRangeList">추가</button>
 			</div>
 		</div>
-		<div id="settingCalc">
+		<div id="settingCalc" title="음성 데이터에서 유사한 부분을 비교·탐색하며\n완벽한 결과를 보장하진 않습니다.">
 			<button id="btnCalc">가중치 계산</button>
-		</div>
-		<div style="border: 0;">
-			음성 데이터를 비교하여<br />
-			유사한 부분을 탐색하며<br />
-			오차가 생길 수 있습니다.
 		</div>
 		
 		<div id="shiftList">

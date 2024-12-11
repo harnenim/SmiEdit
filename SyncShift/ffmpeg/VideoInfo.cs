@@ -19,7 +19,7 @@ namespace Jamaker
 
         // 원래 키프레임도 보려고 했는데...
         // 생각보다 키프레임이 화면전환에 안 맞는 경우가 많음
-    	public static bool withKeyframe = false;
+    	public static bool WITH_KEYFRAME = false;
 
         public string path;
         public int duration;
@@ -29,15 +29,21 @@ namespace Jamaker
 
         public delegate void AfterRefreshInfo(VideoInfo video);
 
-        public VideoInfo(string path)
+        private VideoInfo(string path)
         {
             this.path = path;
-            isSkf = true;
         }
         public VideoInfo(string path, WebProgress progress)
         {
             this.path = path;
             this.progress = progress;
+        }
+        public static VideoInfo FromSkfFile(string path)
+        {
+            VideoInfo info = new VideoInfo(path);
+            info.isSkf = true;
+            info.LoadSkf();
+            return info;
         }
         public void RefreshInfo(AfterRefreshInfo afterRefreshInfo)
         {
@@ -142,37 +148,39 @@ namespace Jamaker
         public List<int> audioTrackIndexes = new List<int>();
         public string audioMap = null;
         private List<double> sfs = null;
-        private List<double> kfs = null;
+        private List<int> kfs = null;
 
         public void RefreshSkf()
         {
-            RefreshSkf(false);
+            RefreshSkf(false, WITH_KEYFRAME);
         }
         public void RefreshSkf(bool withSaveSkf)
+        {
+            RefreshSkf(withSaveSkf, WITH_KEYFRAME);
+        }
+        public void RefreshSkf(bool withSaveSkf, bool withKeyframe)
         {
             Console.WriteLine("RefreshSkf");
             if (isSkf)
             {
-                LoadSkf();
+                return;
             }
-            else
-            {
-                GetSfs();
-                GetKfs();
-                if (withSaveSkf) SaveSkf();
-            }
+            ReadSfs(withKeyframe);
+            ReadKfs(withKeyframe);
+            if (withSaveSkf) SaveSkf();
         }
 
         public List<double> GetSfs()
         {
-            if (sfs != null)
-            {
-                return sfs;
-            }
+            if (sfs == null) sfs = new List<double>();
+            return sfs;
+        }
+        public List<double> ReadSfs(bool withKeyframe)
+        {
             sfs = new List<double>();
 
             Process proc = GetProcess("ffmpeg.exe", true);
-            proc.StartInfo.Arguments = string.Format("-i \"{0}\" -vn -map {1} -ar 44100 -ac 1 -f f32le -", path, audioMap);
+            proc.StartInfo.Arguments = string.Format($"-i \"{path}\" -vn -map {audioMap} -ar 44100 -ac 1 -f f32le -");
             proc.ErrorDataReceived += new DataReceivedEventHandler(Proc_ErrorDataReceived);
             proc.Start();
             proc.BeginErrorReadLine();
@@ -221,19 +229,23 @@ namespace Jamaker
 
             return sfs;
         }
-        public List<double> GetKfs()
+        public List<int> GetKfs()
+        {
+            if (kfs == null) kfs = new List<int>();
+            return kfs;
+        }
+        public List<int> ReadKfs(bool withKeyframe)
         {
             if (kfs != null)
             {
                 return kfs;
             }
-
-            kfs = new List<double>();
+            kfs = new List<int>();
 
             if (withKeyframe)
             {
-            	Process proc = GetProcess("ffmpeg.exe", true);
-                proc.StartInfo.Arguments = "-loglevel error -skip_frame nokey -select_streams v:0 -show_entries frame=pkt_pts_time -of csv=print_section=0 \"" + path + "\"";
+            	Process proc = GetProcess("ffprobe.exe", true);
+                proc.StartInfo.Arguments = $"-loglevel error -select_streams v:0 -show_entries packet=pts_time,flags -of csv=print_section=0 \"{path}\"";
                 proc.ErrorDataReceived += new DataReceivedEventHandler(Proc_ErrorDataReceived);
                 proc.Start();
                 proc.BeginErrorReadLine();
@@ -246,11 +258,13 @@ namespace Jamaker
                 {
                     try
                     {
-                        double time = double.Parse(line);
-                        Console.WriteLine(time);
-                        kfs.Add(time);
-                        if (true)
-                            progress.Set(0.3 + (0.7 * (time * 1000 / duration)));
+                        string[] values = line.Split(',');
+                        int time = (int) Math.Round(double.Parse(values[0]) * 1000);
+                        if (values[1].StartsWith("K"))
+                        {
+                            kfs.Add(time);
+                        }
+                        progress.Set(0.3 + (0.7 * ((double) time / duration)));
                     }
                     catch (Exception) { }
                 }
@@ -286,7 +300,7 @@ namespace Jamaker
                 length += buffer.Length;
             }
 
-            foreach (double kf in kfs)
+            foreach (int kf in kfs)
             {
                 buffer = BitConverter.GetBytes(kf);
                 fs.Write(buffer, 0, buffer.Length);
@@ -302,7 +316,7 @@ namespace Jamaker
         public void LoadSkf()
         {
             sfs = new List<double>();
-            kfs = new List<double>();
+            kfs = new List<int>();
 
             FileStream fs = new FileStream(path, FileMode.Open);
 
@@ -313,9 +327,7 @@ namespace Jamaker
 
             fs.Read(buffer, 0, sizeof(int) * 2);
             int sfsLength = BitConverter.ToInt32(buffer, 0);
-            int kfsLength = BitConverter.ToInt32(buffer, sizeof(int));
-
-            int count = 0;
+            //int kfsLength = BitConverter.ToInt32(buffer, sizeof(int));
 
             while ((didread = fs.Read(buffer, 0, sizeof(double) * 1024)) != 0)
             {
@@ -324,18 +336,18 @@ namespace Jamaker
 
                 length -= residual_length;
 
-                for (int index = 0; index < length; index += sizeof(double))
+                for (int index = 0; index < length; )
                 {
-                    double value = BitConverter.ToDouble(buffer, index);
-                    if (count < sfsLength)
-                        sfs.Add(value);
-                    else if (count < sfsLength + kfsLength)
-                        kfs.Add(value);
+                    if (sfs.Count < sfsLength)
+                    {
+                        sfs.Add(BitConverter.ToDouble(buffer, index));
+                        index += sizeof(double);
+                    }
                     else
                     {
-
+                        kfs.Add(BitConverter.ToInt32(buffer, index));
+                        index += sizeof(int);
                     }
-                    count++;
                 }
             }
 
