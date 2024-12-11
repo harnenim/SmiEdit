@@ -62,6 +62,9 @@ Binder.prototype.checkLoadVideoFile = function(smiPath) {
 Binder.prototype.loadVideoFile = function(path) {
 	this._.loadVideoFile(path);
 }
+Binder.prototype.requestFrames = function(path) {
+	this._.requestFrames(path);
+}
 Binder.prototype.openTempDir = function() {
 	this._.openTempDir();
 }
@@ -117,7 +120,7 @@ var window_open = function(url, name, options, opener) {
 	editor.player = null;
 	editor.strSettingJson = "불러오기 실패 예제";
 	editor.strBridgeList = "NoPlayer: (없음)";
-	editor.strHighlights = "SyncOnly: 싱크 줄 구분\neclipse: 이클립스 스타일";
+	editor.strHighlights = "SyncOnly: 싱크 줄 구분\n eclipse: 이클립스 스타일";
 
 	// override
 	editor.drop = async function(x, y) {
@@ -197,7 +200,7 @@ var window_open = function(url, name, options, opener) {
 		
 		this.script("init", [this.strSettingJson]); // C#에서 객체 그대로 못 보내주므로 json string 만드는 걸로
 		this.script("setPlayerDlls", [this.strBridgeList]);
-        this.script("setHighlights", [this.strHighlights]);
+		this.script("setHighlights", [this.strHighlights]);
 
 		// 세팅 확인
 		WinAPI.GetWindowRect(this.getHwnd("editor"), this.lastOffset);
@@ -666,7 +669,8 @@ var accessHandle;
 		}
 	}
 	editor.checkLoadVideoFile = function() { /* native */ }
-	editor.loadVideoFile = function() { /* native */ }
+	editor.loadVideoFile = function(path) { /* native */ }
+	editor.requestFrames = function(path) { /* native */ }
 	editor.save = async function(text, path) {
 		var stream = null;
 		var paths = path.split(":");

@@ -164,7 +164,10 @@ namespace Jamaker
             Console.WriteLine("ReadVideoFile: {0}", path);
             ShowProcessing("불러오는 중");
             var progress = isOrigin ? "#originVideo > .input" : "#targetVideo > .input";
-            readingVideoFile = new VideoInfo(path, new WebProgress(this, progress));
+            readingVideoFile = new VideoInfo(path, (double ratio) =>
+            {
+                SetProgress(progress, ratio);
+            });
             new Thread(new ThreadStart(() =>
             {
                 readingVideoFile.RefreshInfo((VideoInfo video) => {
@@ -228,7 +231,7 @@ namespace Jamaker
             }
             else
             {
-                video.progress.Set(0);
+                video.setProgress(0);
                 HideProcessing();
             }
         }

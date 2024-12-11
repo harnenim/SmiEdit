@@ -208,11 +208,51 @@ SmiEditor.PlayerAPI = {
 	,	moveTo     : function(time) { binder.moveTo(time); }
 	,	move       : function(move) { binder.moveTo(time + move); }
 };
-SmiEditor.getSyncTime = function(sync) {
+SmiEditor.trustKeyFrame = false;
+SmiEditor.video = {
+		name: null
+	,	fs: []
+	,	kfs: []
+}
+SmiEditor.findSync = function(sync, fs=[], from=0, to=-1) {
+	if (fs.length == 0) return null;
+	if (to < 0) to = fs.length;
+	if (from + 1 == to) {
+		var dist0 = sync - fs[from];
+		var dist1 = fs[to] - sync;
+		if (dist0 <= dist1) {
+			return fs[from];
+		} else {
+			return fs[to];
+		}
+	}
+	var mid = from + Math.floor((to - from) / 2);
+	if (fs[mid] < sync) {
+		return SmiEditor.findSync(sync, fs, mid, to);
+	} else {
+		return SmiEditor.findSync(sync, fs, from, mid);
+	}
+}
+SmiEditor.getSyncTime = function(sync, forKeyFrame=false) {
 	if (!sync) sync = (time + SmiEditor.sync.weight);
-	// 프레임 단위 싱크 보정
-	if (SmiEditor.sync.frame) {
-		sync = Math.max(1, Math.floor(Math.floor((sync / FL) + 0.5) * FL));
+	if (SmiEditor.sync.frame) { // 프레임 단위 싱크 보정
+		var adjustSync = null;
+		if (forKeyFrame && SmiEditor.video.kfs.length > 2) { // 키프레임 싱크
+			adjustSync = SmiEditor.findSync(sync, SmiEditor.video.kfs);
+			var dist = Math.abs(adjustSync - sync);
+			if (dist > 200) { // 200ms 넘어가면 키프레임에 맞춘 게 아니라고 간주
+				adjustSync = null;
+			}
+		}
+		if (adjustSync == null && SmiEditor.video.fs.length > 2) { // 프레임 싱크
+			adjustSync = SmiEditor.findSync(sync, SmiEditor.video.fs);
+		}
+		if (adjustSync) { // 보정 완료
+			sync = adjustSync;
+		} else { // FPS 기반 보정
+			sync = Math.floor(Math.floor((sync / FL) + 0.5) * FL);
+		}
+		sync = Math.max(1, sync);
 	}
 	return sync;
 }
@@ -883,7 +923,7 @@ SmiEditor.prototype.insertSync = function(forFrame) {
 	var cursor = this.input[0].selectionEnd;
 	var lineNo = this.input.val().substring(0, cursor).split("\n").length - 1;
 	
-	var sync = SmiEditor.getSyncTime();
+	var sync = SmiEditor.getSyncTime(null, forFrame);
 	
 	var lineSync = this.lines[lineNo][LINE.SYNC];
 	if (lineSync) {
@@ -1650,6 +1690,8 @@ SmiEditor.prototype.moveSync = function(toForward) {
 	this.history.log();
 }
 SmiEditor.prototype.afterMoveSync = function(range) {
+	this.updateHighlight();
+	
 	if (this.syncUpdating) {
 		// 이미 렌더링 중이면 대기열 활성화
 		this.needToUpdateSync = true;

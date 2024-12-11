@@ -54,8 +54,8 @@ body:not(.drag-file) #cover {
 	--><button type="button" id="btnMoveToBack"  title="싱크 당기기(Ctrl+Shift+↓)">－</button><!--
 	--><button type="button" id="btnMoveToForward" title="싱크 밀기(Ctrl+Shift+↑)">＋</button><!--
 	--><label title="현재 재생 위치로 커서가 자동으로 이동합니다."><input type="checkbox" id="checkAutoFindSync" />검수모드</label><!--
-	--><label title="화면 싱크를 가급적 키프레임에 맞춰줍니다."><input type="checkbox" id="checkTrustKeyframe" />키프레임 신뢰</label><!--
-	 -><span id="showFps"></span><!--
+	--><label class="for-frame-sync" title="화면 싱크를 가급적 키프레임에 맞춰줍니다.\nOTT 영상에선 맞지 않는 경우가 많습니다."><input type="checkbox" id="checkTrustKeyframe" />키프레임 신뢰</label><!--
+	 -><span class="for-frame-sync" id="showFps"></span><!--
 --></div>
 	<div id="tabSelector"><div class="th" id="btnNewTab">＋</div></div>
 	<div id="editor"></div>

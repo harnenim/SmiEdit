@@ -97,6 +97,10 @@
         {
             _.LoadVideoFile(path);
         }
+        public void RequestFrames(string path)
+        {
+            _.RequestFrames(path);
+        }
         public void DoExit(bool resetPlayer, bool exitPlayer)
         {
             _.DoExit(resetPlayer, exitPlayer);

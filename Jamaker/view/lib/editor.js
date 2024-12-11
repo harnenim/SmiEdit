@@ -42,8 +42,6 @@ var Tab = function(text, path) {
 	this.hold = 0;
 	this.lastHold = 1;
 	this.path = path;
-	this.fs = null;
-	this.kfs = null;
 	
 	var holds = Subtitle.SmiFile.textToHolds(text);
 	for (var i = 0; i < holds.length; i++) {
@@ -597,7 +595,7 @@ function init(jsonSetting) {
 			inputWeight[0].setSelectionRange(cursor, cursor);
 		}
 	});
-	var inputUnit = $("#inputUnit").bind("input propertychange", function() {
+	var inputUnit = $("#inputUnit").on("input propertychange", function() {
 		var unit = inputUnit.val();
 		if (isFinite(unit)) {
 			SmiEditor.sync.unit = Number(unit);
@@ -625,11 +623,8 @@ function init(jsonSetting) {
 		tabs[tab].holds[tabs[tab].hold].input.focus();
 	});
 	var checkTrustKeyframe = $("#checkTrustKeyframe").on("click", function() {
-		trustKeyframe = $(this).prop("checked");
+		SmiEditor.trustKeyFrame = $(this).prop("checked");
 		if (tabs.length == 0) return;
-		//tabs[tab].holds[tabs[tab].hold].input.focus();
-		// TODO: ffprobe.exe 작업 필요
-		alert("키프레임 정보를 읽어옵니다. - 개발 중");
 	});
 	
 	var btnNewTab = $("#btnNewTab").on("click", function() {
@@ -752,7 +747,6 @@ function setSetting(setting) {
 				url: "lib/highlight/" + highlight + ".js"
 				, dataType: "text"
 				, success: function (js) {
-					console.log(js);
 					eval(js);
 					afterLoadHighlight();
 				}
@@ -1071,12 +1065,16 @@ function confirmLoadVideo(path) {
 }
 
 // C# 쪽에서 호출
-function setFrames(fs, kfs) {
-	var currentTab = tabs[tab];
-	if (!currentTab) {
-		return;
+function setVideo(path) {
+	if (SmiEditor.video.path != path) {
+		SmiEditor.video.path = path;
+		SmiEditor.video.fs = [];
+		SmiEditor.video.kfs = [];
+		binder.requestFrames(path);
 	}
-	
+}
+// C# 쪽에서 호출
+function setFrames(fs, kfs) {
 	fs = fs.split(",");
 	for (var i = 0; i < fs.length; i++) {
 		fs[i] = Number(fs[i]);
@@ -1085,10 +1083,9 @@ function setFrames(fs, kfs) {
 	for (var i = 0; i < kfs.length; i++) {
 		kfs[i] = Number(kfs[i]);
 	}
-	tab.fs = fs;
-	tab.kfs = kfs;
-	
-	// TODO: progress 닫기
+	console.log(kfs.length + " / " + fs.length);
+	SmiEditor.video.fs = fs;
+	SmiEditor.video.kfs = kfs;
 }
 
 // 종료 전 C# 쪽에서 호출

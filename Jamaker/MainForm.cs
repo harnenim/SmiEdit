@@ -8,6 +8,7 @@ using CefSharp;
 using System.Diagnostics;
 using Jamaker.addon;
 using System.Reflection;
+using System.Threading;
 
 namespace Jamaker
 {
@@ -105,6 +106,7 @@ namespace Jamaker
             }
         }
 
+        private int refreshPlayerIndex = 0;
         private void RefreshPlayer(object sender, EventArgs e)
         {
             if (player != null)
@@ -117,6 +119,12 @@ namespace Jamaker
                         int time = player.GetTime();
                         Script("refreshTime", new object[] { time, fps });
                         UpdateViewerTime(time);
+
+                        if (++refreshPlayerIndex % 100 == 0)
+                        {   // 1초마다 파일명 확인
+                            refreshPlayerIndex = 0;
+                            player.GetFileName();
+                        }
                     }
                     else
                     {   // 실행 직후 초기 위치 가져옴
@@ -212,13 +220,16 @@ namespace Jamaker
                 }
                 if (target.Equals("player"))
                 {
-                    player.currentOffset.top = y;
-                    player.currentOffset.left = x;
-                    player.currentOffset.right = x + width;
-                    player.currentOffset.bottom = y + height;
-                    if (hwnd > 0)
+                    if (player != null)
                     {
-                        player.MoveWindow();
+                        player.currentOffset.top = y;
+                        player.currentOffset.left = x;
+                        player.currentOffset.right = x + width;
+                        player.currentOffset.bottom = y + height;
+                        if (hwnd > 0)
+                        {
+                            player.MoveWindow();
+                        }
                     }
                 }
                 else
@@ -799,10 +810,14 @@ namespace Jamaker
         protected override void WndProc(ref Message m)
         {
             // 파일명 말곤 수신할 일 없다는 가정
-            if (player != null && afterGetFileName != null)
+            if (player != null)
             {
                 string path = player.AfterGetFileName(m);
-                afterGetFileName(path);
+                if (path != null)
+                {
+                    afterGetFileName?.Invoke(path);
+                    Script("setVideo", new object[] { path });
+                }
             }
 
             base.WndProc(ref m);
@@ -904,6 +919,35 @@ namespace Jamaker
         public void LoadVideoFile(string path)
         {
             player.OpenFile(path);
+        }
+        public void RequestFrames(string path)
+        {
+            // 아주 오래 걸리진 않는 작업
+            // 프로그레스 띄우지 않고 그냥 백그라운드에서 갱신
+            // 키프레임 신뢰 버튼 쪽에 프로그레스 띄울까?
+            new Thread(() =>
+            {
+                try
+                {
+                    FileInfo info = new FileInfo(path);
+                    string name = $"{info.Name}.{info.Length}.fkf";
+                    Console.WriteLine(name);
+
+                    // 기존에 있으면 가져오기
+                    //VideoInfo.FromFkfFile(~~name);
+
+                    // 없으면 새로 가져오기
+                    VideoInfo videoInfo = new VideoInfo(path, (double ratio) => { });
+                    videoInfo.ReadKfs(true);
+                    List<int> fs = videoInfo.GetVfs();
+                    List<int> kfs = videoInfo.GetKfs();
+                    string strFs = "", strKfs = "";
+                    foreach (int f in fs) { strFs += (strFs.Length == 0) ? $"{f}" : ("," + f); }
+                    foreach (int f in kfs) { strKfs += (strKfs.Length == 0) ? $"{f}" : ("," + f); }
+                    Script("setFrames", new object[] { strFs, strKfs });
+                }
+                catch (Exception e) { Console.WriteLine(e); }
+            }).Start();
         }
 
         private int saveAfter = 0;
