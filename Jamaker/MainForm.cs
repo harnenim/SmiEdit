@@ -931,17 +931,15 @@ namespace Jamaker
                 {
                     FileInfo info = new FileInfo(path);
                     string fkfName = $"{info.Name.Substring(0, info.Name.Length - info.Extension.Length)}.{info.Length}.fkf";
-                    Console.WriteLine(fkfName);
-
-                    VideoInfo videoInfo = null;
-
+                    
                     // 기존에 있으면 가져오기
                     try
                     {
                         DirectoryInfo di = new DirectoryInfo("temp");
                         if (di.Exists)
-                        { 
-                            videoInfo = VideoInfo.FromFkfFile("temp/" + fkfName);
+                        {
+                            AfterReadFkf(VideoInfo.FromFkfFile("temp/" + fkfName));
+                            return;
                         }
                     }
                     catch (Exception e)
@@ -950,32 +948,24 @@ namespace Jamaker
                     }
 
                     // 없으면 새로 가져오기
-                    if (videoInfo == null)
+                    new VideoInfo(path, (double ratio) => {
+                        Script("Progress.set", new object[] { "#forFrameSync", ratio });
+                    }).RefreshInfo((VideoInfo videoInfo) =>
                     {
-                        videoInfo = new VideoInfo(path, (double ratio) => {
-                            Script("Progress.set", new object[] { "#forFrameSync", ratio });
-                        });
-                        videoInfo.RefreshInfo((VideoInfo video) =>
-                        {
-                            video.ReadKfs(true);
-                            video.SaveFkf("temp/" + fkfName);
-                            AfterReadFkf(video);
-                        });
-                    }
-                    else
-                    {
+                        videoInfo.ReadKfs(true);
                         AfterReadFkf(videoInfo);
-                    }
+                        videoInfo.SaveFkf("temp/" + fkfName);
+                    });
                 }
                 catch (Exception e) { Console.WriteLine(e); }
             }).Start();
         }
-        private void AfterReadFkf(VideoInfo video)
+        private void AfterReadFkf(VideoInfo videoInfo)
         {
             string strFs = "", strKfs = "";
-            List<int> fs = video.GetVfs();
-            List<int> kfs = video.GetKfs();
-            foreach (int f in fs) { strFs += (strFs.Length == 0) ? $"{f}" : ("," + f); }
+            List<int> fs  = videoInfo.GetVfs();
+            List<int> kfs = videoInfo.GetKfs();
+            foreach (int f in fs ) { strFs  += (strFs .Length == 0) ? $"{f}" : ("," + f); }
             foreach (int f in kfs) { strKfs += (strKfs.Length == 0) ? $"{f}" : ("," + f); }
             Script("setFrames", new object[] { strFs, strKfs });
         }

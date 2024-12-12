@@ -2376,7 +2376,3 @@ SmiEditor.fillSync = function (text) {
 	smi.body = input;
 	return smi.toTxt().trim();
 };
-
-$(function() {
-	SmiEditor.refreshHighlight();
-});
