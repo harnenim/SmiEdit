@@ -216,6 +216,10 @@
 	border: 1px solid #aaa;
 	border-width: 1px 0 0 1px;
 }
+.disabled {
+	color: #888;
+}
+
 .sync { border: 0 solid #000; }
 .sync.frame { border-top-width: 1px; line-height: 19px; }
 .sync.range + span { border-left-width: 1px; border-style: dotted; }

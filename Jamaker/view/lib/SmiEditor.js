@@ -210,7 +210,7 @@ SmiEditor.PlayerAPI = {
 };
 SmiEditor.trustKeyFrame = false;
 SmiEditor.video = {
-		name: null
+		path: null
 	,	fs: []
 	,	kfs: []
 }
@@ -246,6 +246,10 @@ SmiEditor.getSyncTime = function(sync, forKeyFrame=false) {
 		}
 		if (adjustSync == null && SmiEditor.video.fs.length > 2) { // 프레임 싱크
 			adjustSync = SmiEditor.findSync(sync, SmiEditor.video.fs);
+			var dist = Math.abs(adjustSync - sync);
+			if (dist > 200) { // 200ms 넘어가면 프레임 정보가 잘못된 걸로 간주
+				adjustSync = null;
+			}
 		}
 		if (adjustSync) { // 보정 완료
 			sync = adjustSync;

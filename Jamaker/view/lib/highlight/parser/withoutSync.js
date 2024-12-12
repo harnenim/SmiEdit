@@ -1,11 +1,3 @@
-SmiEditor.highlightCss = {
-		clamp  : { color: "#3F7F7F" }
-	,	tag    : { color: "#3F7F7F" }
-	,	attr   : { color: "#AB0095" }
-	,	value  : { color: "#2A00FF" }
-	,	comment: { color: "#3F5FBF" }
-	,	sync   : { color: "#3F5FBF" }
-};
 SmiEditor.highlightText = function(text, state=null) {
 	var previewLine = $("<span>").data({ state: state });
 	if (state == null && text.toUpperCase().startsWith("<SYNC ")) {
@@ -25,8 +17,8 @@ SmiEditor.highlightText = function(text, state=null) {
 	var pos = 0;
 	var html = "";
 	switch (state) {
-		case '/': html = "<span class='clamp'>"; break;
-		case '>': html = "<span class='tag'  >"; break;
+		case '/': html = "<span class='tag'>"; break;
+		case '>': html = "<span class='name'>"; break;
 		case "'": html = "<span class='value'>"; break;
 		case '"': html = "<span class='value'>"; break;
 		case '!': html = "<span class='comment'>"; break;
@@ -38,16 +30,16 @@ SmiEditor.highlightText = function(text, state=null) {
 			case '/': { // 태그?!
 				state = '<';
 				if (c == '/') { // 종료 태그 시작일 경우
-					html += "/</span><span class='tag'>";
+					html += "/</span><span class='name'>";
 					break;
 				}
 				// 종료 태그 아닐 경우 아래로 이어서 진행
-				html += "</span><span class='tag'>";
+				html += "</span><span class='name'>";
 			}
 			case '<': { // 태그명
 				switch (c) {
 					case '>': { // 태그 종료
-						html += "</span><span class='clamp'>&gt;</span>";
+						html += "</span><span class='tag'>&gt;</span>";
 						state = null;
 						break;
 					}
@@ -79,7 +71,7 @@ SmiEditor.highlightText = function(text, state=null) {
 			case '>': { // 태그 내
 				switch (c) {
 					case '>': { // 태그 종료
-						html += "</span><span class='clamp'>&gt;</span>";
+						html += "</span><span class='tag'>&gt;</span>";
 						state = null;
 						break;
 					}
@@ -110,7 +102,7 @@ SmiEditor.highlightText = function(text, state=null) {
 			case 'a': { // 속성명
 				switch (c) {
 					case '>': { // 태그 종료
-						html += "</span></span><span class='clamp'>&gt;</span>";
+						html += "</span></span><span class='tag'>&gt;</span>";
 						state = null;
 						break;
 					}
@@ -150,7 +142,7 @@ SmiEditor.highlightText = function(text, state=null) {
 			case '`': { // 속성명+공백문자
 				switch (c) {
 					case '>': { // 태그 종료
-						html += "</span></span><span class='clamp'>&gt;</span>";
+						html += "</span></span><span class='tag'>&gt;</span>";
 						state = null;
 						break;
 					}
@@ -177,7 +169,7 @@ SmiEditor.highlightText = function(text, state=null) {
 			case '=': { // 속성값 시작 전
 				switch (c) {
 					case '>': { // 태그 종료
-						html += "</span></span><span class='clamp'>&gt;</span>";
+						html += "</span></span><span class='tag'>&gt;</span>";
 						state = null;
 						break;
 					}
@@ -219,7 +211,7 @@ SmiEditor.highlightText = function(text, state=null) {
 			case '~': { // 따옴표 없는 속성값
 				switch (c) {
 					case '>': { // 태그 종료
-						html += "</span></span><span class='clamp'>&gt;</span>";
+						html += "</span></span><span class='tag'>&gt;</span>";
 						state = null;
 						break;
 					}
@@ -327,7 +319,7 @@ SmiEditor.highlightText = function(text, state=null) {
 							state = '!';
 							pos += 3;
 						} else {
-							html += "<span class='clamp'>&lt;";
+							html += "<span class='tag'>&lt;";
 							state = '/';
 						}
 						break;

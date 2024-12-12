@@ -1,2 +1,3 @@
-SyncOnly: 싱크 줄 구분
-eclipse: 이클립스 스타일
+SyncOnly|SyncOnly: 싱크 줄 구분
+withoutSync|eclipse: 이클립스 스타일 (싱크줄 제외)
+full|eclipse: 이클립스 스타일

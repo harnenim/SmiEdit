@@ -639,7 +639,7 @@ $(function() {
                 value = "eclipse";
             }
             if (value) {
-                select.find("option[value=" + value + "]").prop("selected", true);
+                select.find("option[value='" + value + "']").prop("selected", true);
             }
         }
 
@@ -672,7 +672,7 @@ $(function() {
 				var dll = opener.playerDlls[i].split(":");
 				select.append($("<option>").val(dll[0].trim()).text(dll[1].trim()));
 			}
-			select.find("option[value=" + select.data("value") + "]").prop("selected", true);
+			select.find("option[value='" + select.data("value") + "']").prop("selected", true);
 		}
 		select.on("change", function() {
 			var dll = select.val();
@@ -1309,14 +1309,16 @@ fieldset ol button,
 	</form>
 	
 	<form id="style">
-		<label><input type="checkbox" name="useTab" /> 탭 사용</label><br />
-		<label><input type="checkbox" name="viewer_useAlign" /> 미리보기 줄표로 시작할 경우 왼쪽 정렬</label><br />
-		<label>문법 하이라이트
+		<label>문법 하이라이트:
 			<select name="useHighlight">
 				<option value="">사용 안 함</option>
 			</select>
-			(파일이 커질 경우 성능 문제가 발생할 수 있습니다.)
+			<br />
+			※ 자막 내용이 많아질 경우 성능 문제가 발생할 수 있습니다.
 		</label><br />
+		<br />
+		<label><input type="checkbox" name="useTab" /> 탭 사용</label><br />
+		<label><input type="checkbox" name="viewer_useAlign" /> 미리보기 줄표로 시작할 경우 왼쪽 정렬</label><br />
 		<label>새 문서
 			<textarea name="newFile" spellcheck="false" style="height: 400px;"></textarea>
 		</label>

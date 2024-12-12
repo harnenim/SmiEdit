@@ -356,7 +356,7 @@ Tab.prototype.replaceBeforeSave = function() {
 	}
 }
 Tab.prototype.getSaveText = function(withCombine=true, withComment=true) {
-	return Subtitle.SmiFile.holdsToText(this.holds, withCombine, withComment);
+	return Subtitle.SmiFile.holdsToText(this.holds, setting.saveWithNormalize, withCombine, withComment);
 }
 Tab.prototype.onChangeSaved = function(hold) {
 	if (this.isSaved()) {
@@ -397,7 +397,7 @@ SmiEditor.prototype.onChangeSaved = function(saved) {
 	currentTab.onChangeSaved(this);
 };
 SmiEditor.prototype.updateTimeRange = function() {
-	var start = 999999999;
+	var start = 999999998;
 	var end = 0;
 	for (var i = 0; i < this.lines.length; i++) {
 		var line = this.lines[i];
@@ -410,8 +410,7 @@ SmiEditor.prototype.updateTimeRange = function() {
 		this.start = start;
 		this.end   = (start == end) ? 999999999 : end;
 	} else {
-		this.start = 0;
-		this.end = 1;
+		this.end = 999999999;
 	}
 }
 
@@ -740,16 +739,22 @@ function setSetting(setting) {
 		}
 		if (setting.useHighlight) {
 			var highlight = setting.useHighlight;
-			if (highlight == true) { // 구버전의 사용여부
-				highlight = setting.useHighlight = "eclipse"; // 현행 이클립스 스타일로 잡아줌
+			if (highlight == true || highlight == "eclipse") { // 구버전의 사용여부
+				highlight = setting.useHighlight = "withoutSync|eclipse"; // 현행 이클립스 스타일로 잡아줌
 			}
-			$.ajax({
-				url: "lib/highlight/" + highlight + ".js"
-				, dataType: "text"
-				, success: function (js) {
-					eval(js);
-					afterLoadHighlight();
-				}
+			var names = highlight.split("|");
+			$.ajax({url: "lib/highlight/parser/" + names[0] + ".js"
+				,	dataType: "text"
+				,	success: function(parser) {
+						eval(parser);
+						$.ajax({url: "lib/highlight/style/" + names[1] + ".js"
+							,	dataType: "text"
+							,	success: function(style) {
+									eval(style);
+									afterLoadHighlight();
+								}
+						});
+					}
 			});
 		} else {
 			afterLoadHighlight();
@@ -765,6 +770,11 @@ function setSetting(setting) {
 	// 가중치 등
 	$("#inputWeight").val(setting.sync.weight);
 	$("#inputUnit"  ).val(setting.sync.unit  );
+	if (setting.sync.frame) {
+		$(".for-frame-sync").show();
+	} else {
+		$(".for-frame-sync").hide();
+	}
 	var dll = setting.player.control.dll;
 	if (dll) {
 		var playerSetting = setting.player.control[dll];
@@ -1070,6 +1080,8 @@ function setVideo(path) {
 		SmiEditor.video.path = path;
 		SmiEditor.video.fs = [];
 		SmiEditor.video.kfs = [];
+		$("#forFrameSync").addClass("disabled");
+		$("#checkTrustKeyframe").attr({ disabled: true });
 		binder.requestFrames(path);
 	}
 }
@@ -1086,6 +1098,8 @@ function setFrames(fs, kfs) {
 	console.log(kfs.length + " / " + fs.length);
 	SmiEditor.video.fs = fs;
 	SmiEditor.video.kfs = kfs;
+	$("#forFrameSync").removeClass("disabled");
+	$("#checkTrustKeyframe").attr({ disabled: false });
 }
 
 // 종료 전 C# 쪽에서 호출

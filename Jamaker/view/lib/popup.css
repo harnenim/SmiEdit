@@ -44,6 +44,7 @@ button:focus {
 	background: #cce4f7;
 }
 input:focus,
+select:focus,
 textarea:focus {
 	outline: 0;
 	border-color: #06a;
