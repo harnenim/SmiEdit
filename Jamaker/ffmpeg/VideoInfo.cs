@@ -269,7 +269,7 @@ namespace Jamaker
                 proc.Start();
                 proc.BeginErrorReadLine();
 
-                setProgress(0.3);
+                setProgress(0);
 
                 StreamReader sr = new StreamReader(proc.StandardOutput.BaseStream);
                 string line;
@@ -284,13 +284,13 @@ namespace Jamaker
                         {
                             kfs.Add(time);
                         }
-                        setProgress(0.3 + (0.7 * ((double) time / duration)));
+                        setProgress((double) time / duration);
                     }
                     catch (Exception) { }
                 }
                 proc.Close();
 
-                setProgress(1);
+                setProgress(0);
             }
 
             return kfs;

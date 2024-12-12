@@ -849,6 +849,7 @@ namespace Jamaker
         }
         private void OpenFileAfterGetVideoFileName(string path)
         {
+            afterGetFileName = null;
             if (path != null && path.Length > 0)
             {
                 int index = path.LastIndexOf('.');
@@ -856,7 +857,6 @@ namespace Jamaker
                 {
                     LoadFile(path.Substring(0, index) + ".smi", true);
                 }
-	            afterGetFileName = null;
             }
         }
         
@@ -893,6 +893,7 @@ namespace Jamaker
         }
         private void CheckLoadVideoFileAfterGetVideoFileName(string path)
         {
+            afterGetFileName = null;
             if (path != null && path.Length > 0)
             {
                 string withoutExt = path.Substring(0, path.LastIndexOf('.'));
@@ -913,7 +914,6 @@ namespace Jamaker
                         }
                     }
                 }
-                afterGetFileName = null;
             }
         }
         public void LoadVideoFile(string path)
@@ -930,24 +930,54 @@ namespace Jamaker
                 try
                 {
                     FileInfo info = new FileInfo(path);
-                    string name = $"{info.Name}.{info.Length}.fkf";
-                    Console.WriteLine(name);
+                    string fkfName = $"{info.Name.Substring(0, info.Name.Length - info.Extension.Length)}.{info.Length}.fkf";
+                    Console.WriteLine(fkfName);
+
+                    VideoInfo videoInfo = null;
 
                     // 기존에 있으면 가져오기
-                    //VideoInfo.FromFkfFile(~~name);
+                    try
+                    {
+                        DirectoryInfo di = new DirectoryInfo("temp");
+                        if (di.Exists)
+                        { 
+                            videoInfo = VideoInfo.FromFkfFile("temp/" + fkfName);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
 
                     // 없으면 새로 가져오기
-                    VideoInfo videoInfo = new VideoInfo(path, (double ratio) => { });
-                    videoInfo.ReadKfs(true);
-                    List<int> fs = videoInfo.GetVfs();
-                    List<int> kfs = videoInfo.GetKfs();
-                    string strFs = "", strKfs = "";
-                    foreach (int f in fs) { strFs += (strFs.Length == 0) ? $"{f}" : ("," + f); }
-                    foreach (int f in kfs) { strKfs += (strKfs.Length == 0) ? $"{f}" : ("," + f); }
-                    Script("setFrames", new object[] { strFs, strKfs });
+                    if (videoInfo == null)
+                    {
+                        videoInfo = new VideoInfo(path, (double ratio) => {
+                            Script("Progress.set", new object[] { "#forFrameSync", ratio });
+                        });
+                        videoInfo.RefreshInfo((VideoInfo video) =>
+                        {
+                            video.ReadKfs(true);
+                            video.SaveFkf("temp/" + fkfName);
+                            AfterReadFkf(video);
+                        });
+                    }
+                    else
+                    {
+                        AfterReadFkf(videoInfo);
+                    }
                 }
                 catch (Exception e) { Console.WriteLine(e); }
             }).Start();
+        }
+        private void AfterReadFkf(VideoInfo video)
+        {
+            string strFs = "", strKfs = "";
+            List<int> fs = video.GetVfs();
+            List<int> kfs = video.GetKfs();
+            foreach (int f in fs) { strFs += (strFs.Length == 0) ? $"{f}" : ("," + f); }
+            foreach (int f in kfs) { strKfs += (strKfs.Length == 0) ? $"{f}" : ("," + f); }
+            Script("setFrames", new object[] { strFs, strKfs });
         }
 
         private int saveAfter = 0;
@@ -985,11 +1015,11 @@ namespace Jamaker
         }
         public void SaveWithDialogAfterGetVideoFileName(string path)
         {
+            afterGetFileName = null;
             if (path != null && path.Length > 0)
             {
                 saveAfter = 0;
                 SaveWithDialog(textToSave, path);
-                afterGetFileName = null;
             }
         }
         public void SaveWithDialog(string text, string videoPath)

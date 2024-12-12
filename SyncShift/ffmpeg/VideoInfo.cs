@@ -12,7 +12,7 @@ namespace Jamaker
         public string language;
         public Dictionary<string, string> metadata = new Dictionary<string, string>();
     }
-
+	
     public class VideoInfo
     {
         public enum Type
@@ -24,7 +24,7 @@ namespace Jamaker
 
         // 원래 키프레임도 보려고 했는데...
         // 생각보다 키프레임이 화면전환에 안 맞는 경우가 많음
-        public static bool WITH_KEYFRAME = false;
+    	public static bool WITH_KEYFRAME = false;
 
         public string path;
         public int duration;
@@ -64,20 +64,20 @@ namespace Jamaker
             RefreshVideoInfo();
             afterRefreshInfo(this);
         }
-
+        
         private static Process GetProcess(string exe)
         {
             return GetProcess(exe, false);
         }
         private static Process GetProcess(string exe, bool withStandardError)
         {
-            Process proc = new Process();
-            proc.StartInfo.UseShellExecute = false;
-            proc.StartInfo.CreateNoWindow = true;
-            proc.StartInfo.RedirectStandardOutput = true;
-            proc.StartInfo.RedirectStandardError = withStandardError;
-            proc.StartInfo.FileName = Path.Combine(exePath, exe);
-            return proc;
+        	Process proc = new Process();
+        	proc.StartInfo.UseShellExecute = false;
+        	proc.StartInfo.CreateNoWindow = true;
+        	proc.StartInfo.RedirectStandardOutput = true;
+        	proc.StartInfo.RedirectStandardError = withStandardError;
+        	proc.StartInfo.FileName = Path.Combine(exePath, exe);
+        	return proc;
         }
 
         private void RefreshVideoInfo()
@@ -88,7 +88,7 @@ namespace Jamaker
 
             streams = new List<StreamAttr>();
             duration = 10000000;
-
+            
             StreamAttr lastStream = null;
             bool isMetadata = false;
             string[] lines = proc.StandardError.ReadToEnd().Split(new char[] { '\n', '\r' });
@@ -135,12 +135,9 @@ namespace Jamaker
                     System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(line, pattern);
                     System.Text.RegularExpressions.GroupCollection groups = m.Groups;
                     streams.Add(lastStream = new StreamAttr()
-                    {
-                        map = groups[1].Value
-                      ,
-                        type = groups[3].Value.ToLower()
-                      ,
-                        language = groups[2].Value
+                    {   map = groups[1].Value
+                      , type = groups[3].Value.ToLower()
+                      , language = groups[2].Value
                     });
                 }
                 else if (lastStream != null && line.StartsWith("      title           : "))
@@ -250,6 +247,11 @@ namespace Jamaker
             if (kfs == null) kfs = new List<int>();
             return kfs;
         }
+        public List<int> GetVfs()
+        {
+            if (vfs == null) vfs = new List<int>();
+            return vfs;
+        }
         public List<int> ReadKfs(bool withKeyframe)
         {
             if (kfs != null)
@@ -261,13 +263,13 @@ namespace Jamaker
 
             if (withKeyframe)
             {
-                Process proc = GetProcess("ffprobe.exe", true);
+            	Process proc = GetProcess("ffprobe.exe", true);
                 proc.StartInfo.Arguments = $"-loglevel error -select_streams v:0 -show_entries packet=pts_time,flags -of csv=print_section=0 \"{path}\"";
                 proc.ErrorDataReceived += new DataReceivedEventHandler(Proc_ErrorDataReceived);
                 proc.Start();
                 proc.BeginErrorReadLine();
 
-                setProgress(0.3);
+                setProgress(0);
 
                 StreamReader sr = new StreamReader(proc.StandardOutput.BaseStream);
                 string line;
@@ -276,19 +278,19 @@ namespace Jamaker
                     try
                     {
                         string[] values = line.Split(',');
-                        int time = (int)Math.Round(double.Parse(values[0]) * 1000);
+                        int time = (int) Math.Round(double.Parse(values[0]) * 1000);
                         vfs.Add(time);
                         if (values[1].StartsWith("K"))
                         {
                             kfs.Add(time);
                         }
-                        setProgress(0.3 + (0.7 * ((double)time / duration)));
+                        setProgress((double) time / duration);
                     }
                     catch (Exception) { }
                 }
                 proc.Close();
 
-                setProgress(1);
+                setProgress(0);
             }
 
             return kfs;
@@ -356,7 +358,7 @@ namespace Jamaker
 
                 length -= residual_length;
 
-                for (int index = 0; index < length;)
+                for (int index = 0; index < length; )
                 {
                     if (sfs.Count < sfsLength)
                     {
