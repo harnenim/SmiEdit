@@ -1578,24 +1578,6 @@ SmiEditor.refreshHighlight = function() {
 	if (style.length == 0) {
 		$("head").append(style = $("<style>").attr({ id: "style_highlight" }));
 	}
-	/*
-	var css = [];
-	for (var key in SmiEditor.highlightCss) {
-		var attrs = SmiEditor.highlightCss[key];
-		var items = [];
-		for (var attr in attrs) {
-			if (attrs[attr]) {
-				items.push(attr + ": " + attrs[attr]);
-			}
-		}
-		if (key == "editor") {
-			css.push(".highlight-textarea > div, .highlight-textarea > div * { " + items.join("; ") + " }");
-		} else {
-			css.push(".highlight-textarea > div ." + key + " { " + items.join("; ") + " }");
-		}
-	}
-	style.html(css.join("\n"));
-	*/
 	style.html(SmiEditor.highlightCss);
 }
 SmiEditor.prototype.moveLine = function(toNext) {
