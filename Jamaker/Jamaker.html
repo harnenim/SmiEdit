@@ -488,11 +488,15 @@ var accessHandle;
 	editor.loadSetting = function(afterSuccess) {
 		editor.strSettingJson = localStorage.getItem("setting");
 		editor.strBridgeList = playerDlls;
-        editor.strHighlights = highlights;
-		
-		if (afterSuccess) {
-			afterSuccess();
-		}
+		$.ajax({url: "view/lib/highlight/list.txt"
+			,	dataType: "text"
+			,	success: function(highlights) {
+					editor.strHighlights = highlights;
+					if (afterSuccess) {
+						afterSuccess();
+					}
+				}
+		});
 	}
 	editor.saveSetting = function(setting) {
 		localStorage.setItem("setting", (this.strSettingJson = setting));

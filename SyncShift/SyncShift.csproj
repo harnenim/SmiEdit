@@ -137,12 +137,8 @@
     <Content Include="ffmpeg\ffprobe.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="ffmpeg\SyncShift.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="ffmpeg\VideoInfo.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Content Include="ffmpeg\SyncShift.js" />
+    <Content Include="ffmpeg\VideoInfo.js" />
     <Content Include="jamaker.ico" />
     <Content Include="view\AutoSyncShift.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

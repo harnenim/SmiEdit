@@ -36,12 +36,12 @@ var checkVersion;
 	}
 	var lastNotifyForCommand = "2024.12.07.v1";
 	var lastNotifyForAutoComplete = "";
-	var lastNotifyForStyle = "2023.04.06.v1";
+	var lastNotifyForStyle = "2024.12.13.v1";
 	var lastNotifyForMenu = "2024.11.19.v2";
 }
 
 var DEFAULT_SETTING =
-{	version: "2024.12.08.v1"
+{	version: "2024.12.13.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -274,7 +274,10 @@ var DEFAULT_SETTING =
 	]
 ,	tempSave: 300
 ,	useTab: false // 탭 사용 기본값은 꺼두는 걸로
-,	useHighlight: true
+,	highlight:
+    { parser: "withoutSync"
+    , style : "eclipse"
+    }
 ,	css	:	".sync     { border-color: #000; }\n"
 		+	".sync.error { background: #f88; }\n"
 		+	".sync.equal { background: #8f8; }\n"
@@ -290,8 +293,8 @@ var DEFAULT_SETTING =
 		+	".th.selected { border-bottom-color: #0f0f0f; }\n"
 		+	"#tabSelector, .hold-selector { background: #333; }\n"
 		+	".th, .hold-selector > .selector { background: #222; }\n"
-		+	"*, .hold * { color: #fff; caret-color: #fff; }\n"
-		+	"input, textarea, .highlight-textarea > div { background: #000; }\n"
+		+	"#body > *:not(#editor) *, .hold .col-sync *, .nonactive textarea { color: #fff; caret-color: #fff; }\n"
+		+	"input { background: #000; }\n"
 		+	"button { background: #222; }\n"
 		+	".tab > .input { border-color: #666; }\n"
 		+	".sync     { border-color: #fff; }\n"
@@ -300,7 +303,7 @@ var DEFAULT_SETTING =
 		+	".sync.range { color     : #888; }\n"
 		+	".highlight-textarea > div .attr  { color: #034f82; }\n"
 		+	".highlight-textarea > div .value { color: #005cc5; }\n"
-		+	".highlight-textarea.nonactive > textarea { background: #000; color: #fff; }\n"
+		+	".highlight-textarea.nonactive > textarea { background: #000; color: #fff; caret-color: #fff; }\n"
 		+	"/* */"
 ,	newFile:"<SAMI>\n"
 		+	"<HEAD>\n"

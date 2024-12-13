@@ -1,1 +1,0 @@
-SmiEditor.highlightCss = { sync: { color: "#3F5FBF" } };

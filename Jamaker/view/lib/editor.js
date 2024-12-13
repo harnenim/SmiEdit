@@ -737,20 +737,21 @@ function setSetting(setting) {
 				}
 			}
 		}
-		if (setting.useHighlight) {
-			var highlight = setting.useHighlight;
-			if (highlight == true || highlight == "eclipse") { // 구버전의 사용여부
-				highlight = setting.useHighlight = "withoutSync|eclipse"; // 현행 이클립스 스타일로 잡아줌
-			}
-			var names = highlight.split("|");
-			$.ajax({url: "lib/highlight/parser/" + names[0] + ".js"
+		if (setting.useHighlight == false) {
+			setting.highlight = { parser: "", style: eclipse };
+			delete(setting.useHighlight);
+		} else if (setting.useHighlight) {
+			delete(setting.useHighlight);
+		}
+		if (setting.highlight.parser && setting.highlight.style) {
+			$.ajax({url: "lib/highlight/parser/" + setting.highlight.parser + ".js"
 				,	dataType: "text"
 				,	success: function(parser) {
 						eval(parser);
-						$.ajax({url: "lib/highlight/style/" + names[1] + ".js"
+						$.ajax({url: "lib/highlight/styles/" + setting.highlight.style + ".css"
 							,	dataType: "text"
 							,	success: function(style) {
-									eval(style);
+									SmiEditor.highlightCss = style;
 									afterLoadHighlight();
 								}
 						});

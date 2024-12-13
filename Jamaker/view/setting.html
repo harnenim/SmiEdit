@@ -628,32 +628,41 @@ $(function() {
 			setSaved("style", setting == opener.setting);
 		})(setting);
 
-        var select = $("select[name=useHighlight]");
+        var selectParser = $("select[name=highlight_parser]");
+        var selectStyle  = $("select[name=highlight_style]" );
         if (opener.highlights) {
             for (var i = 0; i < opener.highlights.length; i++) {
-                var item = opener.highlights[i].split(":");
-                select.append($("<option>").val(item[0].trim()).text(item[1].trim()));
+                var item = opener.highlights[i].trim();
+                if (item.length) {
+	                item = item.split(":");
+	                var value = item[0].trim();
+	                var name = (item.length > 1) ? item[1].trim() : value;
+	                selectStyle.append($("<option>").val(value).text(name));
+                }
             }
-            var value = select.data("value");
-            if (value == true) {
-                value = "eclipse";
-            }
-            if (value) {
-                select.find("option[value='" + value + "']").prop("selected", true);
-            }
+           	selectParser.find("option[value='" + setting.highlight.parser + "']").prop("selected", true);
+           	selectStyle .find("option[value='" + setting.highlight.style  + "']").prop("selected", true);
         }
-
+        selectParser.on("change", function() {
+        	if (selectParser.val()) {
+        		selectStyle.show();
+        	} else {
+        		selectStyle.hide();
+        	}
+        }).change();
+		
 		$("#style").on("input propertychange", function() {
 			setSaved("style", false);
 		});
 	
 		submitFuncs["style"] = function() {
-			setting.useTab          = $("input[name=useTab]").prop("checked");
-			setting.useHighlight    = $("select[name=useHighlight]").val();
-			setting.viewer.useAlign = $("input[name=viewer_useAlign]").prop("checked");
-			setting.css             = $("textarea[name=css]"       ).val();
-			setting.viewer.css      = $("textarea[name=viewer_css]").val();
-			setting.newFile         = $("textarea[name=newFile]"   ).val();
+			setting.useTab           = $("input[name=useTab]").prop("checked");
+			setting.highlight.parser = $("select[name=highlight_parser]").val();
+			setting.highlight.style  = $("select[name=highlight_style]").val();
+			setting.viewer.useAlign  = $("input[name=viewer_useAlign]").prop("checked");
+			setting.css              = $("textarea[name=css]"       ).val();
+			setting.viewer.css       = $("textarea[name=viewer_css]").val();
+			setting.newFile          = $("textarea[name=newFile]"   ).val();
 			setSaved("style", true);
 			opener.setSetting(setting);
 			opener.saveSetting();
@@ -1310,12 +1319,19 @@ fieldset ol button,
 	
 	<form id="style">
 		<label>문법 하이라이트:
-			<select name="useHighlight">
+			<select name="highlight_parser">
 				<option value="">사용 안 함</option>
+				<option value="SyncOnly">싱크만 구분</option>
+				<option value="withoutSync">싱크 제외</option>
+				<option value="full">전체</option>
 			</select>
-			<br />
-			※ 자막 내용이 많아질 경우 성능 문제가 발생할 수 있습니다.
-		</label><br />
+		</label>
+		<span>
+			<select name="highlight_style"></select>
+		</span>
+		<br />
+		※ 자막 내용이 많아질 경우 성능 문제가 발생할 수 있습니다.
+		<br />
 		<br />
 		<label><input type="checkbox" name="useTab" /> 탭 사용</label><br />
 		<label><input type="checkbox" name="viewer_useAlign" /> 미리보기 줄표로 시작할 경우 왼쪽 정렬</label><br />

@@ -14,29 +14,29 @@ SmiEditor.highlightText = function(text, state=null) {
 	var pos = 0;
 	var html = "";
 	switch (state) {
-		case '/': html = "<span class='tag'>"; break;
-		case '>': html = "<span class='name'>"; break;
-		case "'": html = "<span class='value'>"; break;
-		case '"': html = "<span class='value'>"; break;
-		case '!': html = "<span class='comment'>"; break;
+		case '/': html = "<span class='hljs-tag'>"; break;
+		case '>': html = "<span class='hljs-name'>"; break;
+		case "'": html = "<span class='hljs-string'>"; break;
+		case '"': html = "<span class='hljs-string'>"; break;
+		case '!': html = "<span class='hljs-comment'>"; break;
 	}
-	
+
 	for (var pos = 0; pos < text.length; pos++) {
 		var c = text[pos];
 		switch (state) {
 			case '/': { // 태그?!
 				state = '<';
 				if (c == '/') { // 종료 태그 시작일 경우
-					html += "/</span><span class='tag'>";
+					html += "/</span><span class='hljs-name'>";
 					break;
 				}
 				// 종료 태그 아닐 경우 아래로 이어서 진행
-				html += "</span><span class='tag'>";
+				html += "</span><span class='hljs-name'>";
 			}
 			case '<': { // 태그명
 				switch (c) {
 					case '>': { // 태그 종료
-						html += "</span><span class='clamp'>&gt;</span>";
+						html += "</span><span class='hljs-tag'>&gt;</span>";
 						state = null;
 						break;
 					}
@@ -68,7 +68,7 @@ SmiEditor.highlightText = function(text, state=null) {
 			case '>': { // 태그 내
 				switch (c) {
 					case '>': { // 태그 종료
-						html += "</span><span class='clamp'>&gt;</span>";
+						html += "</span><span class='hljs-tag'>&gt;</span>";
 						state = null;
 						break;
 					}
@@ -89,7 +89,7 @@ SmiEditor.highlightText = function(text, state=null) {
 						break;
 					}
 					default: { // 속성명 시작
-						html += "<span class='attr'>" + c;
+						html += "<span class='hljs-attr'>" + c;
 						state = 'a';
 						break;
 					}
@@ -99,12 +99,12 @@ SmiEditor.highlightText = function(text, state=null) {
 			case 'a': { // 속성명
 				switch (c) {
 					case '>': { // 태그 종료
-						html += "</span></span><span class='clamp'>&gt;</span>";
+						html += "</span></span><span class='hljs-tag'>&gt;</span>";
 						state = null;
 						break;
 					}
 					case '=': { // 속성값 시작
-						html += "</span>=<span class='value'>";
+						html += "</span>=<span class='hljs-value'>";
 						state = '=';
 						break;
 					}
@@ -139,12 +139,12 @@ SmiEditor.highlightText = function(text, state=null) {
 			case '`': { // 속성명+공백문자
 				switch (c) {
 					case '>': { // 태그 종료
-						html += "</span></span><span class='clamp'>&gt;</span>";
+						html += "</span></span><span class='hljs-tag'>&gt;</span>";
 						state = null;
 						break;
 					}
 					case '=': { // 속성값 시작
-						html += "</span>=<span class='value'>";
+						html += "</span>=<span class='hljs-value'>";
 						state = '=';
 						break;
 					}
@@ -157,7 +157,7 @@ SmiEditor.highlightText = function(text, state=null) {
 						break;
 					}
 					default: { // 속성값 없는 속성으로 확정, 새 속성 시작
-						html += "</span><span class='attr'>" + c;
+						html += "</span><span class='hljs-attr'>" + c;
 						state = 'a';
 					}
 				}
@@ -166,7 +166,7 @@ SmiEditor.highlightText = function(text, state=null) {
 			case '=': { // 속성값 시작 전
 				switch (c) {
 					case '>': { // 태그 종료
-						html += "</span></span><span class='clamp'>&gt;</span>";
+						html += "</span></span><span class='hljs-tag'>&gt;</span>";
 						state = null;
 						break;
 					}
@@ -208,7 +208,7 @@ SmiEditor.highlightText = function(text, state=null) {
 			case '~': { // 따옴표 없는 속성값
 				switch (c) {
 					case '>': { // 태그 종료
-						html += "</span></span><span class='clamp'>&gt;</span>";
+						html += "</span></span><span class='hljs-tag'>&gt;</span>";
 						state = null;
 						break;
 					}
@@ -312,11 +312,11 @@ SmiEditor.highlightText = function(text, state=null) {
 				switch (c) {
 					case '<': { // 태그 시작
 						if ((pos + 4 <= text.length) && (text.substring(pos, pos+4) == "<!--")) {
-							html += "<span class='comment'>&lt;!--";
+							html += "<span class='hljs-comment'>&lt;!--";
 							state = '!';
 							pos += 3;
 						} else {
-							html += "<span class='clamp'>&lt;";
+							html += "<span class='hljs-tag'>&lt;";
 							state = '/';
 						}
 						break;

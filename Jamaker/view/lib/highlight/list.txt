@@ -1,3 +1,73 @@
-SyncOnly|SyncOnly: 싱크 줄 구분
-withoutSync|eclipse: 이클립스 스타일 (싱크줄 제외)
-full|eclipse: 이클립스 스타일
+eclipse            : Eclipse
+vs                 : Visual Studio
+vs2015             : Visual Studio 2015
+intellij-light     : IntelliJ
+xcode              : Xcode
+androidstudio      : Android Studio
+github             : Github
+github-dark        : Github Dark
+github-dark-dimmed : Github Dark Dimmed
+stackoverflow-light: StackOverflow
+stackoverflow-dark : StackOverflow(dark)
+1c-light
+a11y-light
+a11y-dark
+agate
+an-old-hope
+arduino-light
+arta
+ascetic
+atom-one-light
+atom-one-dark
+atom-one-dark-reasonable
+brown-paper
+codepen-embed
+color-brewer
+dark
+default
+devibeans
+docco
+far
+felipec
+gml
+googlecode
+gradient-light
+gradient-dark
+grayscale
+hybrid
+idea
+ir-black
+isbl-editor-light
+isbl-editor-dark
+kimbie-dark
+kimbie-light
+lightfair
+lioshi
+magula
+mono-blue
+monokai-sublime
+monokai
+night-owl
+nnfx-dark
+nnfx-light
+nord
+obsidian
+panda-syntax-light
+panda-syntax-dark
+paraiso-dark
+paraiso-light
+pojoaque
+purebasic
+qtcreator-dark
+qtcreator-light
+rainbow
+routeros
+school-book
+shades-of-purple
+srcery
+sunburst
+tokyo-night-dark
+tokyo-night-light
+tomorrow-night-blue
+tomorrow-night-bright
+xt256

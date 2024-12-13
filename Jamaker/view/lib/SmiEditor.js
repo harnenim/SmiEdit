@@ -32,7 +32,7 @@ var SmiEditor = function(text) {
 //	this.area.append(this.input = $("<textarea class='input' spellcheck='false'>"));
 	{	// 문법 하이라이트 기능 지원용
 		this.hArea = $("<div class='input highlight-textarea" + (SmiEditor.useHighlight ? "" : " nonactive") + "'>");
-		this.hArea.append(this.hview = $("<div>"));
+		this.hArea.append(this.hview = $("<div class='hljs'>"));
 		this.hArea.append(this.input = $("<textarea spellcheck='false'>"));
 		this.area.append(this.hArea);
 	}
@@ -103,7 +103,7 @@ SmiEditor.setSetting = function(setting, appendStyle) {
 	if (setting.sync) {
 		SmiEditor.sync = setting.sync;
 	}
-	SmiEditor.useHighlight = setting.useHighlight;
+	SmiEditor.useHighlight = setting.highlight.parser;
 	
 	{	// AutoComplete
 		for (var key in SmiEditor.autoComplete) {
@@ -1565,11 +1565,11 @@ SmiEditor.prototype.updateHighlight = function () {
 	};
 	setTimeout(thread, 1);
 }
-SmiEditor.highlightCss = { sync: { color: "#3F5FBF" } };
+SmiEditor.highlightCss = ".hljs-sync: { color: #3F5FBF; }";
 SmiEditor.highlightText = function(text, state=null) {
 	var previewLine = $("<span>");
 	if (text.toUpperCase().startsWith("<SYNC ")) {
-		previewLine.addClass("sync");
+		previewLine.addClass("hljs-sync");
 	}
 	return previewLine.text(text);
 }
@@ -1578,16 +1578,25 @@ SmiEditor.refreshHighlight = function() {
 	if (style.length == 0) {
 		$("head").append(style = $("<style>").attr({ id: "style_highlight" }));
 	}
+	/*
 	var css = [];
 	for (var key in SmiEditor.highlightCss) {
 		var attrs = SmiEditor.highlightCss[key];
 		var items = [];
 		for (var attr in attrs) {
-			items.push(attr + ": " + attrs[attr]);
+			if (attrs[attr]) {
+				items.push(attr + ": " + attrs[attr]);
+			}
 		}
-		css.push(".highlight-textarea > div ." + key + " { " + items.join("; ") + " }");
+		if (key == "editor") {
+			css.push(".highlight-textarea > div, .highlight-textarea > div * { " + items.join("; ") + " }");
+		} else {
+			css.push(".highlight-textarea > div ." + key + " { " + items.join("; ") + " }");
+		}
 	}
 	style.html(css.join("\n"));
+	*/
+	style.html(SmiEditor.highlightCss);
 }
 SmiEditor.prototype.moveLine = function(toNext) {
 	if (this.syncUpdating) return;
@@ -2376,3 +2385,7 @@ SmiEditor.fillSync = function (text) {
 	smi.body = input;
 	return smi.toTxt().trim();
 };
+
+$(function() {
+	SmiEditor.refreshHighlight();
+});
