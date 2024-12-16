@@ -564,7 +564,7 @@ function apply() {
 								
 								syncEnd = shiftSync(syncEnd);
 								if (comment.length > 6 && comment.substring(0, 6).toUpperCase() == "<SYNC ") {
-									comment = shiftText(comment);
+                                    comment = shiftHold(new Subtitle.SmiFile(comment)).toTxt().trim();
 								}
 								comment = comment.trim().split("<").join("<​").split(">").join("​>");
 								item.text = "<!-- End=" + syncEnd + "\n" + comment + "\n-->\n" + afterComment;
