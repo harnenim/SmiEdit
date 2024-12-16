@@ -539,16 +539,39 @@ function apply() {
 			var target = operation.target = new Subtitle.SmiFile();
 			target.header = origin.header;
 			target.footer = origin.footer;
-			
+
+            var ki = 0;
 			function shiftHold(hold) {
 				for (var i = 0; i < hold.body.length; i++) {
-					hold.body[i].start = shiftSync(hold.body[i].start);
+					var smi = hold.body[i];
+					var index = getShiftIndex(smi.start);
+					smi.start = shiftSync(smi.start);
+
+                    if (withKf && (smi.syncType == Subtitle.SyncType.frame)) {
+						var shift =	shifts[index];
+                        if (shift.skipped == null || shift.fCount == 0 || shift.skipped.length == 0) {
+                            continue;
+                        }
+                        while (kfs[ki] > smi.start) {
+                            if (ki == 0) break;
+                            ki--;
+                        }
+                        while ((ki + 1 < kfs.length) && (kfs[ki + 1] < smi.start)) {
+                            ki++;
+                        }
+                        var distPrev = smi.start - kfs[ki];
+                        var distNext = (ki + 1 < kfs.length) ? (kfs[ki + 1] - smi.start) : 999999999;
+                        if (distPrev > 150 && distNext > 150) { // 3프레임 이상의 오차
+                            smi.start += Math.round(shift.fSum / shift.fCount);
+                            continue;
+                        }
+                        smi.start += (distPrev < distNext) ? -distPrev : distNext;
+					}
 				}
 				return hold;
 			}
 			
 			{
-				var ki = 0;
 				for (var i = 0; i < origin.body.length; i++) {
 					var item = origin.body[i];
 					if (item.text.startsWith("<!-- End=")) {
@@ -586,7 +609,7 @@ function apply() {
 							shift.skipped = [];
 						}
 						
-						while (kfs[ki] < smi.start) {
+						while (kfs[ki] > smi.start) {
 							if (ki == 0) break;
 							ki--;
 						}
