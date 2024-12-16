@@ -1,4 +1,6 @@
-﻿namespace Jamaker
+﻿using System.Linq;
+
+namespace Jamaker
 {
     class BaseBinder
     {
@@ -46,9 +48,13 @@
             _.AddFilesByDrag();
         }
 
-        public void Replace(string[] files, string from, string to)
+        public void StartReplace(string[] files)
         {
-            _.Replace(files, from, to);
+            _.StartReplace(files);
+        }
+        public void SaveAndReplaceNext(int index, string text)
+        {
+            _.SaveAndReplaceNext(index, text);
         }
 
         public void ExitAfterSaveSetting(string setting)

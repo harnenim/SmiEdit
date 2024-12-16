@@ -7,6 +7,7 @@ using CefSharp;
 using System.Diagnostics;
 using System.Collections.Generic;
 using Subtitle;
+using System.Linq;
 
 namespace Jamaker
 {
@@ -58,7 +59,7 @@ namespace Jamaker
             mainView.JavascriptObjectRepository.Settings.LegacyBindingEnabled = true;
             mainView.JavascriptObjectRepository.Register("binder", new Binder(this), false, BindingOptions.DefaultBinder);
             mainView.RequestHandler = new RequestHandler(); // TODO: 팝업에서 이동을 막아야 되는데...
-
+            
             FormClosing += new FormClosingEventHandler(BeforeExit);
             FormClosed += new FormClosedEventHandler(WebFormClosed);
         }
@@ -151,6 +152,7 @@ namespace Jamaker
             }
             */
         }
+        /*
         public void Replace(string[] files, string from, string to)
         {
             if (InvokeRequired)
@@ -332,6 +334,96 @@ namespace Jamaker
             }
 
             Script("alert", new object[] { msg });
+        }
+        */
+
+        string[] files;
+        List<string> ignores;
+        public void StartReplace(string[] files)
+        {
+            this.files = files;
+            ignores = new List<string>();
+            Replace(0);
+        }
+        private void Replace(int index)
+        {
+            if (index >= files.Length)
+            {
+                // 모든 파일 끝
+                int success = files.Length - ignores.Count;
+
+                string msg = $"파일 {files.Length}개 중 {success}개의 작업이 완료됐습니다.";
+
+                bool hasNewFrameSync = false;
+                if (success > 0 && hasNewFrameSync)
+                {
+                    msg += "\n화면 싱크를 조정할 부분이 있습니다.";
+                }
+
+                if (ignores.Count > 0)
+                {
+                    msg += "\n\n제외 파일:";
+                    foreach (string ignore in ignores)
+                    {
+                        msg += "\n" + ignore;
+                    }
+                }
+
+                Script("alert", new object[] { msg });
+
+                return;
+            }
+
+            string file = files[index];
+            string text = null;
+            StreamReader sr = null;
+            try
+            {
+                sr = new StreamReader(file, DetectEncoding(file));
+                text = sr.ReadToEnd();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                ignores.Add(file);
+                Replace(index + 1);
+                return;
+            }
+            finally { sr?.Close(); }
+
+            Script("replace", new object[] { index, text });
+        }
+
+        public void SaveAndReplaceNext(int index, string text)
+        {
+            string file = files[index];
+
+            if (text == null)
+            {
+                // 바뀐 게 없음
+                Console.WriteLine($"{file}: 바뀐 게 없음");
+                ignores.Add(file);
+            }
+            else
+            {
+                Encoding encoding = DetectEncoding(file);
+                StreamWriter sw = null;
+                try
+                {
+                    // 원본 파일의 인코딩대로 저장
+                    Console.WriteLine($"{file}: 저장");
+                    sw = new StreamWriter(file, false, encoding);
+                    sw.Write(text);
+                }
+                catch (Exception e)
+                {
+                    // 저장 실패
+                    Console.WriteLine(e);
+                    ignores.Add(file);
+                }
+                finally { sw?.Close(); }
+            }
+            Replace(index + 1);
         }
 
         #region 파일
