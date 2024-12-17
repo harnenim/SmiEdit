@@ -920,11 +920,12 @@ namespace Jamaker
         {
             player.OpenFile(path);
         }
+        private string requestFramesPath = null;
         public void RequestFrames(string path)
         {
             // 아주 오래 걸리진 않는 작업
-            // 프로그레스 띄우지 않고 그냥 백그라운드에서 갱신
-            // 키프레임 신뢰 버튼 쪽에 프로그레스 띄울까?
+            // 키프레임 신뢰 버튼 쪽에 프로그레스
+        	requestFramesPath = path;
             new Thread(() =>
             {
                 try
@@ -949,11 +950,17 @@ namespace Jamaker
 
                     // 없으면 새로 가져오기
                     new VideoInfo(path, (double ratio) => {
-                        Script("Progress.set", new object[] { "#forFrameSync", ratio });
+                        if (requestFramesPath == path)
+                        {   // 중간에 다른 파일 불러왔을 수도 있음
+                            Script("Progress.set", new object[] { "#forFrameSync", ratio });
+                        }
                     }).RefreshInfo((VideoInfo videoInfo) =>
                     {
                         videoInfo.ReadKfs(true);
-                        AfterReadFkf(videoInfo);
+                        if (requestFramesPath == path)
+                        {   // 중간에 다른 파일 불러왔을 수도 있음
+                            AfterReadFkf(videoInfo);
+                        }
                         videoInfo.SaveFkf("temp/" + fkfName);
                     });
                 }
@@ -967,7 +974,7 @@ namespace Jamaker
             List<int> kfs = videoInfo.GetKfs();
             foreach (int f in fs ) { strFs  += (strFs .Length == 0) ? $"{f}" : ("," + f); }
             foreach (int f in kfs) { strKfs += (strKfs.Length == 0) ? $"{f}" : ("," + f); }
-            Script("setFrames", new object[] { strFs, strKfs });
+            Script("setFrames", new object[] { videoInfo.path, strFs, strKfs });
         }
 
         private int saveAfter = 0;

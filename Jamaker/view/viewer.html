@@ -164,18 +164,6 @@ function setTextToView(text, hold) {
 	// RUBY태그 문법이 미묘하게 달라서 가공 필요
 	text = text.split("<RP").join("<!--RP").split("</RP>").join("</RP-->");
 	
-	{	// 팟플레이어에선 공백문자 그대로 표시됨
-		var a = text.split("<");
-		a[0] = a[0].split(" ").join("&nbsp;");
-		for (var j = 1; j < a.length; j++) {
-			var b = a[j].indexOf(">");
-			if (b >= 0) {
-				a[j] = a[j].substring(0, b) + ">" + a[j].substring(b+1).split(" ").join("&nbsp;");
-			}
-		}
-		text = a.join("<");
-	}
-	
 	{	// font size도 추가 작업
 		var j = 0;
 		var begin = 0;
@@ -322,6 +310,7 @@ html, body {
 	right: 0;
 	bottom: 0;
 	text-align: center;
+	white-space: pre;
 }
 #viewer div.has-line {
 	text-align: left;

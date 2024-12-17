@@ -1090,7 +1090,11 @@ function setVideo(path) {
 	}
 }
 // C# 쪽에서 호출
-function setFrames(fs, kfs) {
+function setFrames(path, fs, kfs) {
+	if (SmiEditor.video.path != path) {
+		// 중복 실행된 다른 파일 분석 결과
+		return;
+	}
 	fs = fs.split(",");
 	for (var i = 0; i < fs.length; i++) {
 		fs[i] = Number(fs[i]);
@@ -1099,7 +1103,6 @@ function setFrames(fs, kfs) {
 	for (var i = 0; i < kfs.length; i++) {
 		kfs[i] = Number(kfs[i]);
 	}
-	console.log(kfs.length + " / " + fs.length);
 	SmiEditor.video.fs = fs;
 	SmiEditor.video.kfs = kfs;
 	$("#forFrameSync").removeClass("disabled");
