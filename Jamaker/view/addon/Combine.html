@@ -28,7 +28,7 @@ function setSetting(setting) {
 	if (style == null) {
 		$("head").append(style = $("<style>"));
 	}
-	style.html("#preview {\n" + setting.viewer.css + "}");
+	style.html("#preview {\n" + setting.viewer.css + "\n}");
 	Combine.css = { font: $("#preview").css("font") };
 }
 
@@ -47,20 +47,7 @@ $(function() {
 		var list = [];
 		for (var i = 0; i < lines.length; i++) {
 			if (i % 2) { // 짝수: 싱크 / 홀수: 대사
-				var text = lines[i];
-				// 공백문자 무시되지 않도록 조정
-				// 팟플레이어 특성이긴 한데, 애초에 왼쪽 정렬 자체가 거의 팟플레이어이므로
-				var a = text.split("<");
-				text = [a[0].split(" ").join("&nbsp;")];
-				for (var j = 1; j < a.length; j++) {
-					var b = a[j].split(">");
-					var c = [b[0]];
-					for (var k = 1; k < b.length; k++) {
-						c.push(b[k].split(" ").join("&nbsp;"));
-					}
-					text.push(c.join(">"));
-				}
-				list.push(text.join("<"));
+				list.push(lines[i].split("\n").join(""));
 			}
 		}
 		setPreview(list);
@@ -141,7 +128,7 @@ textarea {
 	border-bottom: 1px solid #000;
 	background: #000;
 	text-align: left;
-	white-space: nowrap;
+	white-space: pre;
 	color: #fff;
 }
 	</style>
