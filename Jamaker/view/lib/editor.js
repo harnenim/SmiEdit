@@ -1089,10 +1089,6 @@ function setVideo(path) {
 }
 // C# 쪽에서 호출
 function setFrames(path, fs, kfs) {
-	if (SmiEditor.video.path != path) {
-		// 중복 실행된 다른 파일 분석 결과
-		return;
-	}
 	fs = fs.split(",");
 	for (var i = 0; i < fs.length; i++) {
 		fs[i] = Number(fs[i]);
