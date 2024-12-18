@@ -1088,19 +1088,40 @@ function setVideo(path) {
 	}
 }
 // C# 쪽에서 호출
-function setFrames(fs, kfs) {
-	fs = fs.split(",");
-	for (var i = 0; i < fs.length; i++) {
-		fs[i] = Number(fs[i]);
+function loadFkf(fkfName) {
+	var req = new XMLHttpRequest();
+	req.open("GET", "../temp/" + fkfName);
+	req.responseType = "arraybuffer";
+	req.onload = function (e) {
+		var buffer = req.response;
+
+		var fkf = new Int32Array(buffer);
+		var vfsLength = fkf[0];
+		var kfsLength = fkf[1];
+
+		var vfs = [];
+		var kfs = [];
+
+		var view = new DataView(buffer.slice(8, 8 + (vfsLength * 4)));
+		for (var i = 0; i < vfsLength; i++) {
+			vfs.push(view.getInt32(i * 4, true));
+		}
+		view = new DataView(buffer.slice(8 + (vfsLength * 4), 8 + (vfsLength * 4) + (kfsLength * 4)));
+		for (var i = 0; i < kfsLength; i++) {
+			kfs.push(view.getInt32(i * 4, true));
+		}
+
+		SmiEditor.video.fs  = vfs;
+		SmiEditor.video.kfs = kfs;
+
+		$("#forFrameSync").removeClass("disabled");
+		$("#checkTrustKeyframe").attr({ disabled: false });
+		Progress.set("#forFrameSync", 0);
 	}
-	kfs = kfs.split(",");
-	for (var i = 0; i < kfs.length; i++) {
-		kfs[i] = Number(kfs[i]);
+	req.onerror = function(e) {
+		Progress.set("#forFrameSync", 0);
 	}
-	SmiEditor.video.fs = fs;
-	SmiEditor.video.kfs = kfs;
-	$("#forFrameSync").removeClass("disabled");
-	$("#checkTrustKeyframe").attr({ disabled: false });
+	req.send();
 }
 
 // 종료 전 C# 쪽에서 호출

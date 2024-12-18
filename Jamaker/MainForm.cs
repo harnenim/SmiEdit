@@ -932,15 +932,16 @@ namespace Jamaker
                 {
                     FileInfo info = new FileInfo(path);
                     string fkfName = $"{info.Name.Substring(0, info.Name.Length - info.Extension.Length)}.{info.Length}.fkf";
-                    
+
                     // 기존에 있으면 가져오기
                     try
                     {
                         DirectoryInfo di = new DirectoryInfo("temp");
                         if (di.Exists)
                         {
+                            VideoInfo.FromFkfFile("temp/" + fkfName);
                             Script("Progress.set", new object[] { "#forFrameSync", 1 });
-                            AfterReadFkf(VideoInfo.FromFkfFile("temp/" + fkfName));
+                            Script("loadFkf", new object[] { fkfName });
                             return;
                         }
                     }
@@ -959,25 +960,15 @@ namespace Jamaker
                     {
                         Script("Progress.set", new object[] { "#forFrameSync", 1 });
                         videoInfo.ReadKfs(true);
+                        videoInfo.SaveFkf("temp/" + fkfName);
                         if (requestFramesPath == path)
                         {   // 중간에 다른 파일 불러왔을 수도 있음
-                            AfterReadFkf(videoInfo);
+                            Script("loadFkf", new object[] { fkfName });
                         }
-                        videoInfo.SaveFkf("temp/" + fkfName);
                     });
                 }
                 catch (Exception e) { Console.WriteLine(e); }
             }).Start();
-        }
-        private void AfterReadFkf(VideoInfo videoInfo)
-        {
-            string strFs = "", strKfs = "";
-            List<int> fs  = videoInfo.GetVfs();
-            List<int> kfs = videoInfo.GetKfs();
-            foreach (int f in fs ) { strFs  += (strFs .Length == 0) ? $"{f}" : ("," + f); }
-            foreach (int f in kfs) { strKfs += (strKfs.Length == 0) ? $"{f}" : ("," + f); }
-            Script("setFrames", new object[] { strFs, strKfs });
-            Script("Progress.set", new object[] { "#forFrameSync", 0 });
         }
 
         private int saveAfter = 0;
