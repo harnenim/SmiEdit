@@ -763,6 +763,8 @@ function setSetting(setting) {
 		}
 	}
 	
+	SmiEditor.followKeyFrame = setting.sync.kframe;
+	
 	// 기본 단축키
 	SmiEditor.withCtrls["N"] = newFile;
 	SmiEditor.withCtrls["O"] = openFile;

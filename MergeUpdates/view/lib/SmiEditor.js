@@ -209,6 +209,7 @@ SmiEditor.PlayerAPI = {
 	,	move       : function(move) { binder.moveTo(time + move); }
 };
 SmiEditor.trustKeyFrame = false;
+SmiEditor.followKeyFrame = false;
 SmiEditor.video = {
 		path: null
 	,	fs: []
@@ -233,15 +234,20 @@ SmiEditor.findSync = function(sync, fs=[], from=0, to=-1) {
 		return SmiEditor.findSync(sync, fs, from, mid);
 	}
 }
-SmiEditor.getSyncTime = function(sync, forKeyFrame=false) {
+SmiEditor.getSyncTime = function(sync, forKeyFrame=false, output={}) {
 	if (!sync) sync = (time + SmiEditor.sync.weight);
 	if (SmiEditor.sync.frame) { // 프레임 단위 싱크 보정
 		var adjustSync = null;
-		if (forKeyFrame && SmiEditor.video.kfs.length > 2) { // 키프레임 싱크
+		if (SmiEditor.trustKeyFrame // 키프레임 신뢰
+		 && (forKeyFrame || SmiEditor.followKeyFrame) // 화면 싱크, 혹은 키프레임 따라가게 설정된 경우
+		 && SmiEditor.video.kfs.length > 2
+		) {
 			adjustSync = SmiEditor.findSync(sync, SmiEditor.video.kfs);
 			var dist = Math.abs(adjustSync - sync);
 			if (dist > 200) { // 200ms 넘어가면 키프레임에 맞춘 게 아니라고 간주
 				adjustSync = null;
+			} else {
+				output.keyframe = true;
 			}
 		}
 		if (adjustSync == null && SmiEditor.video.fs.length > 2) { // 프레임 싱크
@@ -256,9 +262,9 @@ SmiEditor.getSyncTime = function(sync, forKeyFrame=false) {
 		} else { // FPS 기반 보정
 			sync = Math.floor(Math.floor((sync / FL) + 0.5) * FL);
 		}
-		sync = Math.max(1, sync);
+		sync = Math.max(1, sync); // 0 이하는 허용하지 않음
 	}
-	return sync;
+	return output.sync = sync;
 }
 SmiEditor.makeSyncLine = function(time, type) {
 	return SmiEditor.sync.preset.split("{sync}").join(Math.floor(time)).split("{lang}").join(SmiEditor.sync.lang).split("{type}").join(TIDs[type ? type : 1]);
@@ -927,7 +933,10 @@ SmiEditor.prototype.insertSync = function(forFrame) {
 	var cursor = this.input[0].selectionEnd;
 	var lineNo = this.input.val().substring(0, cursor).split("\n").length - 1;
 	
-	var sync = SmiEditor.getSyncTime(null, forFrame);
+	var sync = {};
+	SmiEditor.getSyncTime(null, forFrame, sync);
+	forFrame = forFrame || sync.keyframe;
+	sync = sync.sync;
 	
 	var lineSync = this.lines[lineNo][LINE.SYNC];
 	if (lineSync) {
@@ -2370,4 +2379,11 @@ SmiEditor.fillSync = function (text) {
 
 $(function() {
 	SmiEditor.refreshHighlight();
+	
+	// 찾기/바꾸기 창 항상 위에
+	window.addEventListener("focus", function() {
+		if (SmiEditor.Finder.window) {
+			binder.focus("finder");
+		}
+	});
 });
