@@ -277,6 +277,7 @@ var DEFAULT_SETTING =
 ,	highlight:
     { parser: "withoutSync"
     , style : "eclipse"
+    , enter : false
     }
 ,	css	:	".sync     { border-color: #000; }\n"
 		+	".sync.error { background: #f88; }\n"

@@ -646,9 +646,9 @@ $(function() {
         }
         selectParser.on("change", function() {
         	if (selectParser.val()) {
-        		selectStyle.show();
+        		selectStyle.parent().show();
         	} else {
-        		selectStyle.hide();
+        		selectStyle.parent().hide();
         	}
         }).change();
 		
@@ -660,6 +660,7 @@ $(function() {
 			setting.useTab           = $("input[name=useTab]").prop("checked");
 			setting.highlight.parser = $("select[name=highlight_parser]").val();
 			setting.highlight.style  = $("select[name=highlight_style]").val();
+			setting.highlight.enter  = $("input[name=highlight_enter]").prop("checked");
 			setting.viewer.useAlign  = $("input[name=viewer_useAlign]").prop("checked");
 			setting.css              = $("textarea[name=css]"       ).val();
 			setting.viewer.css       = $("textarea[name=viewer_css]").val();
@@ -1333,6 +1334,7 @@ fieldset ol button,
 		</label>
 		<span>
 			<select name="highlight_style"></select>
+			<label><input type="checkbox" name="highlight_enter" /> 줄바꿈 표시</label>
 		</span>
 		<br />
 		※ 자막 내용이 많아질 경우 성능 문제가 발생할 수 있습니다.

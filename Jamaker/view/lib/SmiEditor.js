@@ -104,6 +104,7 @@ SmiEditor.setSetting = function(setting, appendStyle) {
 		SmiEditor.sync = setting.sync;
 	}
 	SmiEditor.useHighlight = setting.highlight && setting.highlight.parser;
+	SmiEditor.showEnter = setting.highlight.enter;
 	
 	{	// AutoComplete
 		for (var key in SmiEditor.autoComplete) {
@@ -1540,7 +1541,11 @@ SmiEditor.prototype.updateHighlight = function () {
 		var state = lastLine ? lastLine.data("next") : null;
 		var i = changeBegin;
 		for (; i < changeEnd + add; i++) {
-			var highlightLine = SmiEditor.highlightText(lines[i], state).append("<br />");
+			var highlightLine = SmiEditor.highlightText(lines[i], state);
+			if (SmiEditor.showEnter) {
+				highlightLine.append($("<span class='hljs-comment enter'>").text("↵"));
+			}
+			highlightLine.append("<br />");
 			newLines.push(highlightLine);
 			if (lastLine) {
 				lastLine.after(highlightLine);

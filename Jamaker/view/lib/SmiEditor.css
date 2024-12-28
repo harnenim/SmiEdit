@@ -188,6 +188,8 @@
 	right: 0;
 }
 .highlight-textarea {
+	border: 1px solid #aaa;
+	border-width: 1px 0 0 1px;
 	overflow: hidden;
 }
 .highlight-textarea > * {
@@ -201,11 +203,12 @@
 	right: 0;
 	bottom: 0;
 }
-.highlight-textarea > div.hljs {
-    border: 1px solid #fff;
-}
 .highlight-textarea > div.hljs * {
 	font-weight: normal; /* 굵게 하면 글자폭이 달라짐 */
+}
+.highlight-textarea > div span.enter {
+	opacity: 0.5;
+	font-style: normal;
 }
 .highlight-textarea > textarea {
 	background: transparent;
@@ -218,8 +221,7 @@
 	color: #000;
 }
 .hold > .input > textarea {
-	border: 1px solid #aaa;
-	border-width: 1px 0 0 1px;
+	border: 0;
 }
 .disabled {
 	color: #888;
