@@ -62,7 +62,7 @@ var Tab = function(text, path) {
 				alert("잘못된 입력입니다.");
 				return;
 			}
-			hold.selector.find(".hold-name > span").text(hold.name = input);
+			hold.selector.find(".hold-name > span").text(tab.holds.indexOf(hold) + "." + (hold.name = input));
 			tab.onChangeSaved();
 		});
 		

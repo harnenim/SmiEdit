@@ -297,7 +297,7 @@ function devide() {
 $(function() {
 	init();
 	
-	SmiEditor.setSetting({ autoComplete: opener ? opener.setting.autoComplete : {} });
+	SmiEditor.setSetting(opener ? opener.setting : { autoComplete: {}, hlghlight: {} });
 	var editor = new SmiEditor($("#input").val());
 	$("#input").remove();
 	
