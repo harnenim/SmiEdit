@@ -98,3 +98,7 @@ if (opener) {
 		opener.binder.saveAddonSetting(name, text);
 	}
 }
+
+$(function () {
+	$("textarea").attr({ spellcheck: false });
+});
