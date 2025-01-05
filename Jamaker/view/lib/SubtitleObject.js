@@ -1764,6 +1764,9 @@ Subtitle.Smi.toAttr = function(text) {
 						}
 						break;
 					}
+					case '\n': { // 줄바꿈 무자 무시
+						break;
+					}
 					default: {
 						last.text += c;
 					}
@@ -1932,7 +1935,8 @@ Subtitle.Smi.Color.prototype.get = function(value, total) {
 	     + Subtitle.Smi.Color.hex(((this.g * (total - value)) + (this.tg * value)) / total)
 	     + Subtitle.Smi.Color.hex(((this.b * (total - value)) + (this.tb * value)) / total);
 }
-Subtitle.Smi.normalize = function(smis, withComment=false) {
+Subtitle.Smi.normalize = function (smis, withComment = false) {
+	console.log(JSON.parse(JSON.stringify(smis)));
 	var origin = new Subtitle.SmiFile();
 	origin.body = smis;
 	origin.fromTxt(origin.toTxt());
@@ -2077,6 +2081,7 @@ Subtitle.Smi.normalize = function(smis, withComment=false) {
 				tAttrs = tAttrs.concat(newAttrs);
 				tAttrs.push(attr);
 				tAttrs = tAttrs.concat(attrs.slice(attrIndex + 1));
+				console.log(JSON.parse(JSON.stringify(tAttrs)));
 				
 				smis.splice(i + j, 0, new Subtitle.Smi((start * (count - j) + end * (j)) / count,j == 0 ? smi.syncType : Subtitle.SyncType.inner).fromAttr(tAttrs));
 			}
