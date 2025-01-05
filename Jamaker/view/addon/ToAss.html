@@ -34,7 +34,7 @@ $(function() {
 		var input  = new Subtitle.SmiFile($("#input").val());
 		{	// 프레임 단위 싱크 역보정... 필요한가?
 			if (opener && opener.SmiEditor && opener.SmiEditor.sync && opener.SmiEditor.sync.frame) {
-				var FL = opener.FL;
+				var FL = opener.SmiEditor.video.FL;
 				for (var i = 0; i < input.body.length; i++) {
 					var item = input.body[i];
 					item.start = Math.max(1, ((Math.round(item.start / FL) - 0.5) * FL));

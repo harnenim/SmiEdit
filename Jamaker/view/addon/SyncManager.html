@@ -15,15 +15,14 @@ windowName = "addon";
 // 초기 상태 기억
 // TODO: 경우에 따라 opener 분리 필요
 var origin = null;
-var FL = 42;
 var tab = null;
 $(function() {
 	if (opener) {
-		SmiEditor = opener.SmiEditor;
 		tab = opener.SmiEditor.selected;
 		if (tab) {
 			origin = tab.getText();
-			FL = opener.FL;
+			SmiEditor.video.fs = opener.SmiEditor.video.fs;
+			SmiEditor.video.FL = opener.SmiEditor.video.FL;
 		}
 	}
 });
@@ -234,7 +233,7 @@ function frameAssToSmi() {
 				if (last && last != start) {
 					lines.push("&nbsp;");
 				}
-				lines.push(SmiEditor.makeSyncLine(SmiEditor.getSyncTime(start == "0:00:00.00" ? 1 : (ass2smiTime(start) + add)), TYPE.FRAME));
+				lines.push(SmiEditor.makeSyncLine(SmiEditor.getSyncTime(start == "0:00:00.00" ? 1 : (ass2smiTime(start) + add))));
 				var splitTag = text.split("}");
 				splitTag = splitTag[splitTag.length == 1 ? 0 : 1]
 				lines.push(splitTag.split("\\N").join("<br>"));
@@ -243,7 +242,7 @@ function frameAssToSmi() {
 			}
 			last = 0;
 			if (type[1] == '］') {
-				lines.push(SmiEditor.makeSyncLine(SmiEditor.getSyncTime(ass2smiTime(end) + add), TYPE.FRAME));
+				lines.push(SmiEditor.makeSyncLine(SmiEditor.getSyncTime(ass2smiTime(end) + add)));
 				last = end;
 			}
 		}

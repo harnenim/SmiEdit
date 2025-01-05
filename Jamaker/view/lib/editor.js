@@ -1,6 +1,4 @@
 var time = 0;
-var FR = 23976;
-var FL = 1000000 / FR;
 
 var tabs = [];
 var tab = 0;
@@ -23,7 +21,7 @@ function refreshTime(now, fr) {
 		if (fr == 23975) {
 			fr = 23975.7; // 일부 영상 버그
 		}
-		FL = 1000000 / (FR = fr);
+		SmiEditor.video.FL = 1000000 / (SmiEditor.video.FR = fr);
 		if (showFps == null) {
 			showFps = $("#showFps");
 		}

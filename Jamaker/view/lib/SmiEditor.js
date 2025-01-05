@@ -213,6 +213,8 @@ SmiEditor.trustKeyFrame = false;
 SmiEditor.followKeyFrame = false;
 SmiEditor.video = {
 		path: null
+	,	FR: 23976 // 기본값 23.976fps
+	,	FL: 1000000 / 23976
 	,	fs: []
 	,	kfs: []
 }
@@ -261,7 +263,7 @@ SmiEditor.getSyncTime = function(sync, forKeyFrame=false, output={}) {
 		if (adjustSync) { // 보정 완료
 			sync = adjustSync;
 		} else { // FPS 기반 보정
-			sync = Math.floor(Math.floor((sync / FL) + 0.5) * FL);
+			sync = Math.floor(Math.floor((sync / SmiEditor.video.FL) + 0.5) * SmiEditor.video.FL);
 		}
 		sync = Math.max(1, sync); // 0 이하는 허용하지 않음
 	}
