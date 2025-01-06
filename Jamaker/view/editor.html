@@ -14,12 +14,14 @@
 <script src="lib/editor.js"></script>
 <link rel="stylesheet" type="text/css" href="lib/AutoCompleteTextarea.css" />
 <link rel="stylesheet" type="text/css" href="lib/SmiEditor.css" />
-<link rel="stylesheet" type="text/css" href="lib/SmiEditor.color.css" />
 <style>
 * {
 	user-select: none;
 	border-width: 0;
 	border-style: solid;
+}
+input, textarea {
+	user-select: text;
 }
 button {
 	line-height: 13px;
@@ -58,6 +60,7 @@ body:not(.drag-file) #cover {
 	background: rgba(0, 122, 202, 0.3);
 }
 </style>
+<style id="styleColor"></style>
 <style id="styleAppend"></style>
 </head>
 <body id="body">

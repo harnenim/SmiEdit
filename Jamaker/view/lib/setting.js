@@ -36,12 +36,12 @@ var checkVersion;
 	}
 	var lastNotifyForCommand = "2024.12.07.v1";
 	var lastNotifyForAutoComplete = "";
-	var lastNotifyForStyle = "2024.12.13.v1";
+	var lastNotifyForStyle = "2025.01.06.v1";
 	var lastNotifyForMenu = "2024.11.19.v2";
 }
 
 var DEFAULT_SETTING =
-{	version: "2024.12.19.v1"
+{	version: "2025.01.06.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"
@@ -277,37 +277,55 @@ var DEFAULT_SETTING =
 ,	tempSave: 300
 ,	useTab: false // 탭 사용 기본값은 꺼두는 걸로
 ,	highlight:
-    { parser: "withoutSync"
-    , style : "eclipse"
-    , enter : false
-    }
-,	css	:	".sync     { border-color: #000; }\n"
-		+	".sync.error { background: #f88; }\n"
-		+	".sync.equal { background: #8f8; }\n"
-		+	".sync.range { color     : #888; }\n"
-		+	".tab.not-saved { background: #f86; } /* 저장 안 됐을 때 표시 */\n"
-		+	"\n"
-		+	"/* 다크테마 예제 * /\n"
-		+	"body, .th.selected, .th:hover,\n"
-		+	".hold-selector > .selector.selected,\n"
-		+	".hold-selector > .selector:hover,\n"
-		+	".hold-selector > .selector button:hover,\n"
-		+	".hold > .col-sync { background: #0f0f0f; }\n"
-		+	".th.selected { border-bottom-color: #0f0f0f; }\n"
-		+	"#tabSelector, .hold-selector { background: #333; }\n"
-		+	".th, .hold-selector > .selector { background: #222; }\n"
-		+	"#body > *:not(#editor) *, .hold .col-sync *, .nonactive textarea { color: #fff; caret-color: #fff; }\n"
-		+	"input { background: #000; }\n"
-		+	"button { background: #222; }\n"
-		+	".tab > .input { border-color: #666; }\n"
-		+	".sync     { border-color: #fff; }\n"
-		+	".sync.error { background: #088; }\n"
-		+	".sync.equal { background: #808; }\n"
-		+	".sync.range { color     : #888; }\n"
-		+	".highlight-textarea > div .attr  { color: #034f82; }\n"
-		+	".highlight-textarea > div .value { color: #005cc5; }\n"
-		+	".highlight-textarea.nonactive > textarea { background: #000; color: #fff; caret-color: #fff; }\n"
-		+	"/* */"
+	{ parser: "withoutSync"
+	, style : "eclipse"
+	, enter : false
+	}
+,	color:
+	{	background: "#f0f0f0"
+	,	selector  : "#c1c1c1"
+	,	border    : "#aaaaaa"
+	,	tab       : "#dddddd"
+	,	tabBorder : "#888888"
+	,	editor    : "#ffffff"
+	,	text      : "#000000"
+	,	hover     : "#ffffff"
+	,	notSaved  : "#ff8866"
+	,	syncBorder: "#000000"
+	,	syncError : "#ff8888"
+	,	syncEqual : "#88ff88"
+	}
+,	colorPreset:
+	{
+		"기본":
+		{	background: "#f0f0f0"
+		,	selector  : "#c1c1c1"
+		,	border    : "#aaaaaa"
+		,	tab       : "#dddddd"
+		,	tabBorder : "#888888"
+		,	editor    : "#ffffff"
+		,	text      : "#000000"
+		,	hover     : "#ffffff"
+		,	notSaved  : "#ff8866"
+		,	syncBorder: "#000000"
+		,	syncError : "#ff8888"
+		,	syncEqual : "#88ff88"
+		}
+	,	"다크테마":
+		{	background: "#0f0f0f"
+		,	selector  : "#333333"
+		,	border    : "#aaaaaa"
+		,	tab       : "#222222"
+		,	tabBorder : "#888888"
+		,	editor    : "#000000"
+		,	text      : "#ffffff"
+		,	hover     : "#000000"
+		,	notSaved  : "#ff8866"
+		,	syncBorder: "#ffffff"
+		,	syncError : "#880088"
+		,	syncEqual : "#008888"
+		}
+	}
 ,	newFile:"<SAMI>\n"
 		+	"<HEAD>\n"
 		+	"<TITLE>제목</TITLE>\n"

@@ -31,8 +31,8 @@ var SmiEditor = function(text) {
 	this.area.append($("<div class='col-sync' style='background: transparent;'>")); // 블록지정 방지 영역
 //	this.area.append(this.input = $("<textarea class='input' spellcheck='false'>"));
 	{	// 문법 하이라이트 기능 지원용
-		this.hArea = $("<div class='input highlight-textarea" + (SmiEditor.useHighlight ? "" : " nonactive") + "'>");
-		this.hArea.append(this.hview = $("<div class='hljs'>"));
+		this.hArea = $("<div class='input highlight-textarea hljs" + (SmiEditor.useHighlight ? "" : " nonactive") + "'>");
+		this.hArea.append($("<div>").append(this.hview = $("<div>")));
 		this.hArea.append(this.input = $("<textarea spellcheck='false'>"));
 		this.area.append(this.hArea);
 	}
@@ -99,11 +99,12 @@ var SmiEditor = function(text) {
 	}, 1);
 };
 
-SmiEditor.setSetting = function(setting, appendStyle) {
+SmiEditor.setSetting = function(setting) {
 	if (setting.sync) {
 		SmiEditor.sync = setting.sync;
 	}
 	SmiEditor.useHighlight = setting.highlight && setting.highlight.parser;
+	SmiEditor.showEnter = setting.highlight.enter;
 	
 	{	// AutoComplete
 		for (var key in SmiEditor.autoComplete) {
@@ -175,20 +176,6 @@ SmiEditor.setSetting = function(setting, appendStyle) {
 		}
 	}
 }
-SmiEditor.refreshStyle = function(setting, appendStyle) {
-	if (!SmiEditor.style) {
-		$("head").append(SmiEditor.style = $("<style>"));
-		
-		// 최초 접근일 경우 키보드 이벤트도 활성화
-		SmiEditor.activateKeyEvent();
-	}
-	var css = setting.css;
-	if (appendStyle) {
-		css += appendStyle;
-	}
-	
-	SmiEditor.style.html(css);
-}
 
 SmiEditor.sync = {
 	insert: 1 // 싱크 입력 시 커서 이동
@@ -208,10 +195,13 @@ SmiEditor.PlayerAPI = {
 	,	moveTo     : function(time) { binder.moveTo(time); }
 	,	move       : function(move) { binder.moveTo(time + move); }
 };
+SmiEditor.limitKeyFrame = 200;
 SmiEditor.trustKeyFrame = false;
 SmiEditor.followKeyFrame = false;
 SmiEditor.video = {
 		path: null
+	,	FR: 23976 // 기본값 23.976fps
+	,	FL: 1000000 / 23976
 	,	fs: []
 	,	kfs: []
 }
@@ -244,7 +234,7 @@ SmiEditor.getSyncTime = function(sync, forKeyFrame=false, output={}) {
 		) {
 			adjustSync = SmiEditor.findSync(sync, SmiEditor.video.kfs);
 			var dist = Math.abs(adjustSync - sync);
-			if (dist > 200) { // 200ms 넘어가면 키프레임에 맞춘 게 아니라고 간주
+			if (dist > SmiEditor.limitKeyFrame) { // 기준치 넘어가면 키프레임에 맞춘 게 아니라고 간주
 				adjustSync = null;
 			} else {
 				output.keyframe = true;
@@ -253,14 +243,14 @@ SmiEditor.getSyncTime = function(sync, forKeyFrame=false, output={}) {
 		if (adjustSync == null && SmiEditor.video.fs.length > 2) { // 프레임 싱크
 			adjustSync = SmiEditor.findSync(sync, SmiEditor.video.fs);
 			var dist = Math.abs(adjustSync - sync);
-			if (dist > 200) { // 200ms 넘어가면 프레임 정보가 잘못된 걸로 간주
+			if (dist > SmiEditor.limitKeyFrame) { // 기준치 넘어가면 프레임 정보가 잘못된 걸로 간주
 				adjustSync = null;
 			}
 		}
 		if (adjustSync) { // 보정 완료
 			sync = adjustSync;
 		} else { // FPS 기반 보정
-			sync = Math.floor(Math.floor((sync / FL) + 0.5) * FL);
+			sync = Math.floor(Math.floor((sync / SmiEditor.video.FL) + 0.5) * SmiEditor.video.FL);
 		}
 		sync = Math.max(1, sync); // 0 이하는 허용하지 않음
 	}
@@ -312,7 +302,11 @@ SmiEditor.prototype.bindEvent = function() {
 };
 
 SmiEditor.selected = null;
+SmiEditor.keyEventActivated = false;
 SmiEditor.activateKeyEvent = function() {
+	if (SmiEditor.keyEventActivated) return;
+	SmiEditor.keyEventActivated = true;
+	
 	var lastKeyDown = 0;
 	$(document).on("keydown", function(e) {
 		lastKeyDown = e.keyCode;
@@ -1540,7 +1534,11 @@ SmiEditor.prototype.updateHighlight = function () {
 		var state = lastLine ? lastLine.data("next") : null;
 		var i = changeBegin;
 		for (; i < changeEnd + add; i++) {
-			var highlightLine = SmiEditor.highlightText(lines[i], state).append("<br />");
+			var highlightLine = SmiEditor.highlightText(lines[i], state);
+			if (SmiEditor.showEnter) {
+				highlightLine.append($("<span class='hljs-comment enter'>").text("↵"));
+			}
+			highlightLine.append("<br />");
 			newLines.push(highlightLine);
 			if (lastLine) {
 				lastLine.after(highlightLine);
@@ -2223,7 +2221,7 @@ SmiEditor.Addon = {
 		}
 };
 function openAddon(name, target) { SmiEditor.Addon.open(name, target); }
-function extSubmit(method, url, values) {
+function extSubmit(method, url, values, withoutTag=true) {
 	if (typeof values == "string") {
 		var name = values;
 		var editor = SmiEditor.selected;
@@ -2269,7 +2267,9 @@ function extSubmit(method, url, values) {
 			}
 
 			// string일 경우 태그 탈출 처리
-			value = $("<p>").html(value.split(/<br>/gi).join(" ")).text();
+			if (withoutTag) {
+				value = $("<p>").html(value.split(/<br>/gi).join(" ")).text();
+			}
 
 			var params = {};
 			params[name] = value;

@@ -726,6 +726,20 @@ function setSetting(setting) {
 	
 	SmiEditor.setSetting(setting);
 	{
+		if (setting.css) {
+			delete(setting.css);
+		}
+		$.ajax({url: "lib/SmiEditor.color.css"
+			,	dataType: "text"
+			,	success: function(preset) {
+					for (var name in setting.color) {
+						preset = preset.split("[" + name + "]").join(setting.color[name]);
+					}
+					$("#styleColor").html(preset);
+				}
+		});
+	}
+	{
 		function afterLoadHighlight() {
 			SmiEditor.refreshHighlight();
 			for (var i = 0; i < tabs.length; i++) {
