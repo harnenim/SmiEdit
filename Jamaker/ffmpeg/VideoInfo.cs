@@ -94,7 +94,6 @@ namespace Jamaker
             string[] lines = proc.StandardError.ReadToEnd().Split(new char[] { '\n', '\r' });
             foreach (string line in lines)
             {
-                //Console.WriteLine(line);
                 if (line.Trim().Length == 0) continue;
                 if (lastStream != null && line.Equals("    Metadata:"))
                 {
@@ -178,8 +177,8 @@ namespace Jamaker
             Console.WriteLine("RefreshSkf");
             if (type != Type.VIDEO) return;
 
-            ReadSfs(withKeyframe);
-            ReadKfs(withKeyframe);
+            ReadSfs(0, withKeyframe ? 0.3 : 1);
+            ReadKfs(0.3, 1, withKeyframe);
             if (withSaveSkf) SaveSkf();
         }
 
@@ -188,7 +187,7 @@ namespace Jamaker
             if (sfs == null) sfs = new List<double>();
             return sfs;
         }
-        public List<double> ReadSfs(bool withKeyframe)
+        public List<double> ReadSfs(double from, double to)
         {
             sfs = new List<double>();
 
@@ -211,7 +210,7 @@ namespace Jamaker
 
             setProgress(0);
 
-            double ratio = withKeyframe ? 0.3 : 1;
+            double ratio = to - from;
 
             while ((didread = stream.Read(buffer, offset, sizeof(float) * 1024)) != 0)
             {
@@ -231,14 +230,14 @@ namespace Jamaker
                         sum = 0;
                         if (count % 441000 == 0)
                         {
-                            setProgress(ratio * (count / (duration * 44.1)));
+                            setProgress(from + ratio * (count / (duration * 44.1)));
                         }
                     }
                 }
             }
             proc.Close();
 
-            setProgress(ratio);
+            setProgress(from + ratio);
 
             return sfs;
         }
@@ -252,7 +251,7 @@ namespace Jamaker
             if (vfs == null) vfs = new List<int>();
             return vfs;
         }
-        public List<int> ReadKfs(bool withKeyframe)
+        public List<int> ReadKfs(double from, double to, bool withKeyframe)
         {
             if (kfs != null)
             {
@@ -269,7 +268,9 @@ namespace Jamaker
                 proc.Start();
                 proc.BeginErrorReadLine();
 
-                setProgress(0);
+                setProgress(from);
+
+                double ratio = to - from;
 
                 StreamReader sr = new StreamReader(proc.StandardOutput.BaseStream);
                 string line;
@@ -284,7 +285,7 @@ namespace Jamaker
                         {
                             kfs.Add(time);
                         }
-                        setProgress((double) time / duration);
+                        setProgress(from + ratio * time / duration);
                     }
                     catch (Exception) { }
                 }

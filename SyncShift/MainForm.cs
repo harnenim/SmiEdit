@@ -222,7 +222,8 @@ namespace Jamaker
                         string data = null;
                         foreach (StreamAttr audio in audios)
                         {
-                            string item = string.Format("{0}ː[{1}] {2}", audio.map, audio.language, audio.metadata["title"]);
+                            string title = audio.metadata.ContainsKey("title") ? audio.metadata["title"] : "이름 없음";
+                            string item = string.Format("{0}ː[{1}] {2}", audio.map, audio.language, title);
                             data = data == null ? item : (data + "|" + item);
                         }
                         Script("showAudioSelector", new object[] { data, isOrigin, withSaveSkf, withKf });
