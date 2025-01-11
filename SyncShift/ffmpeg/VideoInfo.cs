@@ -251,6 +251,10 @@ namespace Jamaker
             if (vfs == null) vfs = new List<int>();
             return vfs;
         }
+        public List<int> ReadKfs(bool withKeyframe)
+        {
+            return ReadKfs(0, 1, withKeyframe);
+        }
         public List<int> ReadKfs(double from, double to, bool withKeyframe)
         {
             if (kfs != null)
