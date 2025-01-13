@@ -235,7 +235,9 @@ var Combine = {
 			var us = (ui < upperSyncs.length) ? upperSyncs[ui] : [99999999, 99999999, null, 0];
 			var ls = (li < lowerSyncs.length) ? lowerSyncs[li] : [99999999, 99999999, null, 0];
 			if (us[STIME] < ls[STIME]) { // 위가 바뀜
-				if (group && group.lower.length && (group.lower[group.lower.length - 1][ETIME] > us[STIME])) { // 그룹 유지
+				if ((us[STYPE] == TYPE.RANGE) // 중간 싱크
+				 || (group && group.lower.length && (group.lower[group.lower.length - 1][ETIME] > us[STIME]))
+				){ // 그룹 유지
 					group.upper.push(us);
 					group.maxLines[0] = Math.max(group.maxLines[0], us[LINES]);
 					group.maxWidth = Math.max(group.maxWidth, us[WIDTH]);
@@ -251,7 +253,9 @@ var Combine = {
 				ui++;
 				
 			} else if (ls[STIME] < us[STIME]) { // 아래가 바뀜
-				if (group && group.upper.length && (group.upper[group.upper.length - 1][ETIME] > ls[STIME])) { // 그룹 유지
+				if ((ls[STYPE] == TYPE.RANGE) // 중간 싱크
+				 || (group && group.upper.length && (group.upper[group.upper.length - 1][ETIME] > ls[STIME]))
+				) { // 그룹 유지
 					group.lower.push(ls);
 					group.maxLines[1] = Math.max(group.maxLines[1], ls[LINES]);
 					group.maxWidth = Math.max(group.maxWidth, ls[WIDTH]);
@@ -266,13 +270,25 @@ var Combine = {
 				}
 				li++;
 				
-			} else { // 둘이 같이 바뀜 -> 새 그룹
-				groups.push(group = {
-						upper: [us]
-					,	lower: [ls]
-					,	maxLines: [us[LINES], ls[LINES]]
-					,	maxWidth: Math.max(us[WIDTH], ls[WIDTH])
-				});
+			} else { // 둘이 같이 바뀜
+				if ((us[STYPE] == TYPE.RANGE) || (ls[STYPE] == TYPE.RANGE)) {
+					// 하나라도 중간 싱크 - 그룹 유지
+					group.upper.push(us);
+					group.lower.push(ls);
+					group.maxLines[0] = Math.max(group.maxLines[0], us[LINES]);
+					group.maxLines[1] = Math.max(group.maxLines[1], ls[LINES]);
+					group.maxWidth = Math.max(group.maxWidth, us[WIDTH]);
+					group.maxWidth = Math.max(group.maxWidth, ls[WIDTH]);
+					
+				} else {
+					// 새 그룹
+					groups.push(group = {
+							upper: [us]
+						,	lower: [ls]
+						,	maxLines: [us[LINES], ls[LINES]]
+						,	maxWidth: Math.max(us[WIDTH], ls[WIDTH])
+					});
+				}
 				ui++;
 				li++;
 			}
@@ -712,6 +728,7 @@ if (Subtitle && Subtitle.SmiFile) {
 								from: [oi, oi]
 							,	to  : [ni, main.body.length]
 							,	start: main.body[ni].start
+							,	end  : main.body[main.body.length - 1].start + 1
 						};
 						logs.push(newLog);
 					}
@@ -735,10 +752,10 @@ if (Subtitle && Subtitle.SmiFile) {
 						var start = log.to[0];
 						for (var hi = 1; hi < holds.length; hi++) {
 							var smi = holdSmis[hi];
-							var isEqual = true;
+							var isImported = true;
 							for (var j = 0; j < smi.body.length; j++) {
 								if (smi.body[j].start != main.body[start+j].start) {
-									isEqual = false;
+									isImported = false;
 									break;
 								}
 								if (smi.body[j].text != main.body[start+j].text) {
@@ -748,14 +765,24 @@ if (Subtitle && Subtitle.SmiFile) {
 											continue;
 										}
 									}
-									isEqual = false;
+									isImported = false;
 									break;
 								}
 							}
-							if (isEqual) {
+							if (isImported) {
 								var hold = holds[hi];
 								comment = "Hold=" + hold.pos + "|" + hold.name;
 								result[hold.resultIndex] = "";
+								if (smi.body.length < (log.to[1] - log.to[0])) {
+									// 현재 홀드가 내포 홀드의 일부일 경우 나머지 구간 분할
+									var nextLog = {
+											from: log.from
+										,	to  : [log.to[0] + smi.body.length, log.to[1]]
+										,	end : log.end
+									};
+									log.end = nextLog.start = main.body[nextLog.to[0]].start;
+									logs = logs.slice(0, i).concat([log, nextLog]).concat(logs.slice(i + 1));
+								}
 								
 								if (withComment) {
 									for (var j = 0; j < smi.body.length; j++) {
