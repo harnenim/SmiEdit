@@ -383,9 +383,6 @@ Tab.prototype.isSaved = function() {
 	}
 	
 	for (var i = 0; i < this.holds.length; i++) {
-		if (this.savedHolds && (this.savedHolds[i] != this.holds[i])) {
-			return false;
-		}
 		if (!this.holds[i].isSaved()) {
 			return false;
 		}
@@ -1052,13 +1049,17 @@ function afterSaveFile(path) {
 		return;
 	}
 	for (var i = 0; i < currentTab.holds.length; i++) {
-		currentTab.holds[i].afterSave();
+		// currentTab.holds[i].afterSave(); // 최종 저장 여부는 탭 단위로 다뤄져야 해서 군더더기 작업이 됨
+		currentTab.holds[i].saved = currentTab.holds[i].input.val();
 	}
 	currentTab.path = path;
 	var title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";
 	$("#tabSelector .th:eq(" + tab + ") span").text(title);
 	currentTab.holdEdited = false;
 	currentTab.savedHolds = currentTab.holds.slice(0);
+	
+	// savedHolds가 교체된 후에 저장 여부 체크
+	currentTab.onChangeSaved();
 }
 SmiEditor.prototype._afterSave = SmiEditor.prototype.afterSave;
 SmiEditor.prototype.afterSave = function() {
