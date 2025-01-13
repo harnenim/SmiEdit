@@ -1145,19 +1145,22 @@ SmiEditor.prototype.findSync = function(target) {
 		target = time;
 	}
 	var lineNo = 0;
+	var hasSync = false;
 	for (var i = 0; i < this.lines.length; i++) {
 		if (this.lines[i][LINE.TYPE]) {
+			hasSync = true;
 			if (this.lines[i][LINE.SYNC] < target) {
-				lineNo = i;
+				lineNo = i + 1;
 			} else {
 				if (!lineNo) {
 					lineNo = i - 1;
-				} else {
-					lineNo++;
 				}
 				break;
 			}
 		}
+	}
+	if (!hasSync) {
+		return;
 	}
 	var cursor = this.text.split("\n").slice(0, lineNo).join("\n").length + 1;
 	this.setCursor(cursor);
