@@ -1,6 +1,6 @@
 let time = 0;
 
-let tabs = [];
+const tabs = [];
 let tab = 0;
 let closingTab = null;
 let tabToCloseAfterRun = null;
@@ -51,7 +51,7 @@ window.Tab = function(text, path) {
 		
 	}).on("dblclick", ".hold-name", function(e) {
 		e.stopPropagation();
-		let hold = $(this).parents(".selector").data("hold");
+		const hold = $(this).parents(".selector").data("hold");
 		if (hold == tab.holds[0]) {
 			// 메인 홀드는 이름 변경 X
 			return;
@@ -67,9 +67,9 @@ window.Tab = function(text, path) {
 		
 	}).on("click", ".btn-hold-remove", function(e) {
 		e.stopPropagation();
-		let hold = $(this).parents(".selector").data("hold");
+		const hold = $(this).parents(".selector").data("hold");
 		confirm("삭제하시겠습니까?", function() {
-			let index = tab.holds.indexOf(hold);
+			const index = tab.holds.indexOf(hold);
 			
 			if (tab.hold == index) {
 				// 선택된 걸 삭제하는 경우 메인 홀드로 먼저 이동
@@ -93,7 +93,7 @@ window.Tab = function(text, path) {
 		
 	}).on("click", ".btn-hold-upper", function(e) {
 		e.stopPropagation();
-		let hold = $(this).parents(".selector").data("hold");
+		const hold = $(this).parents(".selector").data("hold");
 		if (hold.pos == -1) {
 			hold.pos = 1;
 		} else {
@@ -105,7 +105,7 @@ window.Tab = function(text, path) {
 		
 	}).on("click", ".btn-hold-lower", function(e) {
 		e.stopPropagation();
-		let hold = $(this).parents(".selector").data("hold");
+		const hold = $(this).parents(".selector").data("hold");
 		if (hold.pos == 1) {
 			hold.pos = -1;
 		} else {
@@ -124,10 +124,10 @@ Tab.prototype.addHold = function(info, isMain=false, asActive=true) {
 			,	pos: 1
 		}
 	}
-	let hold = new SmiEditor(info.text);
+	const hold = new SmiEditor(info.text);
 	this.holds.push(hold);
 	this.holdSelector.append(hold.selector = $("<div class='selector'>").data({ hold: hold }));
-	let divName = $("<div class='hold-name'>");
+	const divName = $("<div class='hold-name'>");
 	hold.selector.append(divName.append($("<span>").text(hold.name = hold.savedName = info.name)));
 	hold.owner = this;
 	hold.pos = hold.savedPos = info.pos;
@@ -160,9 +160,9 @@ Tab.prototype.updateHoldSelector = function() {
 	let BEGIN = 1;
 	let END = -1;
 	
-	let timers = [];
+	const timers = []; // 각 홀드의 시작/종료 시간을 정렬한 객체
 	for (let i = 0; i < this.holds.length; i++) {
-		let hold = this.holds[i];
+		const hold = this.holds[i];
 		if (i > 0) {
 			hold.selector.find(".hold-name span").text(i + "." + hold.name);
 		}
@@ -186,40 +186,39 @@ Tab.prototype.updateHoldSelector = function() {
 		}
 	}
 	
-	let add = 0;
-	{	let begins = [];
+	let add = 0; // 홀드 시작/종료 위치 개수에 대한 추가 보정값
+	{	const begins = []; // 각 홀드의 시작 위치를 기록한 객체
 		for (let i= 0; i < timers.length; i++) {
-			let timer = timers[i];
+			const timer = timers[i];
 			
-			let a = 0;
 			for (let j = 0; j < timer.holds.length; j++) {
 				if (timer.holds[j].type == END) {
-					let min = begins[timer.holds[j].index] + 4;
+					// 홀드 종료 위치가 시작 위치와 4칸 이상 떨어져야 함
+					const min = begins[timer.holds[j].index] + 4;
 					if (i + add < min) {
-						Math.max(a = min - (i + add));
+						// 4칸 안 될 경우 보정값에 추가
+						add = min - i;
 					}
 				}
-			}
-			if (a) {
-				add += a;
 			}
 			timer.rate = i + add;
 			
 			for (let j = 0; j < timer.holds.length; j++) {
 				if (timer.holds[j].type == BEGIN) {
+					// 현재 위치에서 시작하는 홀드 위치 기억
 					begins[timer.holds[j].index] = timer.rate;
 				}
 			}
 		}
 	}
 	
-	let posStatus = {};
+	const posStatus = {};
 	for (let i = 0; i < timers.length; i++) {
-		let timer = timers[i];
-		let rate = (timer.rate / (timers.length + add - 1) * 100);
+		const timer = timers[i];
+		const rate = (timer.rate / (timers.length + add - 1) * 100);
 		for (let j = 0; j < timer.holds.length; j++) {
-			let selector = timer.holds[j];
-			let hold = this.holds[selector.index];
+			const selector = timer.holds[j];
+			const hold = this.holds[selector.index];
 			if (selector.type == BEGIN) {
 				// 홀드 시작
 				hold.selector.css({ left: rate + "%" });
@@ -257,8 +256,8 @@ Tab.prototype.updateHoldSelector = function() {
 				
 				// 홀드 위치 사용 중 해제
 				for (let pos in posStatus) {
-					let posHolds = posStatus[pos];
-					let index = posHolds.indexOf(hold);
+					const posHolds = posStatus[pos];
+					const index = posHolds.indexOf(hold);
 					if (index >= 0) {
 						posHolds.splice(index, 1);
 					}
@@ -309,7 +308,7 @@ Tab.prototype.replaceBeforeSave = function() {
 		let cursor = this.holds[i].getCursor();
 		text = [text.substring(0, cursor[0]), text.substring(cursor[0], cursor[1]), text.substring(cursor[1])];
 		for (let j = 0; j < setting.replace.length; j++) {
-			let item = setting.replace[j];
+			const item = setting.replace[j];
 			if (item.use) {
 				if (text[0].indexOf(item.from) >= 0) { text[0] = text[0].split(item.from).join(item.to); changed = true; }
 				if (text[1].indexOf(item.from) >= 0) { text[1] = text[1].split(item.from).join(item.to); changed = true; }
@@ -322,9 +321,9 @@ Tab.prototype.replaceBeforeSave = function() {
 			// 시작 커서 전후 치환
 			text = [text[0] + text[1], text[2]];
 			for (let j = 0; j < setting.replace.length; j++) {
-				let item = setting.replace[j];
+				const item = setting.replace[j];
 				if (item.use) {
-					let index = text[0].indexOf(item.from);
+					const index = text[0].indexOf(item.from);
 					if (index >= 0) {
 						text[0] = text[0].split(item.from).join(item.to);
 						cursor[0] = index + item.to.length;
@@ -341,9 +340,9 @@ Tab.prototype.replaceBeforeSave = function() {
 		if (text[1].length > 0) {
 			text = text[0] + text[1];
 			for (let j = 0; j < setting.replace.length; j++) {
-				let item = setting.replace[j];
+				const item = setting.replace[j];
 				if (item.use) {
-					let index = text.indexOf(item.from);
+					const index = text.indexOf(item.from);
 					if (index >= 0) {
 						text = text.split(item.from).join(item.to);
 						cursor[1] = index;
@@ -397,7 +396,7 @@ SmiEditor.prototype.isSaved = function() {
 SmiEditor.prototype.onChangeSaved = function(saved) {
 	// 수정될 수 있는 건 열려있는 탭이므로
 	if (!tabs.length) return;
-	let currentTab = tabs[tab];
+	const currentTab = tabs[tab];
 	if (!currentTab) return;
 	currentTab.onChangeSaved(this);
 };
@@ -405,7 +404,7 @@ SmiEditor.prototype.updateTimeRange = function() {
 	let start = 999999998;
 	let end = 0;
 	for (let i = 0; i < this.lines.length; i++) {
-		let line = this.lines[i];
+		const line = this.lines[i];
 		if (line[LINE.TYPE]) {
 			start = Math.min(start, line[LINE.SYNC]);
 			end   = Math.max(end  , line[LINE.SYNC]);
@@ -425,7 +424,7 @@ function deepCopyObj(obj) {
 			return JSON.parse(JSON.stringify(obj));
 		}
 		
-		let out = {};
+		const out = {};
 		for (let key in obj) {
 			out[key] = deepCopyObj(obj[key]);
 		}
@@ -478,7 +477,7 @@ function init(jsonSetting) {
 	try {
 		setting = JSON.parse(jsonSetting);
 		
-		let notified = checkVersion(setting.version);
+		const notified = checkVersion(setting.version);
 		
 		// C#에서 보내준 세팅값 오류로 빠진 게 있으면 채워주기
 		if (typeof setting == "object" && !Array.isArray(setting)) {
@@ -493,14 +492,14 @@ function init(jsonSetting) {
 					for (let di = 0; di < DEFAULT_SETTING.menu.length; di++) {
 						let exist0 = false;
 						
-						let dMenu = DEFAULT_SETTING.menu[di];
-						let dMenu0 = dMenu[0];
-						let dMenu0name = dMenu0.split("(&")[0];
+						const dMenu = DEFAULT_SETTING.menu[di];
+						const dMenu0 = dMenu[0];
+						const dMenu0name = dMenu0.split("(&")[0];
 						
 						for (let si = 0; si < setting.menu.length; si++) {
-							let sMenu = setting.menu[si];
-							let sMenu0 = sMenu[0];
-							let sMenu0name = sMenu0.split("(&")[0];
+							const sMenu = setting.menu[si];
+							const sMenu0 = sMenu[0];
+							const sMenu0name = sMenu0.split("(&")[0];
 							
 							if (sMenu0name == dMenu0name) {
 								// 이름이 같은 메뉴를 찾았을 경우
@@ -515,20 +514,20 @@ function init(jsonSetting) {
 								for (let dj = 1; dj < dMenu.length; dj++) {
 									let exist1 = false;
 									
-									let dMenu1 = dMenu[dj];
-									let dMenu1name = dMenu1.split("|")[0].split("(&")[0];
+									const dMenu1 = dMenu[dj];
+									const dMenu1name = dMenu1.split("|")[0].split("(&")[0];
 									
 									for (let sj = 1; sj < sMenu.length; sj++) {
-										let sMenu1 = sMenu[sj];
-										let sMenu1name = sMenu1.split("|")[0].split("(&")[0];
+										const sMenu1 = sMenu[sj];
+										const sMenu1name = sMenu1.split("|")[0].split("(&")[0];
 										
 										if (sMenu1name == dMenu1name) {
 											// 이름이 같은 메뉴를 찾았을 경우
 											exist1 = true;
 											let updated = false;
 											
-											let sLen = sMenu1.indexOf("|");
-											let dLen = dMenu1.indexOf("|");
+											const sLen = sMenu1.indexOf("|");
+											const dLen = dMenu1.indexOf("|");
 											let sMenuName = sMenu1.substring(0, sLen);
 											let dMenuName = dMenu1.substring(0, dLen);
 											if (sMenuName.indexOf("(&") < 0 && dMenuName.indexOf("(&") > 0) {
@@ -584,65 +583,65 @@ function init(jsonSetting) {
 		saveSetting();
 	}
 	
-	let btnAddHold = $("#btnAddHold").on("click", function() {
+	const btnAddHold = $("#btnAddHold").on("click", function() {
 		if (tabs.length == 0) return;
 		tabs[tab].addHold();
 	});
-	let inputWeight = $("#inputWeight").bind("input propertychange", function() {
-		let weight = inputWeight.val();
+	const inputWeight = $("#inputWeight").bind("input propertychange", function() {
+		const weight = inputWeight.val();
 		if (isFinite(weight)) {
 			SmiEditor.sync.weight = Number(weight);
 		} else {
 			alert("숫자를 입력하세요.");
-			let cursor = inputWeight[0].selectionEnd - 1;
+			const cursor = inputWeight[0].selectionEnd - 1;
 			inputWeight.val(SmiEditor.sync.weight);
 			inputWeight[0].setSelectionRange(cursor, cursor);
 		}
 	});
-	let inputUnit = $("#inputUnit").on("input propertychange", function() {
-		let unit = inputUnit.val();
+	const inputUnit = $("#inputUnit").on("input propertychange", function() {
+		const unit = inputUnit.val();
 		if (isFinite(unit)) {
 			SmiEditor.sync.unit = Number(unit);
 		} else {
 			alert("숫자를 입력하세요.");
-			let cursor = inputUnit[0].selectionEnd - 1;
+			const cursor = inputUnit[0].selectionEnd - 1;
 			inputUnit.val(SmiEditor.sync.unit);
 			inputUnit[0].setSelectionRange(cursor, cursor);
 		}
 	});
-	let btnMoveToBack = $("#btnMoveToBack").on("click", function() {
+	const btnMoveToBack = $("#btnMoveToBack").on("click", function() {
 		if (tabs.length == 0) return;
 		tabs[tab].holds[tabs[tab].hold].moveSync(false);
 		tabs[tab].holds[tabs[tab].hold].input.focus();
 	});
-	let btnMoveToForward = $("#btnMoveToForward").on("click", function() {
+	const btnMoveToForward = $("#btnMoveToForward").on("click", function() {
 		if (tabs.length == 0) return;
 		tabs[tab].holds[tabs[tab].hold].moveSync(true);
 		tabs[tab].holds[tabs[tab].hold].input.focus();
 	});
 	
-	let checkAutoFindSync = $("#checkAutoFindSync").on("click", function() {
+	const checkAutoFindSync = $("#checkAutoFindSync").on("click", function() {
 		autoFindSync = $(this).prop("checked");
 		if (tabs.length == 0) return;
 		tabs[tab].holds[tabs[tab].hold].input.focus();
 	});
-	let checkTrustKeyframe = $("#checkTrustKeyframe").on("click", function() {
+	const checkTrustKeyframe = $("#checkTrustKeyframe").on("click", function() {
 		SmiEditor.trustKeyFrame = $(this).prop("checked");
 		if (tabs.length == 0) return;
 	});
 	
-	let btnNewTab = $("#btnNewTab").on("click", function() {
+	const btnNewTab = $("#btnNewTab").on("click", function() {
 		openNewTab();
 	});
 	
-	let tabSelector = $("#tabSelector").on("click", ".th:not(#btnNewTab)", function() {
-		let th = $(this);
+	const tabSelector = $("#tabSelector").on("click", ".th:not(#btnNewTab)", function() {
+		const th = $(this);
 		if (th[0] == closingTab) {
 			return;
 		}
 		
 		tabSelector.find(".selected").removeClass("selected");
-		let currentTab = th.addClass("selected").data("tab");
+		const currentTab = th.addClass("selected").data("tab");
 		if (currentTab) {
 			tab = tabs.indexOf(currentTab);
 			hold = tab.hold;
@@ -663,13 +662,13 @@ function init(jsonSetting) {
 	}).on("click", ".btn-close-tab", function(e) {
 		e.preventDefault();
 		
-		let th = $(this).parent();
+		const th = $(this).parent();
 		closingTab = th[0];
 		setTimeout(function() { // 탭 선택 이벤트 방지... e.preventDefault()로 안 되네...
 			closingTab == null;
 		}, 1);
 		
-		let currentTab = th.data("tab");
+		const currentTab = th.data("tab");
 		let saved = true;
 		for (let i = 0; i < currentTab.holds.length; i++) {
 			if (currentTab.holds[i].input.val() != currentTab.holds[i].saved) {
@@ -679,7 +678,7 @@ function init(jsonSetting) {
 		}
 		
 		confirm((saved ? "저장되지 않았습니다.\n" : "") + "탭을 닫으시겠습니까?", function() {
-			let index = closeTab(th);
+			const index = closeTab(th);
 
 			setTimeout(function() {
 				if (tabs.length && $("#tabSelector .th.selected").length == 0) {
@@ -734,7 +733,7 @@ function setSetting(setting) {
 			delete(setting.css);
 		}
 
-		// 스크롤바 버튼 새로 그려야 함
+		// 스크롤바 버튼 새로 그려야 함 - 커서 문제로 현재 미적용...
 		let button = "";
 		let disabled = "";
 		{
@@ -743,7 +742,7 @@ function setSetting(setting) {
 			canvas.width = 34;
 			canvas.height = 34;
 			
-			let c = canvas.getContext("2d");
+			const c = canvas.getContext("2d");
 			let x;
 			let y;
 			x =  8; y =  8; c.moveTo(x, y-1.5); c.lineTo(x+3.5, y+2), c.lineTo(x-3.5, y+2); c.closePath();
@@ -781,7 +780,7 @@ function setSetting(setting) {
 			SmiEditor.refreshHighlight();
 			for (let i = 0; i < tabs.length; i++) {
 				for (let j = 0; j < tabs[i].holds.length; j++) {
-					let hold = tabs[i].holds[j];
+					const hold = tabs[i].holds[j];
 					hold.highlightLines = [];
 					hold.hview.empty();
 					hold.updateHighlight();
@@ -836,9 +835,9 @@ function setSetting(setting) {
 	}
 	
 	{
-		let dll = setting.player.control.dll;
+		const dll = setting.player.control.dll;
 		if (dll) {
-			let playerSetting = setting.player.control[dll];
+			const playerSetting = setting.player.control[dll];
 			if (playerSetting) {
 				binder.setPlayer(dll, playerSetting.path, playerSetting.withRun);
 			}
@@ -916,8 +915,8 @@ function saveSetting() {
 }
 function refreshPaddingBottom() {
 	// 에디터 하단 여백 재조정
-	let holdTop = tabs.length ? Number(tabs[tab].area.find(".holds").css("top").split("px")[0]) : 0;
-	let append = "\n#editor textarea { padding-bottom: " + ($("#editor").height() - holdTop - SB - LH - 2) + "px; }";
+	const holdTop = tabs.length ? Number(tabs[tab].area.find(".holds").css("top").split("px")[0]) : 0;
+	const append = "\n#editor textarea { padding-bottom: " + ($("#editor").height() - holdTop - SB - LH - 2) + "px; }";
 	let $style = $("#stylePaddingBottom");
 	if (!$style.length) {
 		$("head").append($style = $("<style id='stylePaddingBottom'>"));
@@ -926,7 +925,7 @@ function refreshPaddingBottom() {
 }
 
 function openHelp(name) {
-	let url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html";
+	const url = (name.substring(0, 4) == "http") ? name : "help/" + name.split("..").join("").split(":").join("") + ".html";
 	SmiEditor.helpWindow = window.open(url, "help", "scrollbars=no,location=no,resizable=no,width=1,height=1");
 	binder.moveWindow("help"
 			, setting.window.x + (40 * DPI)
@@ -942,7 +941,7 @@ function runIfCanOpenNewTab(func) {
 	if (!setting.useTab) {
 		// 탭 미사용 -> 현재 파일 닫기
 		if (tabs.length) {
-			let currentTab = tabs[0];
+			const currentTab = tabs[0];
 			for (let i = 0; i < currentTab.holds.length; i++) {
 				if (!currentTab.isSaved()) {
 					confirm("현재 파일을 닫을까요?", function () {
@@ -958,8 +957,8 @@ function runIfCanOpenNewTab(func) {
 	if (func) func();
 }
 function closeTab(th) {
-	let targetTab = th.data("tab");
-	let index = tabs.indexOf(targetTab);
+	const targetTab = th.data("tab");
+	const index = tabs.indexOf(targetTab);
 	tabs.splice(index, 1);
 	targetTab.area.remove();
 	th.remove();
@@ -995,12 +994,12 @@ function openFileForVideo(path, text) {
 
 let exporting = false;
 function saveFile(asNew, isExport) {
-	let currentTab = tabs[tab];
+	const currentTab = tabs[tab];
 	for (let i = 0; i < currentTab.holds.length; i++) {
 		currentTab.holds[i].history.log();
 	}
 
-	let path = currentTab.path;
+	const path = currentTab.path;
 	if (!path) {
 		// 파일 경로가 없으면 다른 이름으로 저장 대화상자 필요
 		asNew = true;
@@ -1016,8 +1015,8 @@ function saveFile(asNew, isExport) {
 	} else if (isExport) {
 		// 내보내기용 파일명 생성
 		if (binder && !binder._) {
-			let index = path.lastIndexOf("/");
-			let prefix = "_"; // 설정 만들기?
+			const index = path.lastIndexOf("/");
+			const prefix = "_"; // 설정 만들기?
 			path = path.substring(0, index + 1) + prefix + path.substring(index + 1);
 		} else {
 			path = "";
@@ -1043,7 +1042,7 @@ function saveFile(asNew, isExport) {
 
 // 저장 후 C# 쪽에서 호출
 function afterSaveFile(path) {
-	let currentTab = tabs[tab];
+	const currentTab = tabs[tab];
 	if (exporting) {
 		// 내보내기 동작일 땐 상태 바꾸지 않음
 		exporting = false;
@@ -1054,7 +1053,7 @@ function afterSaveFile(path) {
 		currentTab.holds[i].saved = currentTab.holds[i].input.val();
 	}
 	currentTab.path = path;
-	let title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";
+	const title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";
 	$("#tabSelector .th:eq(" + tab + ") span").text(title);
 	currentTab.holdEdited = false;
 	currentTab.savedHolds = currentTab.holds.slice(0);
@@ -1070,16 +1069,16 @@ SmiEditor.prototype.afterSave = function() {
 }
 
 function saveTemp() {
-	let currentTab = tabs[tab];
+	const currentTab = tabs[tab];
 	if (!currentTab) {
 		return;
 	}
 
 	// 마지막 임시 저장 이후 변경 사항 없으면 무시
-	let texts = [];
+	const texts = [];
 	let isChanged = false;
 	for (let i = 0; i < currentTab.holds.length; i++) {
-		let text = texts[i] = currentTab.holds[i].input.val();
+		const text = texts[i] = currentTab.holds[i].input.val();
 		if (text == currentTab.holds[i].tempSavedText) {
 			continue;
 		}
@@ -1087,7 +1086,7 @@ function saveTemp() {
 	}
 	
 	if (isChanged) {
-		let path = currentTab.path ? currentTab.path : "\\new.smi";
+		const path = currentTab.path ? currentTab.path : "\\new.smi";
 		binder.saveTemp(currentTab.getSaveText(false), path);
 		for (let i = 0; i < currentTab.holds.length; i++) {
 			currentTab.holds[i].tempSavedText = texts[i];
@@ -1106,7 +1105,7 @@ function openNewTab(text, path, forVideo) {
 		return;
 	}
 	
-	let texts = [];
+	const texts = [];
 	if (path) {
 		if (path.substring(path.length - 4).toUpperCase() == ".SRT") {
 			// SRT 파일 불러왔을 경우 SMI로 변환
@@ -1115,13 +1114,13 @@ function openNewTab(text, path, forVideo) {
 		}
 	}
 
-	let title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";
+	const title = path ? ((path.length > 14) ? ("..." + path.substring(path.length - 14, path.length - 4)) : path.substring(0, path.length - 4)) : "새 문서";
 	
-	let tab = new Tab(text ? text : setting.newFile, path);
+	const tab = new Tab(text ? text : setting.newFile, path);
 	tabs.push(tab);
 	$("#editor").append(tab.area);
 
-	let th = $("<div class='th'>").append($("<span>").text(title));
+	const th = $("<div class='th'>").append($("<span>").text(title));
 	th.append($("<button type='button' class='btn-close-tab'>").text("×"));
 	$("#btnNewTab").before(th);
 	
@@ -1154,18 +1153,18 @@ function setVideo(path) {
 // C# 쪽에서 호출
 function loadFkf(fkfName) {
 	// C# 파일 객체를 js 쪽에 전달할 수 없으므로, 정해진 경로의 파일을 ajax 형태로 가져옴
-	let req = new XMLHttpRequest();
+	const req = new XMLHttpRequest();
 	req.open("GET", "../temp/" + fkfName);
 	req.responseType = "arraybuffer";
 	req.onload = function(e) {
-		let buffer = req.response;
+		const buffer = req.response;
 		
-		let fkf = new Int32Array(buffer);
-		let vfsLength = fkf[0];
-		let kfsLength = fkf[1];
+		const fkf = new Int32Array(buffer);
+		const vfsLength = fkf[0];
+		const kfsLength = fkf[1];
 		
-		let vfs = [];
-		let kfs = [];
+		const vfs = [];
+		const kfs = [];
 		
 		let offset = 8;
 		let view = new DataView(buffer.slice(offset, offset + (vfsLength * 4)));
@@ -1216,7 +1215,7 @@ function doExit() {
 		, setting.player.control[setting.player.control.dll].withExit);
 }
 
-let REG_SRT_SYNC = /^([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*-->( )*([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}$/;
+const REG_SRT_SYNC = /^([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}( )*-->( )*([0-9]{2}:){1,2}[0-9]{2}[,.][0-9]{2,3}$/;
 function srt2smi(text) {
 	return new Subtitle.SmiFile().fromSync(new Subtitle.SrtFile(text).toSync()).toTxt();
 }
