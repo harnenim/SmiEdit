@@ -3,7 +3,7 @@ function setShowDrag(dragging) {
 	showDrag = dragging;
 }
 function setDroppable() {
-	let doc = $(document);
+	const doc = $(document);
 	doc.on("dragleave", function () {
 		return false;
 	});
@@ -134,15 +134,15 @@ $(function () {
 	}));
 	
 	$("[title]").each(function() {
-		let obj = $(this);
-		let title = obj.attr("title").split("\\n");
+		const obj = $(this);
+		const title = obj.attr("title").split("\\n");
 		if (title.length > 1) {
 			obj.attr("title", title.join("\n"));
 		}
 	});
 });
 
-let Progress = function() {
+window.Progress = function() {
 	this.div = $("<div>").css({
 			position: "fixed"
 		,	top: "calc(50% - 20px)"
@@ -180,7 +180,7 @@ Progress.bars = {};
 Progress.set = function(selector, ratio) {
 	let bar = Progress.bars[selector];
 	if (bar == null) {
-		let area = $(selector);
+		const area = $(selector);
 		Progress.bars[selector] = bar = $("<div>").addClass("progress-bar");
 		area.addClass("progress").prepend(bar);
 	}

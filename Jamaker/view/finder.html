@@ -33,7 +33,7 @@ function init(last) {
 }
 
 function getParams() {
-	let params = {};
+	const params = {};
 	params.find      = $("[name=find]"   ).val();
 	params.replace   = $("[name=replace]").val();
 	params.withCase  = $("[name=case]").prop("checked");

@@ -2,20 +2,20 @@
 let LH = 20; // LineHeight
 let SB = 16; // ScrollBarWidth
 
-let LINE = {
+const LINE = {
 		TEXT: 0
 	,	SYNC: 1
 	,	TYPE: 2
 };
-let TYPE = {
+const TYPE = {
 		TEXT: null
 	,	BASIC: 1
 	,	FRAME: 2
 	,	RANGE: 3
 };
-let TIDs = [null, "", " ", "	"];
+const TIDs = [null, "", " ", "	"];
 function linesToText(lines) {
-	let textLines = [];
+	const textLines = [];
 	for (let i = 0; i < lines.length; i++) {
 		textLines.push(lines[i][LINE.TEXT]);
 	}
@@ -23,8 +23,8 @@ function linesToText(lines) {
 }
 
 window.SmiEditor = function(text) {
-	let editor = this;
-
+	const editor = this;
+	
 	this.initialize = false;
 	this.area = $("<div class='hold'>");
 	this.area.append(this.colSync = $("<div class='col-sync'>"));
@@ -275,7 +275,7 @@ SmiEditor.prototype.afterChangeSaved = function(saved) {
 }
 
 SmiEditor.prototype.bindEvent = function() {
-	let editor = this;
+	const editor = this;
 	
 	// 내용에 따라 싱크 표시 동기화
 	this.input.on("input propertychange", function () {
@@ -792,7 +792,7 @@ SmiEditor.prototype.fixScrollAroundEvent = function(scrollLeft) {
 	if (scrollLeft == undefined) {
 		scrollLeft = this.input.scrollLeft()
 	}
-	let editor = this;
+	const editor = this;
 	setTimeout(function() {
 		// 이벤트 진행 후 원래 스크롤 복원
 		editor.input.scrollTop (scrollTop );
@@ -877,7 +877,7 @@ SmiEditor.prototype.inputTextLikeNative = function(input) {
 }
 
 SmiEditor.prototype.reSyncPrompt = function() {
-	let editor = this;
+	const editor = this;
 	prompt("싱크 시작 시간을 입력하세요.", function(value) {
 		if (!value || !isFinite(value)) {
 			alert("잘못된 값입니다.");
@@ -1250,8 +1250,8 @@ SmiEditor.prototype.updateSync = function (range=null) {
 	}
 	
 	// 프로세스 분리할 필요가 있나?
-	let self = this;
-	let thread = function() {
+	const self = this;
+	const thread = function() {
 		let textLines = text.split("\n");
 		let syncLines = [];
 		
@@ -1505,7 +1505,7 @@ SmiEditor.prototype.updateHighlight = function () {
 	this.needToUpdateHighlight = false;
 	this.highlightUpdating = true;
 
-	let self = this;
+	const self = this;
 	function thread() {
 		if (SmiEditor.useHighlight) {
 			self.hArea.removeClass("nonactive");
@@ -1751,7 +1751,7 @@ SmiEditor.prototype.afterMoveSync = function(range) {
 	let text = this.input.val();
 	
 	// 프로세스 분리할 필요가 있나?
-	let self = this;
+	const self = this;
 	setTimeout(function() {
 		let lines = text.split("\n");
 		let syncLines = [];

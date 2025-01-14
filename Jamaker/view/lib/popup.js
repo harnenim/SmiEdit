@@ -72,7 +72,7 @@ confirm = function(msg, yes, no) {
 			}
 		}
 	} else {
-		let result = _confirm(msg);
+		const result = _confirm(msg);
 		if (result) {
 			if (yes) yes();
 		} else {

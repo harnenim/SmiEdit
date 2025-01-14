@@ -39,13 +39,13 @@ window.Tab = function(text, path) {
 	this.lastHold = 1;
 	this.path = path;
 	
-	let holds = Subtitle.SmiFile.textToHolds(text);
+	const holds = Subtitle.SmiFile.textToHolds(text);
 	for (let i = 0; i < holds.length; i++) {
 		this.addHold(holds[i], i == 0, i == 0);
 	}
 	this.savedHolds = this.holds.slice(0);
 	
-	let tab = this;
+	const tab = this;
 	this.holdSelector.on("click", ".selector", function() {
 		tab.selectHold($(this).data("hold"));
 		
@@ -885,8 +885,8 @@ function setDpiBy(width) {
 	}, 1000); // 로딩 덜 됐을 수가 있어서 딜레이 줌
 }
 
-let playerDlls = [];
-let highlights = [];
+window.playerDlls = [];
+window.highlights = [];
 // C# 쪽에서 호출
 function setPlayerDlls(dlls) {
 	playerDlls = dlls.split("\n");

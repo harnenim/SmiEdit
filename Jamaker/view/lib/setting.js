@@ -3,8 +3,8 @@ let checkVersion;
 {	checkVersion = function(version) {
 		if (!version) version = "";
 
-		let notify = [];
-		let notified = {};
+		const notify = [];
+		const notified = {};
 		if (version < lastNotifyForCommand) {
 			notify.push("단축키");
 			notified.command = true;
@@ -34,14 +34,14 @@ let checkVersion;
 		}
 		return notified;
 	}
-	let lastNotifyForCommand = "2024.12.07.v1";
-	let lastNotifyForAutoComplete = "";
-	let lastNotifyForStyle = "2025.01.07.v1";
-	let lastNotifyForMenu = "2024.11.19.v2";
+	const lastNotifyForCommand = "2024.12.07.v1";
+	const lastNotifyForAutoComplete = "";
+	const lastNotifyForStyle = "2025.01.07.v1";
+	const lastNotifyForMenu = "2024.11.19.v2";
 }
 
-let DEFAULT_SETTING =
-{	version: "2025.01.07.v1"
+const DEFAULT_SETTING =
+{	version: "2025.01.14.v1"
 ,	menu:
 	// 유일하게 C#으로 그린 메뉴도 여기서 다 구성함
 	[	[	"파일(&F)"

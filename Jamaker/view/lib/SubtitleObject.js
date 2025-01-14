@@ -2684,7 +2684,6 @@ Subtitle.SrtFile.prototype.fromTxt = function(txt) {
 		let item = items[i];
 		this.body.push(new Subtitle.Srt(item.start, item.end, item.lines.join("\n")));
 	}
-	maruta = this;
 	
 	return this;
 }
