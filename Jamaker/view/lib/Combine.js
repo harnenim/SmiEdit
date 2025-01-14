@@ -2,45 +2,45 @@ window.Combine = {
 	css: 'font-family: 맑은 고딕;'
 };
 {
-	let LINE = {
+	const LINE = {
 			TEXT: 0
 		,	SYNC: 1
 		,	TYPE: 2
 	};
-	let TYPE = {
+	const TYPE = {
 			TEXT: null
 		,	BASIC: 1
 		,	FRAME: 2
 		,	RANGE: 3
 	};
 	
-	let STIME = 0;
-	let STYPE = 1;
-	let ETIME = 2;
-	let ETYPE = 3;
-	let TEXT  = 4;
-	let LINES = 5;
-	let WIDTH = 6;
-	let UPPER = 4;
-	let LOWER = 5;
+	const STIME = 0;
+	const STYPE = 1;
+	const ETIME = 2;
+	const ETYPE = 3;
+	const TEXT  = 4;
+	const LINES = 5;
+	const WIDTH = 6;
+	const UPPER = 4;
+	const LOWER = 5;
 	
-	let LOG = false;
+	const LOG = false;
 	
 	function getWidth(smi, checker) {
 		// RUBY태그 문법이 미묘하게 달라서 가공 필요
 		smi = smi.split("<RP").join("<!--RP").split("</RP>").join("</RP-->");
 		
 		// 태그 밖의 공백문자 치환
-		let tags = smi.split("<");
+		const tags = smi.split("<");
 		for (let i = 1; i < tags.length; i++) {
-			let index = tags[i].indexOf(">");
+			const index = tags[i].indexOf(">");
 			if (index > 0) {
 				tags[i] = tags[i].substring(0, index) + tags[i].substring(index);
 			}
 		}
 		smi = tags.join("<");
 		
-		let lines = smi.split(/<br>/gi);
+		const lines = smi.split(/<br>/gi);
 		for (let i = 0; i < lines.length; i++) {
 			lines[i] = checker.html(lines[i]).text();
 		}
@@ -59,7 +59,7 @@ window.Combine = {
 		return Combine.checker.show();
 	}
 	
-	let syncLines = { basic: {}, frame: {}, range: {} };
+	const syncLines = { basic: {}, frame: {}, range: {} };
 	function getSyncLine(sync, type) {
 		let line = null;
 		switch (type) {
@@ -82,13 +82,13 @@ window.Combine = {
 	}
 	
 	function parse(text, checker) {
-		let lines = text.split("\n");
-		let parseds = [];
+		const lines = text.split("\n");
+		const parseds = [];
 		
 		// 싱크값을 제외하면 별도의 값을 취하지 않는 간이 파싱
 		// SMI는 태그 꺽쇠 내에서 줄바꿈을 하는 경우는 일반적으로 없다고 가정
 		for (let i = 0; i < lines.length; i++) {
-			let line = lines[i];
+			const line = lines[i];
 			let parsed = [line, null, null];
 			parseds.push(parsed);
 			
@@ -102,16 +102,16 @@ window.Combine = {
 				j = k + 1;
 
 				// 태그 닫힌 곳까지 탐색
-				let closePos = line.indexOf(">", j);
+				const closePos = line.indexOf(">", j);
 				if (j < closePos) {
 					// 태그명 찾기
 					for (k = j; k < closePos; k++) {
-						let c = line[k];
+						const c = line[k];
 						if (c == ' ' || c == '\t' || c == '"' || c == "'" || c == '\n') {
 							break;
 						}
 					}
-					let tagName = line.substring(j, k);
+					const tagName = line.substring(j, k);
 					j = k;
 					
 					hasSync = (tagName.toUpperCase() == "SYNC");
@@ -120,19 +120,19 @@ window.Combine = {
 						while (j < closePos) {
 							// 속성 찾기
 							for (; j < closePos; j++) {
-								let c = line[j];
+								const c = line[j];
 								if (('0'<=c&&c<='9') || ('a'<=c&&c<='z') || ('A'<=c&&c<='Z')) {
 									break;
 								}
 								//html += c;
 							}
 							for (k = j; k < closePos; k++) {
-								let c = line[k];
+								const c = line[k];
 								if ((c<'0'||'9'<c) && (c<'a'||'z'<c) && (c<'A'||'Z'<c)) {
 									break;
 								}
 							}
-							let attrName = line.substring(j, k);
+							const attrName = line.substring(j, k);
 							j = k;
 							
 							// 속성 값 찾기
@@ -150,7 +150,7 @@ window.Combine = {
 									k = line.indexOf("\t");
 									k = (0 <= k && k < closePos) ? k : closePos;
 								}
-								let value = line.substring(j + q.length, k);
+								const value = line.substring(j + q.length, k);
 								
 								if (q.length && k < closePos) { // 닫는 따옴표가 있을 경우
 									j += q.length + value.length + q.length;
@@ -194,7 +194,7 @@ window.Combine = {
 		}
 		parseds.push(["&nbsp;", 99999999, TYPE.BASIC]);
 		
-		let syncs = [];
+		const syncs = [];
 		let last = null;
 		for (let i = 0; i < parseds.length; i++) {
 			let parsed = parseds[i];
@@ -206,7 +206,7 @@ window.Combine = {
 					}
 					text = text.join("\n");
 					if (text.split("&nbsp;").join("").trim()) {
-						let lineCount = text.split(/<br>/gi).length;
+						const lineCount = text.split(/<br>/gi).length;
 						//[STIME, STYPE, ETIME, ETYPE, TEXT, LINES, WIDTH];
 						syncs.push([last[LINE.SYNC], last[LINE.TYPE], parsed[LINE.SYNC], parsed[LINE.TYPE], text, lineCount, getWidth(text, checker)]);
 					}
@@ -219,21 +219,21 @@ window.Combine = {
 	}
 	
 	Combine.combine = function(inputUpper, inputLower) {
-		let hljs = $(".hljs").hide(); // 결합 로직 돌아갈 때 문법 하이라이트가 있으면 성능 저하됨
-		let checker = getChecker();
-		let upperSyncs = parse(inputUpper, checker);
-		let lowerSyncs = parse(inputLower, checker);
+		const hljs = $(".hljs").hide(); // 결합 로직 돌아갈 때 문법 하이라이트가 있으면 성능 저하됨
+		const checker = getChecker();
+		const upperSyncs = parse(inputUpper, checker);
+		const lowerSyncs = parse(inputLower, checker);
 		
 		let ui = 0;
 		let li = 0;
-		let groups = [];
+		const groups = [];
 		let group = null;
 		while  ((ui <= upperSyncs.length) && (li <= lowerSyncs.length)) {
 			if ((ui == upperSyncs.length) && (li == lowerSyncs.length)) {
 				break;
 			}
-			let us = (ui < upperSyncs.length) ? upperSyncs[ui] : [99999999, 99999999, null, 0];
-			let ls = (li < lowerSyncs.length) ? lowerSyncs[li] : [99999999, 99999999, null, 0];
+			const us = (ui < upperSyncs.length) ? upperSyncs[ui] : [99999999, 99999999, null, 0];
+			const ls = (li < lowerSyncs.length) ? lowerSyncs[li] : [99999999, 99999999, null, 0];
 			if (us[STIME] < ls[STIME]) { // 위가 바뀜
 				if ((us[STYPE] == TYPE.RANGE) // 중간 싱크
 				 || (group && group.lower.length && (group.lower[group.lower.length - 1][ETIME] > us[STIME]))
@@ -295,7 +295,7 @@ window.Combine = {
 		}
 
 		for (let gi = 0; gi < groups.length; gi++) {
-			let group = groups[gi];
+			const group = groups[gi];
 			group.lines = [];
 			let last = null;
 			
@@ -303,22 +303,22 @@ window.Combine = {
 			
 			// 팟플레이어 왼쪽 정렬에서 좌우로 흔들리지 않도록 잡아줌
 			// ... 사실 폰트에 따라 흔들리긴 함...
-			let lists = [group.upper, group.lower];
+			const lists = [group.upper, group.lower];
 			for (let i = 0; i < lists.length; i++) {
-				let list = lists[i];
+				const list = lists[i];
 				
 				for (let j = 0; j < list.length; j++) {
 					// 줄 길이 채워주기
-					let sync = list[j];
+					const sync = list[j];
 					if (sync[WIDTH] < group.maxWidth) {
 						let line = sync[TEXT];
-						let lines = line.split(/<br>/gi);
+						const lines = line.split(/<br>/gi);
 						
 						// 여러 줄일 경우 제일 긴 줄 찾기
 						if (lines.length > 1) {
 							let maxWidth = 0;
 							for (let k = 0; k < lines.length; k++) {
-								let width = getWidth(lines[k], checker);
+								const width = getWidth(lines[k], checker);
 								if (width > maxWidth) {
 									maxWidth = width;
 									line = lines[k];
@@ -336,7 +336,7 @@ window.Combine = {
 							lastPad = pad;
 							lastWidth = width;
 							pad = lastPad + " ";
-							let curr = "​" + pad + line + pad + "​";
+							const curr = "​" + pad + line + pad + "​";
 							width = getWidth(curr, checker);
 							if (LOG) console.log(curr.split("&nbsp;").join(" ") + ": " + width);
 							
@@ -345,7 +345,7 @@ window.Combine = {
 						if ((width - group.maxWidth) > (group.maxWidth - lastWidth)) {
 							pad = lastPad;
 							if (LOG) {
-								let curr = "​" + pad + line + pad + "​";
+								const curr = "​" + pad + line + pad + "​";
 								width = getWidth(curr, checker);
 							}
 						}
@@ -375,7 +375,7 @@ window.Combine = {
 									line = line.substring(tagEnd);
 								}
 								while (line.endsWith(">")) {
-									let tagStart = line.lastIndexOf("<");
+									const tagStart = line.lastIndexOf("<");
 									if (tagStart < 0) {
 										break;
 									}
@@ -401,8 +401,8 @@ window.Combine = {
 				if ((ui == group.upper.length) && (li == group.lower.length)) {
 					break;
 				}
-				let us = (ui < group.upper.length) ? group.upper[ui] : [99999999, 99999999, null, 0];
-				let ls = (li < group.lower.length) ? group.lower[li] : [99999999, 99999999, null, 0];
+				const us = (ui < group.upper.length) ? group.upper[ui] : [99999999, 99999999, null, 0];
+				const ls = (li < group.lower.length) ? group.lower[li] : [99999999, 99999999, null, 0];
 				
 				if (us[STIME] < ls[STIME]) { // 위가 바뀜
 					if (!last) { // 첫 싱크
@@ -413,14 +413,14 @@ window.Combine = {
 						if (last[STIME] == us[STIME]) {
 							last[UPPER] = us;
 						} else {
-							let curr = [us[STIME], us[STYPE], last[2], last[3], us, last[LOWER]];
+							const curr = [us[STIME], us[STYPE], last[2], last[3], us, last[LOWER]];
 							last[ETIME] = us[STIME];
 							last[ETYPE] = us[STYPE];
 							group.lines.push(last = curr);
 						}
 						
 						if (us[ETIME] < last[ETIME]) { // 위가 먼저 끝남
-							let curr = [us[ETIME], us[ETYPE], last[ETIME], last[ETYPE], null, last[LOWER]];
+							const curr = [us[ETIME], us[ETYPE], last[ETIME], last[ETYPE], null, last[LOWER]];
 							last[ETIME] = us[ETIME];
 							last[ETYPE] = us[ETYPE];
 							group.lines.push(last = curr);
@@ -441,14 +441,14 @@ window.Combine = {
 						if (last[STIME] == ls[STIME]) {
 							last[LOWER] = ls;
 						} else {
-							let curr = [ls[STIME], ls[STYPE], last[ETIME], last[ETYPE], last[UPPER], ls];
+							const curr = [ls[STIME], ls[STYPE], last[ETIME], last[ETYPE], last[UPPER], ls];
 							last[ETIME] = ls[STIME];
 							last[ETYPE] = ls[STYPE];
 							group.lines.push(last = curr);
 						}
 						
 						if (ls[ETIME] < last[ETIME]) { // 아래가 먼저 끝남
-							let curr = [ls[ETIME], ls[ETYPE], last[ETIME], last[ETYPE], last[TEXT], null];
+							const curr = [ls[ETIME], ls[ETYPE], last[ETIME], last[ETYPE], last[TEXT], null];
 							last[ETIME] = ls[ETIME];
 							last[ETYPE] = ls[ETYPE];
 							group.lines.push(last = curr);
@@ -475,11 +475,11 @@ window.Combine = {
 		checker.text("").hide();
 		hljs.show();
 		
-		let lines = [];
+		const lines = [];
 		let lastSync = 0;
 		for (let gi = 0; gi < groups.length; gi++) {
-			let group = groups[gi];
-			let forEmpty = [[], []];
+			const group = groups[gi];
+			const forEmpty = [[], []];
 			for (let i = 0; i < 2; i++) {
 				for (let j = 0; j < group.maxLines[i]; j++) {
 					forEmpty[i].push("<b>　</b>");
@@ -488,7 +488,7 @@ window.Combine = {
 			}
 			
 			for (let i = 0; i < group.lines.length; i++) {
-				let line = group.lines[i];
+				const line = group.lines[i];
 				
 				if (lastSync < line[STIME]) {
 					if (gi > 0) { // 처음일 땐 제외
@@ -519,12 +519,12 @@ window.Combine = {
 
 if (Subtitle && Subtitle.SmiFile) {
 	Subtitle.SmiFile.textToHolds = function(text) {
-		let texts = text.split("\r\n").join("\n").split("\n<!-- Hold=");
+		const texts = text.split("\r\n").join("\n").split("\n<!-- Hold=");
 		let holds = [{ text: texts[0] }];
 		for (let i = 1; i < texts.length; i++) {
-			let hold = texts[i];
-			let begin = hold.indexOf("\n");
-			let end = hold.indexOf("-->");
+			const hold = texts[i];
+			const begin = hold.indexOf("\n");
+			const end = hold.indexOf("-->");
 			if (begin < 0 || end < 0) {
 				holds[0].text += "\n<!-- Hold=" + hold;
 				continue;
@@ -535,7 +535,7 @@ if (Subtitle && Subtitle.SmiFile) {
 			}
 			let name = hold.substring(0, begin).trim();
 			let pos = 1;
-			let index = name.indexOf("|");
+			const index = name.indexOf("|");
 			if (index) {
 				try {
 					pos = Number(name.substring(0, index));
@@ -552,14 +552,14 @@ if (Subtitle && Subtitle.SmiFile) {
 		}
 		
 		// SMI 파일 역정규화
-		let normalized = new Subtitle.SmiFile(holds[0].text).antiNormalize();
+		const normalized = new Subtitle.SmiFile(holds[0].text).antiNormalize();
 		normalized[0].pos = 0;
 		normalized[0].name = "메인";
 		holds = normalized.concat(holds.slice(1));
 		holds[0].text = holds[0].toTxt().trim();
 		for (let i = 1; i < normalized.length; i++) {
 			// 내포된 홀드는 종료싱크가 빠졌을 수 있음
-			let hold = holds[i];
+			const hold = holds[i];
 			if (hold.next && hold.body[hold.body.length - 1].text.split("&nbsp;").join("").trim().length > 0) {
 				hold.body.push(new Subtitle.Smi(hold.next.start, hold.next.syncType, "&nbsp;"));
 			}
@@ -571,16 +571,16 @@ if (Subtitle && Subtitle.SmiFile) {
 		return holds;
 	}
 	Subtitle.SmiFile.holdsToText = function(origHolds, withNormalize=true, withCombine=true, withComment=true) {
-		let result = [];
+		const result = [];
 		let logs = [];
 		let originBody = [];
 		
-		let main = new Subtitle.SmiFile(origHolds[0].text);
+		const main = new Subtitle.SmiFile(origHolds[0].text);
 		withCombine = withCombine && origHolds.length > 1;
 		
 		// 정규화 등 작업
 		if (withNormalize) {
-			let normalized = Subtitle.Smi.normalize(main.body, withComment && !withCombine);
+			const normalized = Subtitle.Smi.normalize(main.body, withComment && !withCombine);
 			originBody = normalized.origin;
 			logs = normalized.logs;
 		} else {
@@ -596,7 +596,7 @@ if (Subtitle && Subtitle.SmiFile) {
 				return a.start - b.start;
 			});
 			for (let hi = 0; hi < holds.length; hi++) {
-				let hold = holds[hi];
+				const hold = holds[hi];
 				result[hold.resultIndex = (hi + 1)] = "<!-- Hold=" + hold.pos + "|" + hold.name + "\n" + hold.text.split("<").join("<​").split(">").join("​>") + "\n-->";
 			}
 			
@@ -622,10 +622,10 @@ if (Subtitle && Subtitle.SmiFile) {
 				return 0;
 			});
 			
-			let holdSmis = [];
+			const holdSmis = [];
 			for (let hi = 1; hi < holds.length; hi++) {
-				let hold = holds[hi];
-				let smi = holdSmis[hi] = new Subtitle.SmiFile(hold.text);
+				const hold = holds[hi];
+				const smi = holdSmis[hi] = new Subtitle.SmiFile(hold.text);
 				smi.header = smi.footer = "";
 				if (withNormalize) {
 					Subtitle.Smi.normalize(smi.body, false);
@@ -635,7 +635,7 @@ if (Subtitle && Subtitle.SmiFile) {
 					continue;
 				}
 				
-				let start = smi.body[0].start;
+				const start = smi.body[0].start;
 				let end = smi.body[smi.body.length - 1].start;
 				
 				// 메인에서 홀드와 겹치는 영역 찾기
@@ -672,14 +672,13 @@ if (Subtitle && Subtitle.SmiFile) {
 				}
 				
 				// 홀드 결합
-				let sliced = new Subtitle.SmiFile();
+				const sliced = new Subtitle.SmiFile();
 				sliced.body = main.body.slice(mainBegin, mainEnd);
 				
-				let slicedText = sliced.toTxt().trim();
-				let combineText = smi.toTxt().trim();
-				let combined = new Subtitle.SmiFile(((hold.pos < 0) ? Combine.combine(slicedText, combineText) : Combine.combine(combineText, slicedText)).join("\n"));
+				const slicedText = sliced.toTxt().trim();
+				const combineText = smi.toTxt().trim();
+				const combined = new Subtitle.SmiFile(((hold.pos < 0) ? Combine.combine(slicedText, combineText) : Combine.combine(combineText, slicedText)).join("\n"));
 				// 원칙상 normalized.result를 다뤄야 맞을 것 같지만...
-				end = (mainEnd < main.body.length) ? main.body[mainEnd].start : 999999999;
 				main.body = main.body.slice(0, mainBegin).concat(combined.body).concat(main.body.slice(mainEnd));
 			}
 			
@@ -699,7 +698,7 @@ if (Subtitle && Subtitle.SmiFile) {
 						}
 						
 						// 변환결과가 원본과 동일하지 않은 범위 찾기
-						let newLog = {
+						const newLog = {
 								from: [oi, originBody.length]
 							,	to  : [ni, main.body.length]
 							,	start: main.body[ni].start
@@ -738,9 +737,9 @@ if (Subtitle && Subtitle.SmiFile) {
 					}
 				}
 				
-				let origin = new Subtitle.SmiFile();
+				const origin = new Subtitle.SmiFile();
 				for (let i = 0; i < logs.length; i++) {
-					let log = logs[i];
+					const log = logs[i];
 					if (!log.end) {
 						if (log.from[1] < originBody.length - 1) {
 							log.end = originBody[log.from[1]].start;
@@ -753,9 +752,9 @@ if (Subtitle && Subtitle.SmiFile) {
 					
 					// 메인 홀드 내용이 없으면 다른 홀드가 통째로 들어왔는지 확인
 					if (comment.length == 0) {
-						let start = log.to[0];
+						const start = log.to[0];
 						for (let hi = 1; hi < holds.length; hi++) {
-							let smi = holdSmis[hi];
+							const smi = holdSmis[hi];
 							let isImported = true;
 							for (let j = 0; j < smi.body.length; j++) {
 								if (smi.body[j].start != main.body[start+j].start) {
@@ -774,12 +773,12 @@ if (Subtitle && Subtitle.SmiFile) {
 								}
 							}
 							if (isImported) {
-								let hold = holds[hi];
+								const hold = holds[hi];
 								comment = "Hold=" + hold.pos + "|" + hold.name;
 								result[hold.resultIndex] = "";
 								if (smi.body.length < (log.to[1] - log.to[0])) {
 									// 현재 홀드가 내포 홀드의 일부일 경우 나머지 구간 분할
-									let nextLog = {
+									const nextLog = {
 											from: log.from
 										,	to  : [log.to[0] + smi.body.length, log.to[1]]
 										,	end : log.end
@@ -790,7 +789,7 @@ if (Subtitle && Subtitle.SmiFile) {
 								
 								if (withComment) {
 									for (let j = 0; j < smi.body.length; j++) {
-										let sync = smi.body[j];
+										const sync = smi.body[j];
 										if (sync.comment) {
 											main.body[start + j].text = sync.comment + "\n" + sync.text;
 										}
