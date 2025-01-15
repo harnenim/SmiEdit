@@ -708,7 +708,7 @@ function init(jsonSetting) {
 	SmiEditor.activateKeyEvent();
 	SmiEditor.Viewer.open();
 	
-	setSetting(setting);
+	setSetting(setting, true);
 	moveWindowsToSetting();
 
 	autoSaveTemp = setInterval(function () {
@@ -716,7 +716,7 @@ function init(jsonSetting) {
 	}, setting.tempSave * 1000);
 }
 
-function setSetting(setting) {
+function setSetting(setting, initial=false) {
 	const oldSetting = window.setting;
 	
 	// 탭 on/off 먼저 해야 height값 계산 가능
@@ -731,7 +731,7 @@ function setSetting(setting) {
 	}
 	
 	SmiEditor.setSetting(setting);
-	if (JSON.stringify(oldSetting.color) != JSON.stringify(setting.color)) {
+	if (initial || (JSON.stringify(oldSetting.color) != JSON.stringify(setting.color))) {
 		// 스타일 바뀌었을 때만 재생성
 		if (setting.css) {
 			delete(setting.css);
@@ -779,7 +779,7 @@ function setSetting(setting) {
 				}
 		});
 	}
-	if (JSON.stringify(oldSetting.highlight) != JSON.stringify(setting.highlight)) {
+	if (initial || (JSON.stringify(oldSetting.highlight) != JSON.stringify(setting.highlight))) {
 		// 문법 하이라이트 양식 바뀌었을 때만 재생성
 		function afterLoadHighlight() {
 			SmiEditor.refreshHighlight();
