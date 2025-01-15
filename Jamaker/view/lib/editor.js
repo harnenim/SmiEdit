@@ -474,6 +474,7 @@ function setDefault(target, dflt) {
 
 // C# 쪽에서 호출
 function init(jsonSetting) {
+	let setting = {};
 	try {
 		setting = JSON.parse(jsonSetting);
 		
@@ -716,6 +717,8 @@ function init(jsonSetting) {
 }
 
 function setSetting(setting) {
+	const oldSetting = window.setting;
+	
 	// 탭 on/off 먼저 해야 height값 계산 가능
 	if (setting.useTab) {
 		$("body").addClass("use-tab");
@@ -728,11 +731,12 @@ function setSetting(setting) {
 	}
 	
 	SmiEditor.setSetting(setting);
-	{
+	if (JSON.stringify(oldSetting.color) != JSON.stringify(setting.color)) {
+		// 스타일 바뀌었을 때만 재생성
 		if (setting.css) {
 			delete(setting.css);
 		}
-
+		
 		// 스크롤바 버튼 새로 그려야 함 - 커서 문제로 현재 미적용...
 		let button = "";
 		let disabled = "";
@@ -758,7 +762,7 @@ function setSetting(setting) {
 			c.fill();
 			disabled = SmiEditor.canvas.toDataURL();
 		}
-
+		
 		$.ajax({url: "lib/SmiEditor.color.css"
 			,	dataType: "text"
 			,	success: function(preset) {
@@ -775,7 +779,8 @@ function setSetting(setting) {
 				}
 		});
 	}
-	{
+	if (JSON.stringify(oldSetting.highlight) != JSON.stringify(setting.highlight)) {
+		// 문법 하이라이트 양식 바뀌었을 때만 재생성
 		function afterLoadHighlight() {
 			SmiEditor.refreshHighlight();
 			for (let i = 0; i < tabs.length; i++) {
@@ -848,7 +853,7 @@ function setSetting(setting) {
 	
 	binder.setMenus(setting.menu);
 	
-	return setting;
+	window.setting = JSON.parse(JSON.stringify(setting));
 }
 function moveWindowsToSetting() {
 	binder.moveWindow("editor"

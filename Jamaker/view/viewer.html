@@ -10,11 +10,11 @@
 let title = document.getElementsByTagName("title")[0];
 let lastTab = null;
 let time = 0;
-let showText = [];
-let hasLine = [];
-let indexes = [];
-let normalizedLines = [];
-let normalizedIndex = [];
+const showText = [];
+const hasLine = [];
+const indexes = [];
+const normalizedLines = [];
+const normalizedIndex = [];
 
 let style = null;
 let setting = {}
@@ -33,7 +33,7 @@ function setLines(newLines) {
 	if (lines.length == 0) {
 		lines.push([]);
 	}
-	normalizedLines = [];
+	normalizedLines.length = 0;
 	
 	let receiveTime = time;
 	time = -1;
